@@ -47,15 +47,15 @@ test('CMS Architecture & Security Boundary Verification', async (t) => {
     () => {
       const layoutContent = fs.readFileSync(DASHBOARD_LAYOUT_PATH, 'utf8');
       assert.match(layoutContent, /noindex=\{true\}/i, 'DashboardLayout mandates noindex');
-      assert.match(layoutContent, /path\.startsWith\('\/dashboard'\)/i, 'Guards /dashboard paths');
+      assert.match(layoutContent, /cmsPath\.startsWith\('\/dashboard'\)/i, 'Guards /dashboard paths');
       assert.match(
         layoutContent,
-        /path\.startsWith\('\/dashboardMain'\)/i,
+        /cmsPath\.startsWith\('\/dashboardMain'\)/i,
         'Guards /dashboardMain paths'
       );
       assert.match(
         layoutContent,
-        /window\.location\.href\s*=\s*'\/dashboard\/login\?redirect='/i,
+        /window\.location\.href\s*=\s*prefix\s*\+\s*'\/dashboard\/login\?redirect='/i,
         'Redirects unauthenticated visits to login'
       );
     }
