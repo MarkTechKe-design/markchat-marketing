@@ -106,27 +106,29 @@ const defaultTitle = title === 'Every conversation. One smarter inbox.';
                 </div>
               )}
             </div>
-          ) : light.src || dark.src ? (
-            <>
-              <div class="dark:hidden">
-                <MCProductFrame
-                  src={light.src}
-                  alt={light.alt}
-                  label="Unified Inbox product demonstration"
-                />
-              </div>
-              <div class="hidden dark:block">
-                <MCProductFrame
-                  src={dark.src}
-                  alt={dark.alt}
-                  label="Unified Inbox product demonstration"
-                />
-              </div>
-            </>
           ) : (
             <div class="space-y-3" data-mc-nonoverlap-layout>
-              <div class="overflow-hidden rounded-2xl border border-border shadow-sm">
-                <MCConceptualPreview kind="inbox" class="rounded-2xl border-0" />
+              <div class="dark:hidden">
+                {light.src ? (
+                  <MCProductFrame
+                    src={light.src}
+                    alt={light.alt}
+                    label="Shared inbox product preview"
+                  />
+                ) : (
+                  <MCConceptualPreview kind="inbox" />
+                )}
+              </div>
+              <div class="hidden dark:block">
+                {dark.src ? (
+                  <MCProductFrame
+                    src={dark.src}
+                    alt={dark.alt}
+                    label="Shared inbox product preview"
+                  />
+                ) : (
+                  <MCConceptualPreview kind="inbox" />
+                )}
               </div>
               <div class="grid items-stretch gap-3 sm:grid-cols-2">
                 <MCConceptualPreview kind="mpesa" />
