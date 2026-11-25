@@ -18,7 +18,7 @@ import MCSection from '@/components/design-system/MCSection.astro';
 import MCSectionHeading from '@/components/design-system/MCSectionHeading.astro';
 import MCFeatureBento from '@/components/design-system/MCFeatureBento.astro';
 import MCButton from '@/components/design-system/MCButton.astro';
-import { communityIllustrations } from '@/data/product-assets';
+
 import type { ProductWorkflow, CmsProductMediaOverride } from '@/data/product-assets';
 import { siteConfig } from '@/config';
 import { fetchHomepageSettings, fetchPricingMatrix, fetchFeatures, fetchFaqs } from '@/lib/cms-api';
@@ -156,10 +156,30 @@ const capabilities = [
     icon: 'lucide:chart-no-axes-combined',
     href: '/integrations/developer-api-webhooks',
   },
-].map((feature) => ({
-  ...feature,
-  illustration: communityIllustrations.find((item) => item.id === feature.id)?.path,
-}));
+].map((feature) => {
+  const patterns: Record<string, RegExp> = {
+    'unified-inbox': /inbox|conversation/i,
+    'mpesa-stk': /m.?pesa|checkout|daraja|\bstk\b/i,
+    markcopilot: /markcopilot|copilot|ai.assist/i,
+    'automation-routing': /automation|routing|workflow/i,
+    'contact-crm': /contact|crm/i,
+    'help-center': /help.center|self.service|knowledge/i,
+    'analytics-webhooks': /analytics|webhooks?|reporting/i,
+  };
+  const published = publishedFeatures.find(
+    (item) =>
+      item.status === 'published' &&
+      item.mediaType === 'screenshot' &&
+      item.mediaUrl &&
+      patterns[feature.id]?.test(item.slug + ' ' + item.title + ' ' + item.category)
+  );
+  return {
+    ...feature,
+    cmsMedia: published
+      ? { status: published.status, mediaUrl: published.mediaUrl, mediaAlt: published.mediaAlt || published.title }
+      : null,
+  };
+});
 
 const pricingPlans = pricingMatrix.tiers.map((tier) => {
   const features = tier.features
