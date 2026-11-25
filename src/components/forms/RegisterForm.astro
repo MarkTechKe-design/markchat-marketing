@@ -62,14 +62,6 @@ const plansInfo: Record<
     agents: '25 Agents included',
     inboxes: 'Unlimited Inboxes',
   },
-  enterprise: {
-    name: 'Enterprise',
-    price: 'Custom',
-    badge: 'Dedicated SLA',
-    isTrial: false,
-    agents: 'Custom capacity',
-    inboxes: 'Dedicated SLA',
-  },
 };
 
 const initialPlan = plansInfo[defaultPlanId] || plansInfo.growth;
@@ -526,7 +518,7 @@ const initialPlan = plansInfo[defaultPlanId] || plansInfo.growth;
           class="flex-1 h-11 cursor-pointer px-6 rounded-xl bg-primary hover:bg-primary-dark text-white font-medium text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed shadow-xs flex items-center justify-center gap-2"
         >
           <span id="register-button-text">
-            {initialPlan.isTrial ? 'Start 72-Hour Free Trial' : 'Create MarkChat Account'}
+            Create MarkChat Account
           </span>
           <span id="register-button-loading" class="hidden items-center gap-2">
             <svg
@@ -553,6 +545,16 @@ const initialPlan = plansInfo[defaultPlanId] || plansInfo.growth;
         </button>
       </div>
     </div>
+
+    <p class="text-xs text-text-muted mt-3 leading-relaxed">
+      If account verification is enabled, KES 82 is charged to confirm payment ownership
+      and automatically refunded within 3 days. Your selected plan is unlocked for the
+      configured free trial after payment confirmation. If no trial is configured,
+      a paid subscription is required before Core access.
+    </p>
+    <a id="registration-payment-return" href="/billing/return" class="hidden text-sm text-primary underline mt-2">
+      Check an earlier verification payment
+    </a>
 
     <!-- Status Messages Container -->
     <div id="register-form-status" class="hidden" role="alert" aria-live="polite">
@@ -669,7 +671,6 @@ const initialPlan = plansInfo[defaultPlanId] || plansInfo.growth;
     starter: { name: 'Starter', isTrial: false },
     growth: { name: 'Growth', isTrial: true },
     scale: { name: 'Scale', isTrial: false },
-    enterprise: { name: 'Enterprise', isTrial: false },
   };
 
   // Plan selection cards
@@ -703,9 +704,25 @@ const initialPlan = plansInfo[defaultPlanId] || plansInfo.growth;
       }
     });
 
-    const isTrial = plansMap[planId]?.isTrial ?? false;
     if (buttonText) {
-      buttonText.textContent = isTrial ? 'Start 72-Hour Free Trial' : 'Create MarkChat Account';
+      buttonText.textContent = 'Create MarkChat Account';
+    }
+  }
+
+  // Resume an unfinished registration after returning from checkout, without re-submitting.
+  const pendingRegistration = sessionStorage.getItem('markchat_verification_pending');
+  if (pendingRegistration) {
+    try {
+      const pending = JSON.parse(pendingRegistration);
+      if (typeof pending.registrationId === 'string' && Date.now() - pending.createdAt < 24 * 60 * 60 * 1000) {
+        const returnLink = document.getElementById('registration-payment-return') as HTMLAnchorElement | null;
+        if (returnLink) {
+          returnLink.href = '/billing/return';
+          returnLink.classList.remove('hidden');
+        }
+      }
+    } catch {
+      sessionStorage.removeItem('markchat_verification_pending');
     }
   }
 
@@ -1142,8 +1159,55 @@ const initialPlan = plansInfo[defaultPlanId] || plansInfo.growth;
         const data = envelope.data || envelope;
         const registrationId = data.registrationId;
 
-        // 6. Fast-path completion or polling
-        if (data.status === 'completed' && data.ssoUrl) {
+        // Stage 2: registration returns a capability token, NOT a checkout URL.
+        // The KES 82 checkout endpoint must be called separately with this token.
+        if (data.verificationRequired === true) {
+          if (!registrationId || typeof data.verificationToken !== 'string') {
+            showFormError('Verification is required, but the registration authorization is missing.');
+            return;
+          }
+          if (loadingStatus) loadingStatus.textContent = 'Preparing KES 82 account confirmation...';
+          const checkoutRes = await fetch(
+            `${apiUrl}/api/v1/registration/${encodeURIComponent(registrationId)}/verification-checkout`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                Authorization: `Bearer ${data.verificationToken}`,
+              },
+              body: JSON.stringify({ paymentMethod: 'mpesa' }),
+            }
+          );
+          if (!checkoutRes.ok) {
+            showFormError('We could not start the KES 82 verification payment. Your workspace is not yet active. Please retry from this registration page.');
+            return;
+          }
+          const checkoutEnvelope = await checkoutRes.json();
+          const checkout = checkoutEnvelope.checkout;
+          if (
+            !checkoutEnvelope.success ||
+            checkout?.amountKesCents !== 8200 ||
+            checkout?.currency !== 'KES' ||
+            typeof checkout?.reference !== 'string' ||
+            !/^https:\/\//i.test(checkout?.authorizationUrl || '')
+          ) {
+            showFormError('The verification checkout details could not be validated. No payment was confirmed.');
+            return;
+          }
+          // Only an opaque registration ID/reference goes into session storage.
+          // Do not persist credentials, passwords, or the verificationToken.
+          sessionStorage.setItem('markchat_verification_pending', JSON.stringify({
+            registrationId,
+            reference: checkout.reference,
+            createdAt: Date.now(),
+          }));
+          window.location.assign(checkout.authorizationUrl);
+          return;
+        }
+
+        // 6. Verification is OFF: proceed with standard saga polling.
+        if (data.status === 'completed') {
           sessionStorage.removeItem('markchat_reg_idempotency_key');
           completeRegistration(redirectTarget);
           return;
