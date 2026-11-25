@@ -61,6 +61,12 @@ const controlPlaneUrl =
         </p>
       </div>
 
+      <div id="billing-upgrade-context" role="status" aria-live="polite"
+        class="hidden mb-6 rounded-xl border border-primary/30 bg-primary/5 p-5 text-sm text-text">
+        <h2 id="billing-upgrade-heading" class="font-semibold">Plan upgrade requested</h2>
+        <p id="billing-upgrade-description" class="mt-1 text-text-muted"></p>
+      </div>
+
       <!-- Active Subscription Summary Banner -->
       <div
         id="subscription-summary-card"
@@ -314,6 +320,17 @@ const controlPlaneUrl =
       `input[name="planSelect"][value="${chosenPlan}"]`
     ) as HTMLInputElement | null;
     if (radio) radio.checked = true;
+    if (chosenPlan === 'growth' || chosenPlan === 'scale') {
+      const upgradeContext = document.getElementById('billing-upgrade-context');
+      const heading = document.getElementById('billing-upgrade-heading');
+      const description = document.getElementById('billing-upgrade-description');
+      const label = chosenPlan === 'scale' ? 'Scale' : 'Growth';
+      upgradeContext?.classList.remove('hidden');
+      if (heading) heading.textContent = 'Upgrade to ' + label;
+      if (description) description.textContent = label === 'Scale'
+        ? 'This feature requires Scale. Your current access remains subject to Control Plane approval.'
+        : 'This feature requires Growth or higher. Your current access remains subject to Control Plane approval.';
+    }
   }
   if (intent.get('interval') === 'annual')
     showError(
@@ -374,7 +391,7 @@ const controlPlaneUrl =
         if (res.status === 401) {
           message = 'Please sign in to your workspace before initializing payment.';
           setTimeout(() => {
-            window.location.href = `/login?redirect=/billing`;
+            window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
           }, 1500);
         }
         showError(message);
