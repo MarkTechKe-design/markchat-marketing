@@ -34,37 +34,6 @@ const controlPlaneUrl =
   import.meta.env.PUBLIC_CONTROL_PLANE_API_URL ||
   'http://localhost:5000';
 
-const plansInfo: Record<
-  string,
-  { name: string; price: string; badge: string; isTrial: boolean; agents: string; inboxes: string }
-> = {
-  starter: {
-    name: 'Starter',
-    price: 'KES 1,500/mo',
-    badge: '3 Agents, 2 Inboxes',
-    isTrial: false,
-    agents: '3 Agents included',
-    inboxes: '2 Inboxes',
-  },
-  growth: {
-    name: 'Growth',
-    price: 'KES 3,500/mo',
-    badge: 'Trial subject to current settings',
-    isTrial: true,
-    agents: '10 Agents included',
-    inboxes: '5 Inboxes',
-  },
-  scale: {
-    name: 'Scale',
-    price: 'KES 5,000/mo',
-    badge: '25 Agents, High Volume',
-    isTrial: false,
-    agents: '25 Agents included',
-    inboxes: 'Unlimited Inboxes',
-  },
-};
-
-const initialPlan = plansInfo[defaultPlanId] || plansInfo.growth;
 ---
 
 <div class="w-full">
