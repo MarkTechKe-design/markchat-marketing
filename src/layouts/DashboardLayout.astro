@@ -53,10 +53,23 @@ const { title, description, breadcrumbs } = Astro.props;
     (function () {
       if (typeof window !== 'undefined') {
         var path = window.location.pathname;
+        var cmsMounted = path.startsWith('/_cms/dashboard') || path.startsWith('/_cms/dashboardMain');
+        var prefix = cmsMounted ? '/_cms' : '';
+        var cmsPath = cmsMounted ? path.slice(prefix.length) : path;
+        // Rewrite same-origin dashboard links only; external and Core routes remain untouched.
+        if (cmsMounted) {
+          document.querySelectorAll('a[href],form[action]').forEach(function (element) {
+            var attribute = element.tagName === 'FORM' ? 'action' : 'href';
+            var value = element.getAttribute(attribute);
+            if (value && (value.startsWith('/dashboard') || value.startsWith('/dashboardMain'))) {
+              element.setAttribute(attribute, '/_cms' + value);
+            }
+          });
+        }
         var isProtectedAdminRoute =
-          (path.startsWith('/dashboard') || path.startsWith('/dashboardMain')) &&
-          path !== '/dashboard/login' &&
-          path !== '/dashboard/login/';
+          (cmsPath.startsWith('/dashboard') || cmsPath.startsWith('/dashboardMain')) &&
+          cmsPath !== '/dashboard/login' &&
+          cmsPath !== '/dashboard/login/';
 
         if (isProtectedAdminRoute) {
           // Client-side UX navigation guard.
@@ -72,7 +85,7 @@ const { title, description, breadcrumbs } = Astro.props;
               ?.split('=')[1];
 
           if (!token) {
-            window.location.href = '/dashboard/login?redirect=' + encodeURIComponent(path);
+            window.location.href = prefix + '/dashboard/login?redirect=' + encodeURIComponent(path);
           }
         }
       }
