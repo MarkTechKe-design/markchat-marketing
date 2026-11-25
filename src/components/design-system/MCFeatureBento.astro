@@ -14,7 +14,8 @@ interface Props {
   features: Feature[];
 }
 const { features } = Astro.props;
-const [primary, mpesa, copilot, ...supporting] = features;
+const primary = features[0];
+const supporting = features.slice(3);
 ---
 
 <div class="space-y-4" data-mc-feature-bento>
