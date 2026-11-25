@@ -176,7 +176,11 @@ const capabilities = [
   return {
     ...feature,
     cmsMedia: published
-      ? { status: published.status, mediaUrl: published.mediaUrl, mediaAlt: published.mediaAlt || published.title }
+      ? {
+          status: published.status,
+          mediaUrl: published.mediaUrl,
+          mediaAlt: published.mediaAlt || published.title,
+        }
       : null,
   };
 });

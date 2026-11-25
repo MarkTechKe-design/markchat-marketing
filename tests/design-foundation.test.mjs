@@ -339,7 +339,15 @@ test('homepage capabilities use seven CMS-first product UI panels', () => {
   assert.match(assets, /media\?\.status === 'published'/);
   assert.match(index, /cmsMedia: published/);
   assert.doesNotMatch(bento, /feature\.illustration/);
-  for (const kind of ['inbox', 'mpesa', 'markcopilot', 'automation-routing', 'contact-crm', 'help-center', 'analytics-webhooks']) {
+  for (const kind of [
+    'inbox',
+    'mpesa',
+    'markcopilot',
+    'automation-routing',
+    'contact-crm',
+    'help-center',
+    'analytics-webhooks',
+  ]) {
     assert.ok(concept.includes("kind === '" + kind + "'"), 'Missing preview: ' + kind);
   }
 });

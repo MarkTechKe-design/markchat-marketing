@@ -55,7 +55,10 @@ const previewKinds = productLayouts[page];
     <figure
       data-mc-layered-hero
       data-hero-media-page={page}
-      class:list={['overflow-hidden rounded-xl border border-border bg-surface p-3 sm:p-4', className]}
+      class:list={[
+        'overflow-hidden rounded-xl border border-border bg-surface p-3 sm:p-4',
+        className,
+      ]}
     >
       <div class="grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
         <MCConceptualPreview kind={previewKinds[0]} class="min-h-52" />

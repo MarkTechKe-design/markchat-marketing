@@ -125,13 +125,24 @@ test('admin media editor retains CMS Bearer token and avoids false publish claim
 });
 
 test('hero default media excludes clipart while retaining editor uploads', () => {
-  for (const page of ['homepage', 'features', 'markcopilot', 'integrations', 'solutions', 'about']) {
+  for (const page of [
+    'homepage',
+    'features',
+    'markcopilot',
+    'integrations',
+    'solutions',
+    'about',
+  ]) {
     const defaults = normalizeHeroMedia(page, null);
     assert.equal(defaults.heroBackgroundImageUrl, '');
     assert.equal(defaults.heroBackgroundMobileImageUrl, '');
     assert.equal(defaults.heroMediaMode, 'layered-preview');
   }
-  for (const name of ['social-ecosystem-hand', 'ai-whatsapp-bot-concept', 'questions-support-portrait']) {
+  for (const name of [
+    'social-ecosystem-hand',
+    'ai-whatsapp-bot-concept',
+    'questions-support-portrait',
+  ]) {
     assert.equal(sanitizeHeroMediaUrl('/media/editorial/' + name + '-desktop.webp'), '');
   }
   const uploaded = normalizeHeroMedia('about', {

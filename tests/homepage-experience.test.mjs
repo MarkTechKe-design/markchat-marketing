@@ -110,28 +110,36 @@ test('Gate 3 homepage source composition and CMS compatibility', async (t) => {
     }
   );
 
-  await t.test('seven Community-safe capabilities use product UI previews and CMS media priority', () => {
-    const bento = read('src/components/design-system/MCFeatureBento.astro');
-    const card = read('src/components/design-system/MCFeatureCard.astro');
-    const concept = read('src/components/design-system/MCConceptualPreview.astro');
-    assert.match(index, /publishedFeatures\.find/);
-    assert.match(index, /cmsMedia: published/);
-    assert.match(index, /<MCFeatureBento features=\{capabilities\}/);
-    assert.match(bento, /features\.slice\(1, 3\)/);
-    assert.match(bento, /features\.slice\(3\)/);
-    assert.match(bento, /<MCFeatureCard/);
-    assert.match(card, /resolvePublishedFeatureMedia\(feature\.cmsMedia\)/);
-    assert.match(card, /data-mc-feature-fallback/);
-    assert.match(card, /aspect-\[16\/10\]/);
-    assert.match(card, /aspect-\[16\/9\]/);
-    assert.doesNotMatch(card + bento, /feature\.illustration/);
-    for (const kind of [
-      'inbox', 'mpesa', 'markcopilot', 'automation-routing',
-      'contact-crm', 'help-center', 'analytics-webhooks',
-    ]) {
-      assert.ok(concept.includes("kind === '" + kind + "'"), 'Missing UI preview: ' + kind);
+  await t.test(
+    'seven Community-safe capabilities use product UI previews and CMS media priority',
+    () => {
+      const bento = read('src/components/design-system/MCFeatureBento.astro');
+      const card = read('src/components/design-system/MCFeatureCard.astro');
+      const concept = read('src/components/design-system/MCConceptualPreview.astro');
+      assert.match(index, /publishedFeatures\.find/);
+      assert.match(index, /cmsMedia: published/);
+      assert.match(index, /<MCFeatureBento features=\{capabilities\}/);
+      assert.match(bento, /features\.slice\(1, 3\)/);
+      assert.match(bento, /features\.slice\(3\)/);
+      assert.match(bento, /<MCFeatureCard/);
+      assert.match(card, /resolvePublishedFeatureMedia\(feature\.cmsMedia\)/);
+      assert.match(card, /data-mc-feature-fallback/);
+      assert.match(card, /aspect-\[16\/10\]/);
+      assert.match(card, /aspect-\[16\/9\]/);
+      assert.doesNotMatch(card + bento, /feature\.illustration/);
+      for (const kind of [
+        'inbox',
+        'mpesa',
+        'markcopilot',
+        'automation-routing',
+        'contact-crm',
+        'help-center',
+        'analytics-webhooks',
+      ]) {
+        assert.ok(concept.includes("kind === '" + kind + "'"), 'Missing UI preview: ' + kind);
+      }
     }
-  });
+  );
 
   await t.test('Kenyan industry routes remain available', () => {
     const useCases = read('src/components/sections/marketing/SolutionsPreview.astro');
@@ -243,5 +251,8 @@ test('homepage defaults to UI previews rather than old editorial clipart', async
     assert.ok(html.includes('data-mc-ui-kind="' + kind + '"'), 'Missing UI preview: ' + kind);
   }
   assert.match(html, /Conceptual product preview/);
-  assert.doesNotMatch(html, /social-ecosystem-hand|ai-whatsapp-bot-concept|questions-support-portrait/i);
+  assert.doesNotMatch(
+    html,
+    /social-ecosystem-hand|ai-whatsapp-bot-concept|questions-support-portrait/i
+  );
 });

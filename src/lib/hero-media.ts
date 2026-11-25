@@ -37,7 +37,8 @@ export const DEFAULT_HERO_MEDIA: Record<HeroMediaPage, HeroMediaSettings> = {
 const modes: HeroMediaMode[] = ['layered-preview', 'editorial-backdrop', 'hybrid'];
 const scrims: HeroScrimStrength[] = ['subtle', 'medium', 'strong'];
 const safeLocal = /^\/media\/[A-Za-z0-9_\-/]+\.(?:avif|webp|png|jpe?g|svg)$/i;
-const retiredEditorial = /\/media\/editorial\/(?:social-ecosystem-hand|ai-whatsapp-bot-concept|questions-support-portrait)(?:-[a-z0-9-]+)?\.(?:webp|png|jpe?g|avif)$/i;
+const retiredEditorial =
+  /\/media\/editorial\/(?:social-ecosystem-hand|ai-whatsapp-bot-concept|questions-support-portrait)(?:-[a-z0-9-]+)?\.(?:webp|png|jpe?g|avif)$/i;
 
 /** Check ASCII controls without a control-character regex (ESLint no-control-regex). */
 function isControlCharacter(char: string): boolean {
