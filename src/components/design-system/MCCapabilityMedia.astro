@@ -124,6 +124,8 @@ const pictureAlt = alt.trim() || 'MarkChat ' + id + ' feature visual';
       if (!match) continue;
       const feature = features.find(
         (item) =>
+          item &&
+          typeof item === 'object' &&
           item.status === 'published' &&
           item.mediaType !== 'none' &&
           item.mediaUrl &&
