@@ -1,0 +1,163 @@
+---
+import MCCapabilityPreview from './MCCapabilityPreview.astro';
+import type { CapabilityId } from '@/data/capability-ui';
+
+interface Props {
+  id: CapabilityId;
+  src?: string | null;
+  alt?: string;
+  source?: 'cms' | 'captured' | 'fallback';
+  size?: 'large' | 'compact';
+}
+
+const {
+  id,
+  src = null,
+  alt = '',
+  source = 'fallback',
+  size = 'compact',
+} = Astro.props;
+const pictureAlt = alt.trim() || 'MarkChat ' + id + ' feature visual';
+---
+
+<div
+  data-mc-capability-frame={id}
+  data-mc-capability-source={src ? source : 'fallback'}
+  class:list={[
+    'relative min-w-0 overflow-hidden rounded-xl border border-border bg-background dark:bg-[#202020]',
+    size === 'large' ? 'aspect-[16/10]' : 'aspect-[16/9]',
+  ]}
+>
+  <img
+    data-mc-capability-image
+    src={src || undefined}
+    alt={pictureAlt}
+    loading="lazy"
+    decoding="async"
+    class:list={['absolute inset-0 h-full w-full object-cover object-center', !src && 'hidden']}
+  />
+  <div
+    data-mc-capability-fallback
+    class:list={['absolute inset-0', src && 'hidden']}
+  >
+    <MCCapabilityPreview id={id} />
+  </div>
+  <span
+    class:list={[
+      'pointer-events-none absolute bottom-1 right-1 rounded border border-border bg-surface/95 px-1.5 py-0.5 text-[9px] font-medium text-text-muted dark:bg-[#262626]/95',
+      !src && 'hidden',
+    ]}
+    data-mc-capability-label
+  >
+    {src ? (source === 'captured' ? 'Verified synthetic capture' : 'Admin-provided visual') : 'Conceptual preview'}
+  </span>
+</div>
+
+<script>
+  import { sanitizeHeroMediaUrl } from '@/lib/hero-media';
+  import { CAPABILITY_IMAGE_MATCHERS, type CapabilityId } from '@/data/capability-ui';
+
+  type CmsFeatureImage = {
+    status?: string;
+    slug?: string;
+    title?: string;
+    mediaUrl?: string;
+    mediaAlt?: string;
+    mediaType?: string;
+  };
+
+  function initCapabilityMedia() {
+    document.querySelectorAll<HTMLImageElement>('[data-mc-capability-image]').forEach((image) => {
+      if (image.dataset.mcBound === 'true') return;
+      image.dataset.mcBound = 'true';
+      const useFallback = () => {
+        image.hidden = true;
+        image.classList.add('hidden');
+        const frame = image.closest<HTMLElement>('[data-mc-capability-frame]');
+        frame?.querySelector<HTMLElement>('[data-mc-capability-fallback]')?.classList.remove('hidden');
+        frame?.querySelector<HTMLElement>('[data-mc-capability-label]')?.classList.add('hidden');
+        if (frame) frame.dataset.mcCapabilitySource = 'fallback';
+      };
+      image.addEventListener('error', useFallback);
+      if (image.hasAttribute('src') && image.complete && image.naturalWidth === 0) useFallback();
+    });
+  }
+
+  /** Fresh public CMS images can replace build-time assets without weakening URL controls. */
+  async function refreshCapabilityMedia() {
+    const frames = Array.from(document.querySelectorAll<HTMLElement>('[data-mc-capability-frame]'));
+    if (!frames.length) return;
+    let features: CmsFeatureImage[] | null = null;
+    const api = import.meta.env.PUBLIC_BRIDGE_API_URL || '';
+    const allowedApi =
+      /^https:\/\//i.test(api) ||
+      (location.hostname === 'localhost' && /^http:\/\/localhost(?::\d+)?$/i.test(api));
+    if (allowedApi) {
+      try {
+        const response = await fetch(api.replace(/\/$/, '') + '/api/public/features', {
+          credentials: 'omit',
+          signal: AbortSignal.timeout(4000),
+        });
+        if (response.ok) {
+          const data: unknown = await response.json();
+          if (Array.isArray(data)) features = data as CmsFeatureImage[];
+        }
+      } catch {
+        // Offline / unconfigured bridge: retain build-time imagery.
+      }
+    }
+    if (!features && typeof localStorage !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('markchat_cms_features');
+        if (raw) {
+          const data: unknown = JSON.parse(raw);
+          if (Array.isArray(data)) features = data as CmsFeatureImage[];
+        }
+      } catch {
+        // Ignore malformed local cache.
+      }
+    }
+    if (!features) return;
+    for (const frame of frames) {
+      const id = frame.dataset.mcCapabilityFrame || '';
+      const match = CAPABILITY_IMAGE_MATCHERS[id as CapabilityId];
+      if (!match) continue;
+      const feature = features.find(
+        (item) =>
+          item &&
+          typeof item === 'object' &&
+          item.status === 'published' &&
+          item.mediaType !== 'none' &&
+          item.mediaUrl &&
+          match.test((item.slug || '') + ' ' + (item.title || ''))
+      );
+      if (!feature) continue;
+      const url = sanitizeHeroMediaUrl(feature.mediaUrl, import.meta.env.PUBLIC_CMS_MEDIA_HOST || '');
+      if (!url) continue;
+      const image = frame.querySelector<HTMLImageElement>('[data-mc-capability-image]');
+      if (!image) continue;
+      image.alt = feature.mediaAlt?.trim() || 'Admin-provided feature visual';
+      image.addEventListener(
+        'load',
+        () => {
+          image.hidden = false;
+          image.classList.remove('hidden');
+          frame.querySelector<HTMLElement>('[data-mc-capability-fallback]')?.classList.add('hidden');
+          frame.dataset.mcCapabilitySource = 'cms';
+          const label = frame.querySelector<HTMLElement>('[data-mc-capability-label]');
+          label?.replaceChildren(document.createTextNode('Admin-provided visual'));
+          label?.classList.remove('hidden');
+        },
+        { once: true }
+      );
+      image.src = url;
+    }
+  }
+
+  function initialize() {
+    initCapabilityMedia();
+    void refreshCapabilityMedia();
+  }
+  initialize();
+  document.addEventListener('astro:page-load', initialize);
+</script>
