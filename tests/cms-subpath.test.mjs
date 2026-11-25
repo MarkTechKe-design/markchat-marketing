@@ -10,7 +10,7 @@ test('CMS dashboard supports direct and mounted navigation without weakening aut
   assert.match(layout, /cmsMounted\s*=\s*path\.startsWith\('\/_cms\/dashboard'/);
   assert.match(layout, /cmsPath\s*=\s*cmsMounted\s*\?\s*path\.slice\(prefix\.length\)/);
   assert.match(layout, /element\.setAttribute\(attribute, '\/_cms' \+ value\)/);
-  assert.match(layout, /window\.location\.href = prefix \+ '\/dashboard\/login\?redirect='/);
+  assert.match(layout, /window\.location\.href\s*=\s*prefix \+ '\/dashboard\/login\?redirect='/);
   assert.match(layout, /sessionStorage\.getItem\('markchat_admin_token'\)/);
 });
 
