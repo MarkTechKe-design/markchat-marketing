@@ -59,7 +59,11 @@ describe('Batch 9: Paystack Billing Portal & Payment Return Integration', () => 
     assert.ok(src.includes('state-pending'));
     assert.ok(src.includes("tx.purpose !== 'subscription'"));
     assert.ok(!src.includes('launchBtn.href = tx.ssoUrl'));
-    assert.ok(!src.includes("stateSuccess?.classList.remove('hidden');\n        if (receiptRef) receiptRef.textContent = reference"));
+    assert.ok(
+      !src.includes(
+        "stateSuccess?.classList.remove('hidden');\n        if (receiptRef) receiptRef.textContent = reference"
+      )
+    );
   });
 
   test('Payment return page verifies reference and facilitates Chatwoot launch', () => {

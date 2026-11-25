@@ -33,7 +33,6 @@ const controlPlaneUrl =
   import.meta.env.PUBLIC_CONTROL_PLANE_URL ||
   import.meta.env.PUBLIC_CONTROL_PLANE_API_URL ||
   'http://localhost:5000';
-
 ---
 
 <div class="w-full">
@@ -486,9 +485,7 @@ const controlPlaneUrl =
           id="register-submit-button"
           class="flex-1 h-11 cursor-pointer px-6 rounded-xl bg-primary hover:bg-primary-dark text-white font-medium text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed shadow-xs flex items-center justify-center gap-2"
         >
-          <span id="register-button-text">
-            Create MarkChat Account
-          </span>
+          <span id="register-button-text"> Create MarkChat Account </span>
           <span id="register-button-loading" class="hidden items-center gap-2">
             <svg
               class="animate-spin w-4 h-4 text-white"
@@ -516,12 +513,16 @@ const controlPlaneUrl =
     </div>
 
     <p class="text-xs text-text-muted mt-3 leading-relaxed">
-      If account verification is enabled, KES 82 is charged to confirm payment ownership
-      and automatically refunded within 3 days. Your selected plan is unlocked for the
-      configured free trial after payment confirmation. If no trial is configured,
-      a paid subscription is required before Core access.
+      If account verification is enabled, KES 82 is charged to confirm payment ownership and
+      automatically refunded within 3 days. Your selected plan is unlocked for the configured free
+      trial after payment confirmation. If no trial is configured, a paid subscription is required
+      before Core access.
     </p>
-    <a id="registration-payment-return" href="/billing/return" class="hidden text-sm text-primary underline mt-2">
+    <a
+      id="registration-payment-return"
+      href="/billing/return"
+      class="hidden text-sm text-primary underline mt-2"
+    >
       Check an earlier verification payment
     </a>
 
@@ -683,8 +684,13 @@ const controlPlaneUrl =
   if (pendingRegistration) {
     try {
       const pending = JSON.parse(pendingRegistration);
-      if (typeof pending.registrationId === 'string' && Date.now() - pending.createdAt < 24 * 60 * 60 * 1000) {
-        const returnLink = document.getElementById('registration-payment-return') as HTMLAnchorElement | null;
+      if (
+        typeof pending.registrationId === 'string' &&
+        Date.now() - pending.createdAt < 24 * 60 * 60 * 1000
+      ) {
+        const returnLink = document.getElementById(
+          'registration-payment-return'
+        ) as HTMLAnchorElement | null;
         if (returnLink) {
           returnLink.href = '/billing/return';
           returnLink.classList.remove('hidden');
@@ -1149,7 +1155,9 @@ const controlPlaneUrl =
         // The KES 82 checkout endpoint must be called separately with this token.
         if (data.verificationRequired === true) {
           if (!registrationId || typeof data.verificationToken !== 'string') {
-            showFormError('Verification is required, but the registration authorization is missing.');
+            showFormError(
+              'Verification is required, but the registration authorization is missing.'
+            );
             return;
           }
           // A refreshed page must not generate another payment for an existing reference.
@@ -1181,7 +1189,9 @@ const controlPlaneUrl =
             }
           );
           if (!checkoutRes.ok) {
-            showFormError('We could not start the KES 82 verification payment. Your workspace is not yet active. Please retry from this registration page.');
+            showFormError(
+              'We could not start the KES 82 verification payment. Your workspace is not yet active. Please retry from this registration page.'
+            );
             return;
           }
           const checkoutEnvelope = await checkoutRes.json();
@@ -1193,16 +1203,21 @@ const controlPlaneUrl =
             typeof checkout?.reference !== 'string' ||
             !/^https:\/\//i.test(checkout?.authorizationUrl || '')
           ) {
-            showFormError('The verification checkout details could not be validated. No payment was confirmed.');
+            showFormError(
+              'The verification checkout details could not be validated. No payment was confirmed.'
+            );
             return;
           }
           // Only an opaque registration ID/reference goes into session storage.
           // Do not persist credentials, passwords, or the verificationToken.
-          sessionStorage.setItem('markchat_verification_pending', JSON.stringify({
-            registrationId,
-            reference: checkout.reference,
-            createdAt: Date.now(),
-          }));
+          sessionStorage.setItem(
+            'markchat_verification_pending',
+            JSON.stringify({
+              registrationId,
+              reference: checkout.reference,
+              createdAt: Date.now(),
+            })
+          );
           window.location.assign(checkout.authorizationUrl);
           return;
         }

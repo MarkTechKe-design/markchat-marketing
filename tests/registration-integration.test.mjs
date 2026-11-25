@@ -76,8 +76,10 @@ describe('Batch 5: Registration and Provisioning Integration', () => {
 
   test('Missing verificationRequired cannot silently bypass the KES 82 gate', () => {
     assert.ok(registerFormSource.includes("typeof data.verificationRequired !== 'boolean'"));
-    assert.ok(registerFormSource.indexOf("typeof data.verificationRequired !== 'boolean'") <
-      registerFormSource.indexOf("if (data.verificationRequired === true)"));
+    assert.ok(
+      registerFormSource.indexOf("typeof data.verificationRequired !== 'boolean'") <
+        registerFormSource.indexOf('if (data.verificationRequired === true)')
+    );
     assert.ok(registerFormSource.includes('Registration verification is temporarily unavailable'));
   });
 
@@ -98,14 +100,22 @@ describe('Batch 5: Registration and Provisioning Integration', () => {
       registerFormSource.indexOf("if (data.status === 'completed')") <
         registerFormSource.indexOf('if (data.verificationRequired === true)')
     );
-    assert.ok(registerFormSource.includes("const previousRaw = sessionStorage.getItem('markchat_verification_pending')"));
-    assert.ok(registerFormSource.includes("previous?.registrationId === registrationId"));
+    assert.ok(
+      registerFormSource.includes(
+        "const previousRaw = sessionStorage.getItem('markchat_verification_pending')"
+      )
+    );
+    assert.ok(registerFormSource.includes('previous?.registrationId === registrationId'));
     assert.ok(registerFormSource.includes("window.location.assign('/billing/return')"));
   });
 
   test('Verification-disabled registration retains bounded saga polling', () => {
-    assert.ok(registerFormSource.includes('Verification is OFF: proceed with standard saga polling'));
-    assert.ok(registerFormSource.includes('pollRegistrationStatus(apiUrl, registrationId, redirectTarget)'));
+    assert.ok(
+      registerFormSource.includes('Verification is OFF: proceed with standard saga polling')
+    );
+    assert.ok(
+      registerFormSource.includes('pollRegistrationStatus(apiUrl, registrationId, redirectTarget)')
+    );
     assert.ok(registerFormSource.includes('KES 82 is charged to confirm payment ownership'));
     assert.ok(registerFormSource.includes('automatically refunded within 3 days'));
   });

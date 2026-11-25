@@ -61,8 +61,12 @@ const controlPlaneUrl =
         </p>
       </div>
 
-      <div id="billing-upgrade-context" role="status" aria-live="polite"
-        class="hidden mb-6 rounded-xl border border-primary/30 bg-primary/5 p-5 text-sm text-text">
+      <div
+        id="billing-upgrade-context"
+        role="status"
+        aria-live="polite"
+        class="hidden mb-6 rounded-xl border border-primary/30 bg-primary/5 p-5 text-sm text-text"
+      >
         <h2 id="billing-upgrade-heading" class="font-semibold">Plan upgrade requested</h2>
         <p id="billing-upgrade-description" class="mt-1 text-text-muted"></p>
       </div>
@@ -327,9 +331,11 @@ const controlPlaneUrl =
       const label = chosenPlan === 'scale' ? 'Scale' : 'Growth';
       upgradeContext?.classList.remove('hidden');
       if (heading) heading.textContent = 'Upgrade to ' + label;
-      if (description) description.textContent = label === 'Scale'
-        ? 'This feature requires Scale. Your current access remains subject to Control Plane approval.'
-        : 'This feature requires Growth or higher. Your current access remains subject to Control Plane approval.';
+      if (description)
+        description.textContent =
+          label === 'Scale'
+            ? 'This feature requires Scale. Your current access remains subject to Control Plane approval.'
+            : 'This feature requires Growth or higher. Your current access remains subject to Control Plane approval.';
     }
   }
   if (intent.get('interval') === 'annual')
@@ -389,7 +395,8 @@ const controlPlaneUrl =
         let message =
           errJson.message || 'Unable to initialize checkout. Please ensure you are logged in.';
         if (res.status === 403 && (chosenPlan === 'growth' || chosenPlan === 'scale')) {
-          message = 'Plan upgrades require MarkChat Super Admin approval. Your current plan has not changed and no upgrade payment was taken.';
+          message =
+            'Plan upgrades require MarkChat Super Admin approval. Your current plan has not changed and no upgrade payment was taken.';
         }
         if (res.status === 401) {
           message = 'Please sign in to your workspace before initializing payment.';
