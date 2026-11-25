@@ -1159,12 +1159,35 @@ const initialPlan = plansInfo[defaultPlanId] || plansInfo.growth;
         const data = envelope.data || envelope;
         const registrationId = data.registrationId;
 
+        // An idempotent completed registration never starts another KES 82 charge.
+        if (data.status === 'completed') {
+          sessionStorage.removeItem('markchat_reg_idempotency_key');
+          sessionStorage.removeItem('markchat_verification_pending');
+          completeRegistration(redirectTarget);
+          return;
+        }
+
         // Stage 2: registration returns a capability token, NOT a checkout URL.
         // The KES 82 checkout endpoint must be called separately with this token.
         if (data.verificationRequired === true) {
           if (!registrationId || typeof data.verificationToken !== 'string') {
             showFormError('Verification is required, but the registration authorization is missing.');
             return;
+          }
+          // A refreshed page must not generate another payment for an existing reference.
+          try {
+            const previousRaw = sessionStorage.getItem('markchat_verification_pending');
+            const previous = previousRaw ? JSON.parse(previousRaw) : null;
+            if (
+              previous?.registrationId === registrationId &&
+              typeof previous.reference === 'string' &&
+              Date.now() - previous.createdAt < 24 * 60 * 60 * 1000
+            ) {
+              window.location.assign('/billing/return');
+              return;
+            }
+          } catch {
+            sessionStorage.removeItem('markchat_verification_pending');
           }
           if (loadingStatus) loadingStatus.textContent = 'Preparing KES 82 account confirmation...';
           const checkoutRes = await fetch(
@@ -1207,12 +1230,6 @@ const initialPlan = plansInfo[defaultPlanId] || plansInfo.growth;
         }
 
         // 6. Verification is OFF: proceed with standard saga polling.
-        if (data.status === 'completed') {
-          sessionStorage.removeItem('markchat_reg_idempotency_key');
-          completeRegistration(redirectTarget);
-          return;
-        }
-
         if (registrationId) {
           await pollRegistrationStatus(apiUrl, registrationId, redirectTarget);
         } else {
