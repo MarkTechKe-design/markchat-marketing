@@ -18,7 +18,8 @@ import MCSection from '@/components/design-system/MCSection.astro';
 import MCSectionHeading from '@/components/design-system/MCSectionHeading.astro';
 import MCFeatureBento from '@/components/design-system/MCFeatureBento.astro';
 import MCButton from '@/components/design-system/MCButton.astro';
-import { communityIllustrations } from '@/data/product-assets';
+import { communityIllustrations, resolveProductAsset } from '@/data/product-assets';
+import { sanitizeHeroMediaUrl } from '@/lib/hero-media';
 import type { ProductWorkflow, CmsProductMediaOverride } from '@/data/product-assets';
 import { siteConfig } from '@/config';
 import { fetchHomepageSettings, fetchPricingMatrix, fetchFeatures, fetchFaqs } from '@/lib/cms-api';
@@ -156,10 +157,48 @@ const capabilities = [
     icon: 'lucide:chart-no-axes-combined',
     href: '/integrations/developer-api-webhooks',
   },
-].map((feature) => ({
-  ...feature,
-  illustration: communityIllustrations.find((item) => item.id === feature.id)?.path,
-}));
+].map((feature) => {
+  // Keep the historical SVG registry intact for older CMS consumers, but never render it
+  // in the homepage bento. Use an approved published feature image when available.
+  const illustration = communityIllustrations.find((item) => item.id === feature.id)?.path;
+  const aliases: Record<string, RegExp> = {
+    'unified-inbox': /shared.inbox|unified.inbox|team.inbox|collaborative/i,
+    'mpesa-stk': /mpesa|m.pesa|checkout|payments/i,
+    markcopilot: /markcopilot|ai.assist|agent.copilot/i,
+    'automation-routing': /automation|routing|workflows/i,
+    'contact-crm': /crm|contact|customer.profile/i,
+    'help-center': /help.center|knowledge|self.service/i,
+    'analytics-webhooks': /analytics|webhook|developer.api/i,
+  };
+  const published = publishedFeatures.find(
+    (item) =>
+      item.status === 'published' &&
+      item.mediaType !== 'none' &&
+      item.mediaUrl &&
+      aliases[feature.id].test(item.slug + ' ' + item.title)
+  );
+  const cmsSrc = published ? sanitizeHeroMediaUrl(published.mediaUrl) : '';
+  const workflow =
+    feature.id === 'unified-inbox'
+      ? 'inbox'
+      : feature.id === 'mpesa-stk'
+        ? 'mpesa'
+        : feature.id === 'markcopilot'
+          ? 'markcopilot'
+          : null;
+  const verified = workflow ? resolveProductAsset(workflow, 'light') : null;
+  return {
+    ...feature,
+    illustration,
+    mediaUrl: cmsSrc || verified?.src || null,
+    mediaAlt: cmsSrc
+      ? published?.mediaAlt || feature.title + ' admin-provided image'
+      : verified?.src
+        ? verified.alt
+        : undefined,
+    mediaSource: cmsSrc ? ('cms' as const) : verified?.src ? ('captured' as const) : ('fallback' as const),
+  };
+});
 
 const pricingPlans = pricingMatrix.tiers.map((tier) => {
   const features = tier.features
