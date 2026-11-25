@@ -64,10 +64,21 @@ const modes: HeroMediaMode[] = ['layered-preview', 'editorial-backdrop', 'hybrid
 const scrims: HeroScrimStrength[] = ['subtle', 'medium', 'strong'];
 const safeLocal = /^\/media\/[A-Za-z0-9_\-/]+\.(?:avif|webp|png|jpe?g|svg)$/i;
 
+/** Check ASCII controls without a control-character regex (ESLint no-control-regex). */
+function isControlCharacter(char: string): boolean {
+  const code = char.charCodeAt(0);
+  return code < 32 || code === 127;
+}
+
+
 export function sanitizeHeroMediaUrl(input: unknown, extraTrustedHost = ''): string {
   if (typeof input !== 'string') return '';
   const value = input.trim();
-  if (!value || value.length > 2048 || /[\\\u0000-\u001f\u007f]/.test(value)) return '';
+  if (
+    !value ||
+    value.length > 2048 ||
+    Array.from(value).some((char) => char === '\\' || isControlCharacter(char))
+  ) return '';
   if (value.startsWith('/')) {
     if (!safeLocal.test(value) || value.includes('//') || value.split('/').some(x => x === '..' || x === '.')) {
       return '';
@@ -105,7 +116,11 @@ export function normalizeHeroMedia(
       extraTrustedHost
     ),
     heroBackgroundAlt: typeof raw.heroBackgroundAlt === 'string'
-      ? raw.heroBackgroundAlt.replace(/[<>\u0000-\u001f\u007f]/g, '').trim().slice(0, 180)
+      ? Array.from(raw.heroBackgroundAlt)
+          .filter((char) => char !== '<' && char !== '>' && !isControlCharacter(char))
+          .join('')
+          .trim()
+          .slice(0, 180)
       : '',
     heroMediaMode: modes.includes(raw.heroMediaMode) ? raw.heroMediaMode : defaults.heroMediaMode,
     heroScrimStrength: scrims.includes(raw.heroScrimStrength)
