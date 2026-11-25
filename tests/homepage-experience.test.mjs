@@ -110,22 +110,26 @@ test('Gate 3 homepage source composition and CMS compatibility', async (t) => {
     }
   );
 
-  await t.test('seven Community-safe capabilities use the existing isometric SVG manifest', () => {
-    const illustrations = read('src/data/product-assets.ts');
+  await t.test('seven Community-safe capabilities use product UI previews and CMS media priority', () => {
     const bento = read('src/components/design-system/MCFeatureBento.astro');
-    assert.match(index, /communityIllustrations\.find/);
+    const card = read('src/components/design-system/MCFeatureCard.astro');
+    const concept = read('src/components/design-system/MCConceptualPreview.astro');
+    assert.match(index, /publishedFeatures\.find/);
+    assert.match(index, /cmsMedia: published/);
     assert.match(index, /<MCFeatureBento features=\{capabilities\}/);
-    assert.match(bento, /feature\.illustration/);
-    for (const id of [
-      'unified-inbox',
-      'mpesa-stk',
-      'markcopilot',
-      'automation-routing',
-      'contact-crm',
-      'help-center',
-      'analytics-webhooks',
+    assert.match(bento, /features\.slice\(1, 3\)/);
+    assert.match(bento, /features\.slice\(3\)/);
+    assert.match(bento, /<MCFeatureCard/);
+    assert.match(card, /resolvePublishedFeatureMedia\(feature\.cmsMedia\)/);
+    assert.match(card, /data-mc-feature-fallback/);
+    assert.match(card, /aspect-\[16\/10\]/);
+    assert.match(card, /aspect-\[16\/9\]/);
+    assert.doesNotMatch(card + bento, /feature\.illustration/);
+    for (const kind of [
+      'inbox', 'mpesa', 'markcopilot', 'automation-routing',
+      'contact-crm', 'help-center', 'analytics-webhooks',
     ]) {
-      assert.ok(illustrations.includes("id: '" + id + "'"), 'Missing illustration ' + id);
+      assert.ok(concept.includes("kind === '" + kind + "'"), 'Missing UI preview: ' + kind);
     }
   });
 
@@ -227,4 +231,17 @@ test('CMS responsive image source and missing-image fallbacks are safe in built 
       assert.match(html, /data-mc-nonoverlap-layout|data-mc-responsive-hero/);
     }
   }
+});
+
+test('homepage defaults to UI previews rather than old editorial clipart', async () => {
+  const response = await fetch('http://localhost:4321/', {
+    signal: AbortSignal.timeout(6000),
+  });
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  for (const kind of ['inbox', 'mpesa', 'markcopilot', 'analytics-webhooks']) {
+    assert.ok(html.includes('data-mc-ui-kind="' + kind + '"'), 'Missing UI preview: ' + kind);
+  }
+  assert.match(html, /Conceptual product preview/);
+  assert.doesNotMatch(html, /social-ecosystem-hand|ai-whatsapp-bot-concept|questions-support-portrait/i);
 });
