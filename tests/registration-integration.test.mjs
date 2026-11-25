@@ -86,6 +86,16 @@ describe('Batch 5: Registration and Provisioning Integration', () => {
     assert.ok(!registerFormSource.includes("sessionStorage.setItem('markchat_verificationToken'"));
   });
 
+  test('Completed registration and an existing pending checkout never trigger a second charge', () => {
+    assert.ok(
+      registerFormSource.indexOf("if (data.status === 'completed')") <
+        registerFormSource.indexOf('if (data.verificationRequired === true)')
+    );
+    assert.ok(registerFormSource.includes("const previousRaw = sessionStorage.getItem('markchat_verification_pending')"));
+    assert.ok(registerFormSource.includes("previous?.registrationId === registrationId"));
+    assert.ok(registerFormSource.includes("window.location.assign('/billing/return')"));
+  });
+
   test('Verification-disabled registration retains bounded saga polling', () => {
     assert.ok(registerFormSource.includes('Verification is OFF: proceed with standard saga polling'));
     assert.ok(registerFormSource.includes('pollRegistrationStatus(apiUrl, registrationId, redirectTarget)'));
