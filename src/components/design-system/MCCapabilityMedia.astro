@@ -1,0 +1,77 @@
+---
+import MCCapabilityPreview, { type CapabilityId } from './MCCapabilityPreview.astro';
+
+interface Props {
+  id: CapabilityId;
+  src?: string | null;
+  alt?: string;
+  source?: 'cms' | 'captured' | 'fallback';
+  size?: 'large' | 'compact';
+}
+
+const {
+  id,
+  src = null,
+  alt = '',
+  source = 'fallback',
+  size = 'compact',
+} = Astro.props;
+const pictureAlt = alt.trim() || 'MarkChat ' + id + ' feature visual';
+---
+
+<div
+  data-mc-capability-frame={id}
+  data-mc-capability-source={src ? source : 'fallback'}
+  class:list={[
+    'relative min-w-0 overflow-hidden rounded-xl border border-border bg-background dark:bg-[#202020]',
+    size === 'large' ? 'aspect-[16/10]' : 'aspect-[16/9]',
+  ]}
+>
+  {
+    src && (
+      <img
+        data-mc-capability-image
+        src={src}
+        alt={pictureAlt}
+        loading="lazy"
+        decoding="async"
+        class="absolute inset-0 h-full w-full object-cover object-center"
+      />
+    )
+  }
+  <div
+    data-mc-capability-fallback
+    class:list={['absolute inset-0', src && 'hidden']}
+  >
+    <MCCapabilityPreview id={id} />
+  </div>
+  <span
+    class="pointer-events-none absolute bottom-1 right-1 rounded border border-border bg-surface/95 px-1.5 py-0.5 text-[9px] font-medium text-text-muted dark:bg-[#262626]/95"
+    data-mc-capability-label
+  >
+    {src ? 'Admin-provided visual' : 'Conceptual preview'}
+  </span>
+</div>
+
+<script>
+  function initCapabilityMedia() {
+    document.querySelectorAll<HTMLImageElement>('[data-mc-capability-image]').forEach((image) => {
+      if (image.dataset.mcBound === 'true') return;
+      image.dataset.mcBound = 'true';
+      const useFallback = () => {
+        image.hidden = true;
+        image.classList.add('hidden');
+        const frame = image.closest<HTMLElement>('[data-mc-capability-frame]');
+        frame?.querySelector<HTMLElement>('[data-mc-capability-fallback]')?.classList.remove('hidden');
+        frame?.querySelector<HTMLElement>('[data-mc-capability-label]')?.replaceChildren(
+          document.createTextNode('Conceptual preview')
+        );
+        if (frame) frame.dataset.mcCapabilitySource = 'fallback';
+      };
+      image.addEventListener('error', useFallback);
+      if (image.complete && image.naturalWidth === 0) useFallback();
+    });
+  }
+  initCapabilityMedia();
+  document.addEventListener('astro:page-load', initCapabilityMedia);
+</script>
