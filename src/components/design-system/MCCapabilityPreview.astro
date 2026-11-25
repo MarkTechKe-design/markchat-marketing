@@ -1,0 +1,242 @@
+---
+/**
+ * Conceptual UI illustrations, not screenshots or live product data.
+ * Demonstrate the seven Community-safe product pillars with a flat Virex UI.
+ */
+import { Icon } from 'astro-icon/components';
+
+export type CapabilityId =
+  | 'unified-inbox'
+  | 'mpesa-stk'
+  | 'markcopilot'
+  | 'automation-routing'
+  | 'contact-crm'
+  | 'help-center'
+  | 'analytics-webhooks';
+
+interface Props {
+  id: CapabilityId;
+}
+
+const { id } = Astro.props;
+---
+
+<div
+  data-mc-capability-preview={id}
+  role="img"
+  aria-label={id + ': conceptual sample product interface, not a live screenshot or real customer data'}
+  class="flex h-full min-h-0 w-full flex-col overflow-hidden bg-background p-2.5 text-text sm:p-4 dark:bg-[#202020]"
+>
+  <div class="mb-2 flex shrink-0 items-center justify-between gap-2 border-b border-border pb-2 text-[9px] sm:text-[11px]">
+    <div class="flex min-w-0 items-center gap-2">
+      <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-primary text-[10px] font-bold text-white">M</span>
+      <span class="truncate font-semibold">MarkChat <span class="font-normal text-text-muted">/ Demo workspace</span></span>
+    </div>
+    <span class="shrink-0 rounded border border-border bg-surface px-1.5 py-0.5 text-[9px] text-text-muted">Sample UI</span>
+  </div>
+  {
+    id === 'unified-inbox' && (
+      <div class="grid min-h-0 flex-1 grid-cols-[36%_minmax(0,1fr)] gap-2 sm:grid-cols-[29%_minmax(0,1fr)_25%]">
+        <div class="min-w-0 space-y-1.5 overflow-hidden border-r border-border pr-1.5">
+          <div class="flex items-center justify-between gap-1 text-[9px] font-semibold text-text-muted">
+            <span>Conversations</span><span class="rounded bg-surface px-1 text-primary">3</span>
+          </div>
+          <div class="space-y-1 rounded-lg border border-primary/30 bg-primary/5 p-1.5">
+            <div class="flex items-center gap-1 text-[9px] font-semibold">
+              <span class="h-2 w-2 shrink-0 rounded-full bg-[#25D366]" />
+              <span class="truncate">WhatsApp · Buyer A</span>
+            </div>
+            <p class="truncate text-[9px] text-text-muted">Delivery options?</p>
+          </div>
+          <div class="rounded-lg border border-border bg-surface p-1.5">
+            <div class="flex items-center gap-1 text-[9px] font-semibold">
+              <span class="h-2 w-2 shrink-0 rounded-full bg-secondary" />
+              <span class="truncate">Instagram · Buyer B</span>
+            </div>
+            <p class="truncate text-[9px] text-text-muted">Is it available?</p>
+          </div>
+          <div class="hidden rounded-lg border border-border bg-surface p-1.5 md:block">
+            <p class="truncate text-[9px] font-semibold">WhatsApp · Buyer C</p>
+            <p class="truncate text-[9px] text-text-muted">Thank you!</p>
+          </div>
+        </div>
+        <div class="flex min-w-0 flex-col justify-between gap-2">
+          <div class="flex flex-wrap items-center justify-between gap-1 border-b border-border pb-2">
+            <p class="truncate text-[10px] font-bold">Example buyer</p>
+            <span class="rounded-md border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold text-primary">
+              Assigned · Support
+            </span>
+          </div>
+          <div class="flex flex-1 flex-col justify-center gap-2">
+            <div class="max-w-[93%] rounded-lg rounded-tl-sm border border-border bg-surface p-2 text-[9px] leading-snug">
+              Is delivery available in Nairobi?
+            </div>
+            <div class="ml-auto max-w-[93%] rounded-lg rounded-tr-sm bg-primary p-2 text-[9px] leading-snug text-white">
+              Yes. Which area works best?
+            </div>
+          </div>
+          <div class="rounded-md border border-border bg-surface px-2 py-1.5 text-[9px] text-text-muted">
+            Reply to conversation…
+          </div>
+          <p class="text-[9px] text-text-muted sm:hidden">Context: Nairobi · Returning buyer</p>
+        </div>
+        <aside class="hidden min-w-0 space-y-2 border-l border-border pl-2 sm:block">
+          <p class="text-[9px] font-bold uppercase tracking-wide text-text-muted">Customer context</p>
+          <div class="rounded-md border border-border bg-surface p-2">
+            <Icon name="lucide:user-round" class="mb-2 h-4 w-4 text-primary" />
+            <p class="truncate text-[10px] font-semibold">Example buyer</p>
+            <p class="text-[9px] text-text-muted">Location · Nairobi</p>
+          </div>
+          <div class="rounded-md bg-primary/10 px-2 py-1.5 text-[9px] font-medium text-primary">Returning contact</div>
+        </aside>
+      </div>
+    )
+  }
+  {
+    id === 'mpesa-stk' && (
+      <div class="flex min-h-0 flex-1 flex-col justify-center gap-2">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p class="text-[9px] font-medium uppercase tracking-wider text-text-muted">Illustrative checkout</p>
+            <p class="mt-0.5 text-xl font-extrabold tracking-tight text-text sm:text-2xl">KES 2,500</p>
+          </div>
+          <span class="rounded-lg border border-border bg-surface px-2 py-1.5 font-mono text-[10px] text-primary">
+            /stk 2500
+          </span>
+        </div>
+        <div class="rounded-lg border border-border bg-surface p-2.5">
+          <div class="flex items-center gap-2">
+            <Icon name="lucide:smartphone" class="h-4 w-4 shrink-0 text-primary" />
+            <div class="min-w-0">
+              <p class="text-[10px] font-semibold">Phone prompt · +254 7XX XXX 123</p>
+              <p class="text-[9px] text-text-muted">Example STK approval step</p>
+            </div>
+          </div>
+          <div class="mt-2 flex items-center gap-2 border-t border-border pt-2">
+            <Icon name="lucide:shield-check" class="h-4 w-4 shrink-0 text-primary" />
+            <div class="min-w-0">
+              <p class="text-[10px] font-semibold">Daraja callback · Sample confirmed state</p>
+              <p class="text-[9px] text-text-muted">Provider verification required in real use</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  {
+    id === 'markcopilot' && (
+      <div class="flex min-h-0 flex-1 flex-col justify-center gap-2">
+        <div class="flex items-center gap-2">
+          <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/10">
+            <Icon name="lucide:sparkles" class="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <p class="text-[11px] font-semibold">Reply assistance</p>
+            <p class="text-[9px] text-text-muted">Based on an example customer question</p>
+          </div>
+        </div>
+        <div class="rounded-lg border border-border bg-surface p-2.5">
+          <div class="mb-1 flex flex-wrap items-center justify-between gap-1">
+            <p class="text-[9px] font-semibold text-primary">Suggested draft</p>
+            <span class="rounded border border-border px-1.5 py-0.5 text-[9px] text-text-muted">Human review</span>
+          </div>
+          <p class="text-[10px] leading-relaxed">
+            Hello! Delivery is available. Could you share your preferred location?
+          </p>
+        </div>
+        <span class="inline-flex w-fit items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-[10px] font-semibold text-white">
+          <Icon name="lucide:check" class="h-3.5 w-3.5" /> Review before sending
+        </span>
+      </div>
+    )
+  }
+  {
+    id === 'automation-routing' && (
+      <div class="flex min-h-0 flex-1 flex-col justify-center gap-1.5">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[10px] font-semibold">Routing rule</span>
+          <span class="rounded border border-border bg-surface px-2 py-0.5 text-[9px] text-primary">Example</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5 text-[9px]">
+          <span class="rounded-md border border-border bg-surface px-2 py-1.5">When · New conversation</span>
+          <Icon name="lucide:arrow-right" class="h-3 w-3 shrink-0 text-primary" />
+          <span class="rounded-md border border-border bg-surface px-2 py-1.5">If · Channel is WhatsApp</span>
+        </div>
+        <div class="flex items-center gap-1.5 text-[9px]">
+          <Icon name="lucide:corner-down-right" class="h-4 w-4 shrink-0 text-primary" />
+          <span class="min-w-0 rounded-md border border-primary/25 bg-primary/10 px-2 py-1.5 font-semibold text-text">
+            Assign to · Support queue
+          </span>
+        </div>
+      </div>
+    )
+  }
+  {
+    id === 'contact-crm' && (
+      <div class="flex min-h-0 flex-1 flex-col justify-center gap-2">
+        <div class="flex items-center gap-2">
+          <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">EB</div>
+          <div class="min-w-0">
+            <p class="truncate text-[11px] font-bold">Example buyer</p>
+            <p class="text-[9px] text-text-muted">Nairobi · Returning customer</p>
+          </div>
+          <span class="ml-auto rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[9px] text-primary">
+            Customer
+          </span>
+        </div>
+        <div class="grid grid-cols-2 gap-1.5 text-[9px]">
+          <div class="rounded border border-border bg-surface p-1.5">+254 7XX XXX 123</div>
+          <div class="truncate rounded border border-border bg-surface p-1.5">buyer@example.com</div>
+        </div>
+        <div class="flex items-center justify-between gap-2 border-t border-border pt-2 text-[9px]">
+          <span class="text-text-muted">Recent activity · Sample conversation</span>
+          <span class="shrink-0 text-primary">View context</span>
+        </div>
+      </div>
+    )
+  }
+  {
+    id === 'help-center' && (
+      <div class="flex min-h-0 flex-1 flex-col justify-center gap-2">
+        <div class="flex items-center gap-2 rounded-lg border border-border bg-surface px-2 py-1.5 text-[10px] text-text-muted">
+          <Icon name="lucide:search" class="h-3.5 w-3.5 shrink-0" />
+          <span>Search help articles…</span>
+        </div>
+        <div class="grid grid-cols-1 gap-1.5">
+          {['Delivery and collection', 'Payment help', 'Managing conversations'].map((article) => (
+            <div class="flex items-center justify-between gap-2 rounded-md border border-border bg-surface px-2 py-1.5 text-[9px]">
+              <span class="min-w-0 truncate">{article}</span>
+              <Icon name="lucide:chevron-right" class="h-3 w-3 shrink-0 text-primary" />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+  {
+    id === 'analytics-webhooks' && (
+      <div class="flex min-h-0 flex-1 flex-col justify-center gap-2">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[10px] font-semibold">Response time · Sample</span>
+          <span class="text-[9px] text-text-muted">Illustrative values</span>
+        </div>
+        <div class="flex h-12 items-end gap-2 border-b border-border pb-1.5">
+          {[45, 65, 52, 82, 68, 95, 76].map((height) => (
+            <div class="flex-1 rounded-t bg-primary/75" style={{ height: height + '%' }} />
+          ))}
+        </div>
+        <div class="space-y-1 text-[9px]">
+          <p class="font-semibold">Webhook deliveries · Example log</p>
+          <div class="flex items-center justify-between gap-2 rounded border border-border bg-surface px-2 py-1">
+            <span class="truncate">conversation.updated · HMAC-SHA256</span>
+            <span class="shrink-0 font-semibold text-primary">200 · Sample</span>
+          </div>
+          <div class="flex items-center justify-between gap-2 rounded border border-border bg-surface px-2 py-1">
+            <span class="truncate">message.created · Signed request</span>
+            <span class="shrink-0 font-semibold text-primary">200 · Sample</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+</div>
