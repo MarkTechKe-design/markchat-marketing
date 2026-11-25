@@ -1159,6 +1159,15 @@ const initialPlan = plansInfo[defaultPlanId] || plansInfo.growth;
         const data = envelope.data || envelope;
         const registrationId = data.registrationId;
 
+        // Never interpret an absent verification flag as an administrator bypass.
+        // Older Control Plane releases do not expose the required payment contract.
+        if (typeof data.verificationRequired !== 'boolean') {
+          showFormError(
+            'Registration verification is temporarily unavailable. Your workspace has not been confirmed. Please contact support before making a payment.'
+          );
+          return;
+        }
+
         // An idempotent completed registration never starts another KES 82 charge.
         if (data.status === 'completed') {
           sessionStorage.removeItem('markchat_reg_idempotency_key');
