@@ -96,6 +96,16 @@ function safeMediaUrl(candidate: string | null | undefined): string | null {
   }
 }
 
+/**
+ * Published CMS feature imagery wins over conceptual product UI.
+ * Never serve a draft image or an unapproved external URL.
+ */
+export function resolvePublishedFeatureMedia(
+  media?: CmsProductMediaOverride | null
+): string | null {
+  return media?.status === 'published' ? safeMediaUrl(media.mediaUrl) : null;
+}
+
 export function resolveProductAsset(
   workflow: ProductWorkflow,
   theme: ProductTheme,
