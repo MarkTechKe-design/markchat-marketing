@@ -62,7 +62,7 @@ const controlPlaneUrl =
           <div>
             <h1 class="text-2xl font-extrabold text-text">Payment Settled!</h1>
             <p class="text-sm text-text-muted mt-1">
-              Your MarkChat subscription and channel entitlements have been refreshed.
+              Payment confirmed by the Control Plane. Workspace provisioning and access may still be finishing.
             </p>
           </div>
 
@@ -82,7 +82,7 @@ const controlPlaneUrl =
             <div class="flex justify-between">
               <span class="text-slate-500">Payment Status:</span>
               <span class="font-bold text-emerald-600 dark:text-emerald-400 uppercase"
-                >Settled (Active)</span
+                >Payment confirmed</span
               >
             </div>
           </div>
@@ -94,6 +94,14 @@ const controlPlaneUrl =
           >
             Launch MarkChat Workspace &rarr;
           </a>
+        </div>
+
+        <div id="state-pending" class="hidden space-y-4" role="status">
+          <h1 class="text-2xl font-bold text-text">Confirmation is still processing</h1>
+          <p id="pending-reason" class="text-sm text-text-muted">
+            Your payment has not yet been confirmed. We will not activate your workspace until the Control Plane confirms it.
+          </p>
+          <a id="pending-resume" href="/register" class="inline-block text-primary underline">Return to registration</a>
         </div>
 
         <!-- 3. Failed / Abandoned State -->
@@ -139,77 +147,124 @@ const controlPlaneUrl =
 <script>
   const container = document.getElementById('return-container');
   const apiUrl = container?.dataset.apiUrl || 'http://localhost:5000';
-
   const stateVerifying = document.getElementById('state-verifying');
   const stateSuccess = document.getElementById('state-success');
   const stateFailed = document.getElementById('state-failed');
-
+  const statePending = document.getElementById('state-pending');
+  const pendingReason = document.getElementById('pending-reason');
   const receiptRef = document.getElementById('receipt-ref');
   const receiptAmount = document.getElementById('receipt-amount');
   const launchBtn = document.getElementById('launch-workspace-btn') as HTMLAnchorElement;
   const failedReason = document.getElementById('failed-reason');
-
+  const pendingResume = document.getElementById('pending-resume') as HTMLAnchorElement;
   const urlParams = new URLSearchParams(window.location.search);
-  const reference = urlParams.get('reference') || urlParams.get('trxref');
-
-  if (!reference) {
-    if (stateVerifying) stateVerifying.classList.add('hidden');
-    if (stateFailed) {
-      stateFailed.classList.remove('hidden');
-      if (failedReason) failedReason.textContent = 'No transaction reference found in return URL.';
+  const pendingRaw = sessionStorage.getItem('markchat_verification_pending');
+  let pending: { registrationId: string; reference: string; createdAt: number } | null = null;
+  try {
+    const saved = pendingRaw ? JSON.parse(pendingRaw) : null;
+    if (saved && typeof saved.registrationId === 'string' && typeof saved.reference === 'string'
+      && Number.isFinite(saved.createdAt) && Date.now() - saved.createdAt < 24 * 60 * 60 * 1000) {
+      pending = saved;
     }
-  } else {
-    // Poll transaction status from Control Plane
-    let attempts = 0;
-    const maxAttempts = 20;
+  } catch {
+    sessionStorage.removeItem('markchat_verification_pending');
+  }
+  // Paystack returns reference or trxref. A stored reference supports a manual check
+  // after a callback URL is missing; URL values never authorize Core access.
+  const reference = urlParams.get('reference') || urlParams.get('trxref') || pending?.reference || null;
+  const isVerification = !!pending && pending.reference === reference;
 
-    const token = localStorage.getItem('markchat_auth_token');
+  function reveal(which: 'success' | 'failed' | 'pending') {
+    stateVerifying?.classList.add('hidden');
+    stateSuccess?.classList.toggle('hidden', which !== 'success');
+    stateFailed?.classList.toggle('hidden', which !== 'failed');
+    statePending?.classList.toggle('hidden', which !== 'pending');
+  }
+  function showPending(message: string) {
+    if (pendingReason) pendingReason.textContent = message;
+    if (pendingResume) pendingResume.href = isVerification ? '/register' : '/billing';
+    reveal('pending');
+  }
+  function showFailed(message: string) {
+    if (failedReason) failedReason.textContent = message;
+    reveal('failed');
+  }
+  function showConfirmed(tx: { reference: string; amountKesCents: number; purpose: string }) {
+    if (receiptRef) receiptRef.textContent = tx.reference;
+    if (receiptAmount) receiptAmount.textContent = `KES ${(tx.amountKesCents / 100).toLocaleString()}`;
+    // Never navigate directly to an untrusted ssoUrl returned with a receipt.
+    if (launchBtn) launchBtn.href = '/login';
+    sessionStorage.removeItem('markchat_reg_idempotency_key');
+    if (isVerification) sessionStorage.removeItem('markchat_verification_pending');
+    const heading = document.querySelector('#state-success h1');
+    if (heading) heading.textContent = isVerification ? 'Account confirmation received' : 'Subscription payment confirmed';
+    reveal('success');
+  }
+
+  async function readRegistrationStatus(registrationId: string) {
+    const response = await fetch(`${apiUrl}/api/v1/registration/${encodeURIComponent(registrationId)}`, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    });
+    if (!response.ok) return null;
+    const payload = await response.json();
+    return payload.data || payload;
+  }
+
+  async function checkStatus() {
+    if (!reference || !/^[a-zA-Z0-9_-]{8,100}$/.test(reference)) {
+      showFailed('No valid transaction reference was found. Please return to your registration or billing page.');
+      return;
+    }
+    const token = localStorage.getItem('markchat_cp_token');
     const headers: Record<string, string> = { Accept: 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const poll = setInterval(async () => {
-      attempts++;
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const maxAttempts = 20;
+    for (let attempts = 0; attempts < maxAttempts; attempts++) {
       try {
-        const res = await fetch(`${apiUrl}/api/v1/billing/status/${reference}`, { headers });
+        const res = await fetch(`${apiUrl}/api/v1/billing/status/${reference}`, { headers, cache: 'no-store' });
         if (res.ok) {
           const body = await res.json();
           const tx = body.transaction || body.data?.transaction;
-
           if (tx && (tx.status === 'success' || tx.status === 'settled')) {
-            clearInterval(poll);
-            stateVerifying?.classList.add('hidden');
-            stateSuccess?.classList.remove('hidden');
-
-            if (receiptRef) receiptRef.textContent = tx.reference;
-            if (receiptAmount)
-              receiptAmount.textContent = `KES ${(tx.amountKesCents / 100).toLocaleString()}`;
-            if (launchBtn && tx.ssoUrl) {
-              launchBtn.href = tx.ssoUrl;
-            } else if (launchBtn) {
-              launchBtn.href = '/login';
+            if (isVerification) {
+              if (tx.purpose !== 'account_verification' || tx.amountKesCents !== 8200) {
+                showFailed('The returned payment does not match the KES 82 account confirmation.');
+                return;
+              }
+              const statusData = await readRegistrationStatus(pending!.registrationId);
+              if (statusData?.status === 'completed') {
+                showConfirmed(tx);
+                return;
+              }
+              if (statusData?.status === 'failed') {
+                showPending('Your payment was confirmed, but workspace setup needs support. Do not pay again.');
+                return;
+              }
+              if (attempts === maxAttempts - 1) {
+                showPending('KES 82 payment confirmed. Your selected plan is being provisioned. Do not pay again; return later to check workspace setup.');
+                return;
+              }
+            } else {
+              if (tx.purpose !== 'subscription') {
+                showFailed('This payment is not a subscription transaction associated with this billing session.');
+                return;
+              }
+              showConfirmed(tx);
+              return;
             }
-            return;
-          } else if (tx && (tx.status === 'failed' || tx.status === 'abandoned')) {
-            clearInterval(poll);
-            stateVerifying?.classList.add('hidden');
-            stateFailed?.classList.remove('hidden');
-            if (failedReason)
-              failedReason.textContent = `Transaction was ${tx.status}. Please try initiating payment again.`;
+          }
+          if (tx && (tx.status === 'failed' || tx.status === 'abandoned')) {
+            showFailed(`Payment was ${tx.status}. No subscription or verification activation has been confirmed.`);
             return;
           }
         }
       } catch {
-        // network retry
+        // Temporary network errors are not payment confirmation.
       }
-
-      if (attempts >= maxAttempts) {
-        clearInterval(poll);
-        stateVerifying?.classList.add('hidden');
-        stateSuccess?.classList.remove('hidden');
-        if (receiptRef) receiptRef.textContent = reference;
-        if (receiptAmount) receiptAmount.textContent = 'Verification in progress';
-        if (launchBtn) launchBtn.href = '/login';
-      }
-    }, 1500);
+      await new Promise<void>((resolve) => setTimeout(resolve, 1500));
+    }
+    showPending('Payment confirmation is taking longer than expected. Do not pay twice; you can revisit this page to check the reference.');
   }
+  void checkStatus();
 </script>
