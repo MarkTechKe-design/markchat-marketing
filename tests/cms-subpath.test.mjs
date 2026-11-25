@@ -22,3 +22,13 @@ test('LF checkout rules are explicit for JavaScript Astro and shell files',()=>{
   for(const ext of ['sh','js','mjs','ts','astro','json','sql'])
     assert.ok(nginxInstructions.includes(`*.${ext} text eol=lf`));
 });
+
+test('CMS login uses mount-relative API, rejects unissued tokens and limits redirect destinations',()=>{
+  const login=fs.readFileSync('src/pages/dashboard/login.astro','utf8');
+  assert.match(login,/const cmsApiBase = mounted \? '\/_cms' : bridgeApiUrl/);
+  assert.match(login,/const token = data\.token/);
+  assert.match(login,/typeof token !== 'string'/);
+  assert.match(login,/requested\.startsWith\('\/\/'\)/);
+  assert.match(login,/window\.location\.assign\(destination\)/);
+  assert.ok(!login.includes('data.token || entered'));
+});
