@@ -177,7 +177,9 @@ const capabilities = [
       item.mediaUrl &&
       aliases[feature.id].test(item.slug + ' ' + item.title)
   );
-  const cmsSrc = published ? sanitizeHeroMediaUrl(published.mediaUrl) : '';
+  const cmsSrc = published
+    ? sanitizeHeroMediaUrl(published.mediaUrl, import.meta.env.PUBLIC_CMS_MEDIA_HOST || '')
+    : '';
   const workflow =
     feature.id === 'unified-inbox'
       ? 'inbox'
