@@ -123,3 +123,24 @@ test('admin media editor retains CMS Bearer token and avoids false publish claim
   ])
     assert.match(readFileSync(file, 'utf8'), /MCHeroMediaEditor/);
 });
+
+test('hero default media excludes clipart while retaining editor uploads', () => {
+  for (const page of ['homepage', 'features', 'markcopilot', 'integrations', 'solutions', 'about']) {
+    const defaults = normalizeHeroMedia(page, null);
+    assert.equal(defaults.heroBackgroundImageUrl, '');
+    assert.equal(defaults.heroBackgroundMobileImageUrl, '');
+    assert.equal(defaults.heroMediaMode, 'layered-preview');
+  }
+  for (const name of ['social-ecosystem-hand', 'ai-whatsapp-bot-concept', 'questions-support-portrait']) {
+    assert.equal(sanitizeHeroMediaUrl('/media/editorial/' + name + '-desktop.webp'), '');
+  }
+  const uploaded = normalizeHeroMedia('about', {
+    heroBackgroundImageUrl: '/media/editorial/approved-photo.webp',
+    heroMediaMode: 'editorial-backdrop',
+  });
+  assert.equal(uploaded.heroMediaMode, 'editorial-backdrop');
+  assert.equal(uploaded.heroBackgroundImageUrl, '/media/editorial/approved-photo.webp');
+  const renderer = readFileSync('src/components/design-system/MCResponsiveHeroMedia.astro', 'utf8');
+  assert.match(renderer, /data-mc-layered-hero/);
+  assert.match(renderer, /<MCConceptualPreview/);
+});
