@@ -28,18 +28,14 @@ const pictureAlt = alt.trim() || 'MarkChat ' + id + ' feature visual';
     size === 'large' ? 'aspect-[16/10]' : 'aspect-[16/9]',
   ]}
 >
-  {
-    src && (
-      <img
-        data-mc-capability-image
-        src={src}
-        alt={pictureAlt}
-        loading="lazy"
-        decoding="async"
-        class="absolute inset-0 h-full w-full object-cover object-center"
-      />
-    )
-  }
+  <img
+    data-mc-capability-image
+    src={src || undefined}
+    alt={pictureAlt}
+    loading="lazy"
+    decoding="async"
+    class:list={['absolute inset-0 h-full w-full object-cover object-center', !src && 'hidden']}
+  />
   <div
     data-mc-capability-fallback
     class:list={['absolute inset-0', src && 'hidden']}
@@ -50,11 +46,32 @@ const pictureAlt = alt.trim() || 'MarkChat ' + id + ' feature visual';
     class="pointer-events-none absolute bottom-1 right-1 rounded border border-border bg-surface/95 px-1.5 py-0.5 text-[9px] font-medium text-text-muted dark:bg-[#262626]/95"
     data-mc-capability-label
   >
-    {src ? 'Admin-provided visual' : 'Conceptual preview'}
+    {src ? (source === 'captured' ? 'Verified synthetic capture' : 'Admin-provided visual') : 'Conceptual preview'}
   </span>
 </div>
 
 <script>
+  import { sanitizeHeroMediaUrl } from '@/lib/hero-media';
+
+  type CmsFeatureImage = {
+    status?: string;
+    slug?: string;
+    title?: string;
+    mediaUrl?: string;
+    mediaAlt?: string;
+    mediaType?: string;
+  };
+
+  const aliases: Record<string, RegExp> = {
+    'unified-inbox': /shared.inbox|unified.inbox|team.inbox|collaborative/i,
+    'mpesa-stk': /mpesa|m.pesa|checkout|payments/i,
+    markcopilot: /markcopilot|ai.assist|agent.copilot/i,
+    'automation-routing': /automation|routing|workflows/i,
+    'contact-crm': /crm|contact|customer.profile/i,
+    'help-center': /help.center|knowledge|self.service/i,
+    'analytics-webhooks': /analytics|webhook|developer.api/i,
+  };
+
   function initCapabilityMedia() {
     document.querySelectorAll<HTMLImageElement>('[data-mc-capability-image]').forEach((image) => {
       if (image.dataset.mcBound === 'true') return;
@@ -70,9 +87,77 @@ const pictureAlt = alt.trim() || 'MarkChat ' + id + ' feature visual';
         if (frame) frame.dataset.mcCapabilitySource = 'fallback';
       };
       image.addEventListener('error', useFallback);
-      if (image.complete && image.naturalWidth === 0) useFallback();
+      if (image.hasAttribute('src') && image.complete && image.naturalWidth === 0) useFallback();
     });
   }
-  initCapabilityMedia();
-  document.addEventListener('astro:page-load', initCapabilityMedia);
+
+  /** Fresh public CMS images can replace build-time assets without weakening URL controls. */
+  async function refreshCapabilityMedia() {
+    const frames = Array.from(document.querySelectorAll<HTMLElement>('[data-mc-capability-frame]'));
+    if (!frames.length) return;
+    let features: CmsFeatureImage[] | null = null;
+    const api = import.meta.env.PUBLIC_BRIDGE_API_URL || '';
+    const allowedApi =
+      /^https:\/\//i.test(api) ||
+      (location.hostname === 'localhost' && /^http:\/\/localhost(?::\d+)?$/i.test(api));
+    if (allowedApi) {
+      try {
+        const response = await fetch(api.replace(/\/$/, '') + '/api/public/features', {
+          credentials: 'omit',
+          signal: AbortSignal.timeout(4000),
+        });
+        if (response.ok) {
+          const data: unknown = await response.json();
+          if (Array.isArray(data)) features = data as CmsFeatureImage[];
+        }
+      } catch {
+        // Offline / unconfigured bridge: retain build-time imagery.
+      }
+    }
+    if (!features && typeof localStorage !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('markchat_cms_features');
+        if (raw) {
+          const data: unknown = JSON.parse(raw);
+          if (Array.isArray(data)) features = data as CmsFeatureImage[];
+        }
+      } catch {
+        // Ignore malformed local cache.
+      }
+    }
+    if (!features) return;
+    for (const frame of frames) {
+      const id = frame.dataset.mcCapabilityFrame || '';
+      const match = aliases[id];
+      if (!match) continue;
+      const feature = features.find(
+        (item) =>
+          item.status === 'published' &&
+          item.mediaType !== 'none' &&
+          item.mediaUrl &&
+          match.test((item.slug || '') + ' ' + (item.title || ''))
+      );
+      if (!feature) continue;
+      const url = sanitizeHeroMediaUrl(feature.mediaUrl, import.meta.env.PUBLIC_CMS_MEDIA_HOST || '');
+      if (!url) continue;
+      const image = frame.querySelector<HTMLImageElement>('[data-mc-capability-image]');
+      if (!image) continue;
+      image.alt = feature.mediaAlt?.trim() || 'Admin-provided feature visual';
+      image.hidden = false;
+      image.classList.remove('hidden');
+      frame.querySelector<HTMLElement>('[data-mc-capability-fallback]')?.classList.add('hidden');
+      frame.dataset.mcCapabilitySource = 'cms';
+      frame.querySelector<HTMLElement>('[data-mc-capability-label]')?.replaceChildren(
+        document.createTextNode('Admin-provided visual')
+      );
+      image.src = url;
+    }
+  }
+
+  function initialize() {
+    initCapabilityMedia();
+    void refreshCapabilityMedia();
+  }
+  initialize();
+  document.addEventListener('astro:page-load', initialize);
 </script>
