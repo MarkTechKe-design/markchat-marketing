@@ -144,10 +144,53 @@ test('P1 two-tone hero, vertical accessible tabs and asymmetrical capability hie
   assert.match(hero, /MCProductFrame/);
   assert.match(tabs, /aria-orientation="vertical"/);
   assert.match(tabs, /ArrowDown/);
-  assert.match(bento, /features\.slice\(3\)/);
+  assert.match(bento, /supporting\.map/);
   assert.match(pricing, /ring-primary\/20/);
 });
 
+
+test('P1 seven capability previews render flat UI rather than isometric homepage images', () => {
+  const panel = read('src/components/design-system/MCCapabilityPreview.astro');
+  const media = read('src/components/design-system/MCCapabilityMedia.astro');
+  const bento = read('src/components/design-system/MCFeatureBento.astro');
+  const index = read('src/pages/index.astro');
+  for (const id of [
+    'unified-inbox', 'mpesa-stk', 'markcopilot',
+    'automation-routing', 'contact-crm', 'help-center', 'analytics-webhooks',
+  ]) {
+    assert.match(panel, new RegExp("id === '" + id + "'"));
+  }
+  assert.match(panel, /WhatsApp/);
+  assert.match(panel, /Instagram/);
+  assert.match(panel, /Assigned · Support/);
+  assert.match(panel, /Daraja callback/);
+  assert.match(panel, /Review before sending/);
+  assert.match(panel, /HMAC-SHA256/);
+  assert.match(media, /aspect-\[16\/10\]/);
+  assert.match(media, /aspect-\[16\/9\]/);
+  assert.match(media, /data-mc-capability-fallback/);
+  assert.match(media, /addEventListener\('error', useFallback\)/);
+  assert.match(bento, /MCCapabilityMedia/);
+  assert.doesNotMatch(bento, /<img[^>]*illustration|src=\{feature\.illustration\}/);
+  assert.match(index, /sanitizeHeroMediaUrl/);
+  assert.match(index, /resolveProductAsset/);
+  assert.doesNotMatch(panel + bento, /radial-gradient|backdrop-blur|blur-3xl/);
+  assert.ok(existsSync('public/media/illustrations/unified-inbox.svg'));
+});
+
+test('Feature editor preserves image URL, alt and classification instead of clearing custom media', () => {
+  const admin = read('src/pages/dashboard/features.astro');
+  const cms = read('src/lib/cms-api.ts');
+  assert.match(admin, /id="feature-media-url"/);
+  assert.match(admin, /id="feature-media-alt"/);
+  assert.match(admin, /id="feature-media-type"/);
+  assert.match(admin, /sanitizeHeroMediaUrl\(requestedMediaUrl\)/);
+  assert.match(admin, /mediaUrl: mediaType === 'none'/);
+  assert.match(admin, /mediaAlt: mediaType === 'none'/);
+  assert.match(admin, /uploadHeroMediaAsset/);
+  assert.match(cms, /mediaUrl: feature\.mediaUrl/);
+  assert.match(cms, /mediaAlt: feature\.mediaAlt/);
+});
 test('Gate 2 capture defaults to unverified and CMS-overrides precede bundled captures', () => {
   const manifest = JSON.parse(read('src/data/captured-product-assets.json'));
   assert.equal(typeof manifest.verified, 'boolean');
