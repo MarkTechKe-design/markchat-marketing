@@ -55,6 +55,7 @@ const pictureAlt = alt.trim() || 'MarkChat ' + id + ' feature visual';
 
 <script>
   import { sanitizeHeroMediaUrl } from '@/lib/hero-media';
+  import { CAPABILITY_IMAGE_MATCHERS, type CapabilityId } from '@/data/capability-ui';
 
   type CmsFeatureImage = {
     status?: string;
@@ -63,16 +64,6 @@ const pictureAlt = alt.trim() || 'MarkChat ' + id + ' feature visual';
     mediaUrl?: string;
     mediaAlt?: string;
     mediaType?: string;
-  };
-
-  const aliases: Record<string, RegExp> = {
-    'unified-inbox': /shared.inbox|unified.inbox|team.inbox|collaborative/i,
-    'mpesa-stk': /mpesa|m.pesa|checkout|payments/i,
-    markcopilot: /markcopilot|ai.assist|agent.copilot/i,
-    'automation-routing': /automation|routing|workflows/i,
-    'contact-crm': /crm|contact|customer.profile/i,
-    'help-center': /help.center|knowledge|self.service/i,
-    'analytics-webhooks': /analytics|webhook|developer.api/i,
   };
 
   function initCapabilityMedia() {
@@ -129,7 +120,7 @@ const pictureAlt = alt.trim() || 'MarkChat ' + id + ' feature visual';
     if (!features) return;
     for (const frame of frames) {
       const id = frame.dataset.mcCapabilityFrame || '';
-      const match = aliases[id];
+      const match = CAPABILITY_IMAGE_MATCHERS[id as CapabilityId];
       if (!match) continue;
       const feature = features.find(
         (item) =>

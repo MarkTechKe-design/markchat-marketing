@@ -20,6 +20,7 @@ import MCFeatureBento from '@/components/design-system/MCFeatureBento.astro';
 import MCButton from '@/components/design-system/MCButton.astro';
 import { communityIllustrations, resolveProductAsset } from '@/data/product-assets';
 import { sanitizeHeroMediaUrl } from '@/lib/hero-media';
+import { CAPABILITY_IMAGE_MATCHERS } from '@/data/capability-ui';
 import type { ProductWorkflow, CmsProductMediaOverride } from '@/data/product-assets';
 import { siteConfig } from '@/config';
 import { fetchHomepageSettings, fetchPricingMatrix, fetchFeatures, fetchFaqs } from '@/lib/cms-api';
@@ -161,21 +162,12 @@ const capabilities = ([
   // Keep the historical SVG registry intact for older CMS consumers, but never render it
   // in the homepage bento. Use an approved published feature image when available.
   const illustration = communityIllustrations.find((item) => item.id === feature.id)?.path;
-  const aliases: Record<string, RegExp> = {
-    'unified-inbox': /shared.inbox|unified.inbox|team.inbox|collaborative/i,
-    'mpesa-stk': /mpesa|m.pesa|checkout|payments/i,
-    markcopilot: /markcopilot|ai.assist|agent.copilot/i,
-    'automation-routing': /automation|routing|workflows/i,
-    'contact-crm': /crm|contact|customer.profile/i,
-    'help-center': /help.center|knowledge|self.service/i,
-    'analytics-webhooks': /analytics|webhook|developer.api/i,
-  };
   const published = publishedFeatures.find(
     (item) =>
       item.status === 'published' &&
       item.mediaType !== 'none' &&
       item.mediaUrl &&
-      aliases[feature.id].test(item.slug + ' ' + item.title)
+      CAPABILITY_IMAGE_MATCHERS[feature.id].test(item.slug + ' ' + item.title)
   );
   const cmsSrc = published
     ? sanitizeHeroMediaUrl(published.mediaUrl, import.meta.env.PUBLIC_CMS_MEDIA_HOST || '')
