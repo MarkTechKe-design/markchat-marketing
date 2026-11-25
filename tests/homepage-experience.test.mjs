@@ -168,7 +168,7 @@ test('Gate 3 built homepage renders safely without verified screenshots', async 
 
   await t.test('document has metadata, new hero and lead conversion actions', () => {
     assert.match(html, /<!doctype html>/i);
-      /Every conversation\. One smarter inbox\./
+    assert.match(html, /Every conversation/i);
     assert.match(html, /Built for Kenyan businesses/i);
     assert.match(html, /Get Started/i);
     assert.match(html, /Book a Demo/i);
