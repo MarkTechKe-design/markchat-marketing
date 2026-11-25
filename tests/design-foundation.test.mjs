@@ -118,8 +118,8 @@ test('P0 all seven public SVG assets load from the built preview', async () => {
 
 test('P0 canonical CI hostname and Core-only registration copy', () => {
   const workflow = read('.github/workflows/marketing-quality.yml');
-  assert.match(workflow, /SITE_URL:\\s*https:\/\/markchat\\.co\\.ke/);
-  assert.doesNotMatch(workflow, /www\\.markchat\\.co\\.ke/);
+  assert.match(workflow, /SITE_URL:\s*https:\/\/markchat\.co\.ke/);
+  assert.doesNotMatch(workflow, /www\.markchat\.co\.ke/);
   assert.doesNotMatch(read('src/config/site.ts'), /bulk messaging/i);
   assert.doesNotMatch(read('src/components/forms/RegisterForm.astro'), /SMS alerts/i);
   assert.doesNotMatch(read('src/data/navigation.ts'), /Blast bulk promotional/i);
@@ -136,7 +136,7 @@ test('P1 two-tone hero, vertical accessible tabs and asymmetrical capability hie
   assert.match(hero, /MCProductFrame/);
   assert.match(tabs, /aria-orientation="vertical"/);
   assert.match(tabs, /ArrowDown/);
-  assert.match(bento, /features\\.slice\\(3\\)/);
+  assert.match(bento, /features\.slice\(3\)/);
   assert.match(pricing, /ring-primary\/20/);
 });
 

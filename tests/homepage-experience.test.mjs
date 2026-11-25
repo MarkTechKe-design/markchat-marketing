@@ -35,10 +35,10 @@ test('Gate 3 homepage source composition and CMS compatibility', async (t) => {
   await t.test('ScrewFast-inspired hero has correct product-first message and CTAs', () => {
     assert.match(
       hero,
-      /Every conversation\\. One smarter inbox\\./
+      /Every conversation\. One smarter inbox\./
     );
     assert.match(index, /Built for Kenyan businesses/);
-    assert.match(hero, /lg:grid-cols-\[1\.1fr_0\.9fr\]/);
+    assert.match(hero, /lg:grid-cols-\[0\.95fr_1\.05fr\]/);
     assert.match(hero, /label: 'Get Started', href: '\/register'/);
     assert.match(hero, /label: 'Book a Demo', href: '\/demo'/);
     assert.doesNotMatch(index, /SupportHero3D/);
@@ -168,7 +168,7 @@ test('Gate 3 built homepage renders safely without verified screenshots', async 
 
   await t.test('document has metadata, new hero and lead conversion actions', () => {
     assert.match(html, /<!doctype html>/i);
-    assert.match(html, /Every conversation/i);
+      /Every conversation\. One smarter inbox\./
     assert.match(html, /Built for Kenyan businesses/i);
     assert.match(html, /Get Started/i);
     assert.match(html, /Book a Demo/i);
