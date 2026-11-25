@@ -169,7 +169,7 @@ const capabilities = [
   const published = publishedFeatures.find(
     (item) =>
       item.status === 'published' &&
-      item.mediaType === 'screenshot' &&
+      item.mediaType !== 'none' &&
       item.mediaUrl &&
       patterns[feature.id]?.test(item.slug + ' ' + item.title + ' ' + item.category)
   );
