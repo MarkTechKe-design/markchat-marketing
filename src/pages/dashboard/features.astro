@@ -348,6 +348,47 @@ Database unique TransID constraint"></textarea>
             placeholder="e.g. /demo or /integrations/safaricom-mpesa-daraja"
           />
         </div>
+      <div class="rounded-xl border border-border bg-surface p-4">
+        <h4 class="text-sm font-bold text-text">Capability image for homepage</h4>
+        <p class="mt-1 text-xs leading-relaxed text-text-muted">
+          Optional published media overrides the conceptual capability preview. Use a deployed /media/
+          image or approved HTTPS CMS media. Do not label illustrations as actual screenshots.
+        </p>
+        <div class="mt-3 space-y-3">
+          <div>
+            <label class="form-label" for="feature-media-url">Feature image URL</label>
+            <input
+              id="feature-media-url"
+              type="text"
+              class="form-input w-full"
+              placeholder="/media/features/example.webp"
+              autocomplete="off"
+            />
+          </div>
+          <div>
+            <label class="form-label" for="feature-media-alt">Accessible image description</label>
+            <input
+              id="feature-media-alt"
+              type="text"
+              class="form-input w-full"
+              maxlength="180"
+              placeholder="Describes the actual image content"
+            />
+          </div>
+          <div>
+            <label class="form-label" for="feature-media-type">Media classification</label>
+            <select id="feature-media-type" class="form-input w-full">
+              <option value="conceptual_card">Editorial / conceptual image</option>
+              <option value="screenshot">Verified product screenshot</option>
+              <option value="none">No image (conceptual fallback)</option>
+            </select>
+          </div>
+          <p class="text-xs text-text-muted">
+            This URL is saved through the existing feature CMS API. File uploads use the
+            separate authorized media pipeline where configured.
+          </p>
+        </div>
+      </div>
       </div>
     </form>
 
@@ -646,6 +687,7 @@ Database unique TransID constraint"></textarea>
 </style>
 
 <script>
+  import { sanitizeHeroMediaUrl } from '@/lib/hero-media';
   import {
     upsertFeature,
     updateFeaturesSettings,
@@ -715,6 +757,9 @@ Database unique TransID constraint"></textarea>
         (document.getElementById('feature-cta-label') as HTMLInputElement).value =
           feat.ctaText || '';
         (document.getElementById('feature-cta-href') as HTMLInputElement).value = feat.ctaUrl || '';
+        (document.getElementById('feature-media-url') as HTMLInputElement).value = feat.mediaUrl || '';
+        (document.getElementById('feature-media-alt') as HTMLInputElement).value = feat.mediaAlt || '';
+        (document.getElementById('feature-media-type') as HTMLSelectElement).value = feat.mediaType || 'conceptual_card';
 
         window.openModal?.('feature-modal');
       });
@@ -761,6 +806,14 @@ Database unique TransID constraint"></textarea>
 
         const ctaLabel = (document.getElementById('feature-cta-label') as HTMLInputElement).value;
         const ctaHref = (document.getElementById('feature-cta-href') as HTMLInputElement).value;
+        const requestedMediaUrl = (document.getElementById('feature-media-url') as HTMLInputElement).value.trim();
+        const approvedMediaUrl = sanitizeHeroMediaUrl(requestedMediaUrl);
+        if (requestedMediaUrl && !approvedMediaUrl) {
+          alert('Use an approved HTTPS image URL or a deployed /media/ image path.');
+          return;
+        }
+        const mediaAlt = (document.getElementById('feature-media-alt') as HTMLInputElement).value.trim().slice(0, 180);
+        const mediaType = (document.getElementById('feature-media-type') as HTMLSelectElement).value as MarketingFeature['mediaType'];
 
         const featurePayload: MarketingFeature = {
           id: id || `feat-${Date.now()}`,
@@ -774,7 +827,9 @@ Database unique TransID constraint"></textarea>
           status,
           summary: description,
           description: longDescription || description,
-          mediaType: 'conceptual_card',
+          mediaType,
+          mediaUrl: mediaType === 'none' ? undefined : approvedMediaUrl || undefined,
+          mediaAlt: mediaType === 'none' ? undefined : mediaAlt || undefined,
           mediaPosition: 'right',
           highlights,
           technicalDetails:
