@@ -74,6 +74,30 @@ describe('Batch 5: Registration and Provisioning Integration', () => {
     );
   });
 
+  test('KES 82 verification exchanges signed registration capability for hosted checkout', () => {
+    assert.match(registerFormSource, /data\\.verificationRequired === true/);
+    assert.match(registerFormSource, /data\\.verificationToken/);
+    assert.match(registerFormSource, /\\/verification-checkout/);
+    assert.match(registerFormSource, /Authorization: \`Bearer \\$/);
+    assert.match(registerFormSource, /checkout\\?\\.amountKesCents !== 8200/);
+    assert.match(registerFormSource, /checkout\\?\\.currency !== 'KES'/);
+    assert.match(registerFormSource, /window\\.location\\.assign\\(checkout\\.authorizationUrl\\)/);
+    assert.match(registerFormSource, /markchat_verification_pending/);
+    assert.doesNotMatch(registerFormSource, /sessionStorage\\.setItem\\([^\\n]*verificationToken/);
+  });
+
+  test('Verification-disabled registration retains bounded saga polling', () => {
+    assert.match(registerFormSource, /Verification is OFF: proceed with standard saga polling/);
+    assert.match(registerFormSource, /pollRegistrationStatus\\(apiUrl, registrationId, redirectTarget\\)/);
+    assert.match(registerFormSource, /KES 82 is charged to confirm payment ownership/);
+    assert.match(registerFormSource, /automatically refunded within 3 days/);
+  });
+
+  test('Registration is restricted to Core-only Starter, Growth and Scale', () => {
+    assert.doesNotMatch(registerFormSource, /enterprise:\\s*\\{/);
+    assert.doesNotMatch(registerFormSource, /Launch SMS Studio|bulk SMS promotions/i);
+  });
+
   test('Asynchronous saga polling loop handles status lifecycle', () => {
     assert.match(
       registerFormSource,
