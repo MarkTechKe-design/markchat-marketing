@@ -1,0 +1,45 @@
+---
+import MCCard from './MCCard.astro';
+import MCConceptualPreview from './MCConceptualPreview.astro';
+import { resolvePublishedFeatureMedia, type CmsProductMediaOverride } from '@/data/product-assets';
+
+type Kind = 'inbox' | 'mpesa' | 'markcopilot' | 'automation-routing' | 'contact-crm' | 'help-center' | 'analytics-webhooks';
+interface Props {
+  feature: { id: string; title: string; description: string; href?: string; cmsMedia?: CmsProductMediaOverride | null };
+  aspect?: 'primary' | 'supporting';
+}
+const { feature, aspect = 'supporting' } = Astro.props;
+const kind: Kind = feature.id === 'unified-inbox' ? 'inbox' : feature.id === 'mpesa-stk' ? 'mpesa' : feature.id as Kind;
+const customImage = resolvePublishedFeatureMedia(feature.cmsMedia);
+---
+
+<MCCard padded={false} class="group flex h-full min-w-0 flex-col overflow-hidden">
+  <div data-mc-feature-frame data-feature-kind={kind} class:list={['relative min-w-0 overflow-hidden border-b border-border bg-surface', aspect === 'supporting' ? 'aspect-[16/9]' : 'aspect-[16/10]']}>
+    {customImage && <img data-mc-feature-image src={customImage} alt={feature.cmsMedia?.mediaAlt || feature.title + ' published media'} class="h-full w-full object-cover" loading="lazy" decoding="async" />}
+    <div data-mc-feature-fallback class:list={['h-full', customImage && 'hidden']}>
+      <MCConceptualPreview kind={kind} class="!h-full !rounded-none !border-0" />
+    </div>
+  </div>
+  <div class="flex flex-1 flex-col p-5 sm:p-6">
+    <h3 class:list={['font-bold tracking-tight text-text', aspect === 'primary' ? 'text-xl sm:text-2xl' : 'text-lg']}>{feature.title}</h3>
+    <p class="mt-2 text-sm leading-relaxed text-text-muted">{feature.description}</p>
+    {feature.href && <a href={feature.href} class="mt-5 inline-flex text-sm font-semibold text-primary hover:underline">Explore feature <span aria-hidden="true">→</span></a>}
+  </div>
+</MCCard>
+
+<script>
+  function initFeaturePanels() {
+    document.querySelectorAll<HTMLImageElement>('[data-mc-feature-image]').forEach((image) => {
+      if (image.dataset.bound === 'true') return;
+      image.dataset.bound = 'true';
+      const fallback = () => {
+        image.classList.add('hidden');
+        image.closest('[data-mc-feature-frame]')?.querySelector<HTMLElement>('[data-mc-feature-fallback]')?.classList.remove('hidden');
+      };
+      image.addEventListener('error', fallback);
+      if (image.complete && image.naturalWidth === 0) fallback();
+    });
+  }
+  initFeaturePanels();
+  document.addEventListener('astro:page-load', initFeaturePanels);
+</script>
