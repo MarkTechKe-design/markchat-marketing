@@ -74,6 +74,13 @@ describe('Batch 5: Registration and Provisioning Integration', () => {
     );
   });
 
+  test('Missing verificationRequired cannot silently bypass the KES 82 gate', () => {
+    assert.ok(registerFormSource.includes("typeof data.verificationRequired !== 'boolean'"));
+    assert.ok(registerFormSource.indexOf("typeof data.verificationRequired !== 'boolean'") <
+      registerFormSource.indexOf("if (data.verificationRequired === true)"));
+    assert.ok(registerFormSource.includes('Registration verification is temporarily unavailable'));
+  });
+
   test('KES 82 verification exchanges signed capability for hosted checkout', () => {
     assert.ok(registerFormSource.includes('data.verificationRequired === true'));
     assert.ok(registerFormSource.includes('data.verificationToken'));
