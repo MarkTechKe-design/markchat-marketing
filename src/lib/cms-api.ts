@@ -406,9 +406,15 @@ export interface LeadItem extends LeadPayload {
 // Fallback Kenyan Seed Data
 // ---------------------------------------------------------------------------
 
+// The CMS Bearer authentication contract is unchanged. A CMS mounted on the
+// app host sends its API calls through the same-origin /_cms/api proxy.
 const BRIDGE_API_URL =
-  (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_BRIDGE_API_URL) ||
-  'http://localhost:4000';
+  (typeof window !== 'undefined' &&
+    (window.location.pathname.startsWith('/_cms/dashboard') ||
+     window.location.pathname.startsWith('/_cms/dashboardMain'))
+    ? '/_cms'
+    : (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_BRIDGE_API_URL) ||
+      'http://localhost:4000');
 
 const DEFAULT_PRICING_MATRIX: PricingMatrixResponse = {
   tiers: [
