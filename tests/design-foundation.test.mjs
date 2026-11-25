@@ -169,6 +169,10 @@ test('P1 seven capability previews render flat UI rather than isometric homepage
   assert.match(media, /aspect-\[16\/10\]/);
   assert.match(media, /aspect-\[16\/9\]/);
   assert.match(media, /data-mc-capability-fallback/);
+  assert.match(media, /refreshCapabilityMedia/);
+  assert.match(media, /data-mc-capability-image/);
+  assert.match(media, /sanitizeHeroMediaUrl/);
+  assert.match(media, /'published'/);
   assert.match(media, /addEventListener\('error', useFallback\)/);
   assert.match(bento, /MCCapabilityMedia/);
   assert.doesNotMatch(bento, /<img[^>]*illustration|src=\{feature\.illustration\}/);
