@@ -43,7 +43,10 @@ const pictureAlt = alt.trim() || 'MarkChat ' + id + ' feature visual';
     <MCCapabilityPreview id={id} />
   </div>
   <span
-    class="pointer-events-none absolute bottom-1 right-1 rounded border border-border bg-surface/95 px-1.5 py-0.5 text-[9px] font-medium text-text-muted dark:bg-[#262626]/95"
+    class:list={[
+      'pointer-events-none absolute bottom-1 right-1 rounded border border-border bg-surface/95 px-1.5 py-0.5 text-[9px] font-medium text-text-muted dark:bg-[#262626]/95',
+      !src && 'hidden',
+    ]}
     data-mc-capability-label
   >
     {src ? (source === 'captured' ? 'Verified synthetic capture' : 'Admin-provided visual') : 'Conceptual preview'}
@@ -81,9 +84,7 @@ const pictureAlt = alt.trim() || 'MarkChat ' + id + ' feature visual';
         image.classList.add('hidden');
         const frame = image.closest<HTMLElement>('[data-mc-capability-frame]');
         frame?.querySelector<HTMLElement>('[data-mc-capability-fallback]')?.classList.remove('hidden');
-        frame?.querySelector<HTMLElement>('[data-mc-capability-label]')?.replaceChildren(
-          document.createTextNode('Conceptual preview')
-        );
+        frame?.querySelector<HTMLElement>('[data-mc-capability-label]')?.classList.add('hidden');
         if (frame) frame.dataset.mcCapabilitySource = 'fallback';
       };
       image.addEventListener('error', useFallback);
@@ -143,12 +144,18 @@ const pictureAlt = alt.trim() || 'MarkChat ' + id + ' feature visual';
       const image = frame.querySelector<HTMLImageElement>('[data-mc-capability-image]');
       if (!image) continue;
       image.alt = feature.mediaAlt?.trim() || 'Admin-provided feature visual';
-      image.hidden = false;
-      image.classList.remove('hidden');
-      frame.querySelector<HTMLElement>('[data-mc-capability-fallback]')?.classList.add('hidden');
-      frame.dataset.mcCapabilitySource = 'cms';
-      frame.querySelector<HTMLElement>('[data-mc-capability-label]')?.replaceChildren(
-        document.createTextNode('Admin-provided visual')
+      image.addEventListener(
+        'load',
+        () => {
+          image.hidden = false;
+          image.classList.remove('hidden');
+          frame.querySelector<HTMLElement>('[data-mc-capability-fallback]')?.classList.add('hidden');
+          frame.dataset.mcCapabilitySource = 'cms';
+          const label = frame.querySelector<HTMLElement>('[data-mc-capability-label]');
+          label?.replaceChildren(document.createTextNode('Admin-provided visual'));
+          label?.classList.remove('hidden');
+        },
+        { once: true }
       );
       image.src = url;
     }
