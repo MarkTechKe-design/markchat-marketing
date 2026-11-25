@@ -18,7 +18,9 @@ import MCSection from '@/components/design-system/MCSection.astro';
 import MCSectionHeading from '@/components/design-system/MCSectionHeading.astro';
 import MCFeatureBento from '@/components/design-system/MCFeatureBento.astro';
 import MCButton from '@/components/design-system/MCButton.astro';
-import { communityIllustrations } from '@/data/product-assets';
+import { communityIllustrations, resolveProductAsset } from '@/data/product-assets';
+import { sanitizeHeroMediaUrl } from '@/lib/hero-media';
+import { CAPABILITY_IMAGE_MATCHERS } from '@/data/capability-ui';
 import type { ProductWorkflow, CmsProductMediaOverride } from '@/data/product-assets';
 import { siteConfig } from '@/config';
 import { fetchHomepageSettings, fetchPricingMatrix, fetchFeatures, fetchFaqs } from '@/lib/cms-api';
@@ -102,7 +104,7 @@ for (const feature of publishedFeatures) {
   }
 }
 
-const capabilities = [
+const capabilities = ([
   {
     id: 'unified-inbox',
     title: 'Unified Inbox',
@@ -156,10 +158,41 @@ const capabilities = [
     icon: 'lucide:chart-no-axes-combined',
     href: '/integrations/developer-api-webhooks',
   },
-].map((feature) => ({
-  ...feature,
-  illustration: communityIllustrations.find((item) => item.id === feature.id)?.path,
-}));
+] as const).map((feature) => {
+  // Keep the historical SVG registry intact for older CMS consumers, but never render it
+  // in the homepage bento. Use an approved published feature image when available.
+  const illustration = communityIllustrations.find((item) => item.id === feature.id)?.path;
+  const published = publishedFeatures.find(
+    (item) =>
+      item.status === 'published' &&
+      item.mediaType !== 'none' &&
+      item.mediaUrl &&
+      CAPABILITY_IMAGE_MATCHERS[feature.id].test(item.slug + ' ' + item.title)
+  );
+  const cmsSrc = published
+    ? sanitizeHeroMediaUrl(published.mediaUrl, import.meta.env.PUBLIC_CMS_MEDIA_HOST || '')
+    : '';
+  const workflow =
+    feature.id === 'unified-inbox'
+      ? 'inbox'
+      : feature.id === 'mpesa-stk'
+        ? 'mpesa'
+        : feature.id === 'markcopilot'
+          ? 'markcopilot'
+          : null;
+  const verified = workflow ? resolveProductAsset(workflow, 'light') : null;
+  return {
+    ...feature,
+    illustration,
+    mediaUrl: cmsSrc || verified?.src || null,
+    mediaAlt: cmsSrc
+      ? published?.mediaAlt || feature.title + ' admin-provided image'
+      : verified?.src
+        ? verified.alt
+        : undefined,
+    mediaSource: cmsSrc ? ('cms' as const) : verified?.src ? ('captured' as const) : ('fallback' as const),
+  };
+});
 
 const pricingPlans = pricingMatrix.tiers.map((tier) => {
   const features = tier.features

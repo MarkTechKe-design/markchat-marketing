@@ -110,23 +110,16 @@ test('Gate 3 homepage source composition and CMS compatibility', async (t) => {
     }
   );
 
-  await t.test('seven Community-safe capabilities use the existing isometric SVG manifest', () => {
-    const illustrations = read('src/data/product-assets.ts');
+  await t.test('seven capability cards use CMS-approved or verified product media with UI fallbacks', () => {
     const bento = read('src/components/design-system/MCFeatureBento.astro');
+    const panel = read('src/components/design-system/MCCapabilityPreview.astro');
     assert.match(index, /communityIllustrations\.find/);
     assert.match(index, /<MCFeatureBento features=\{capabilities\}/);
-    assert.match(bento, /feature\.illustration/);
-    for (const id of [
-      'unified-inbox',
-      'mpesa-stk',
-      'markcopilot',
-      'automation-routing',
-      'contact-crm',
-      'help-center',
-      'analytics-webhooks',
-    ]) {
-      assert.ok(illustrations.includes("id: '" + id + "'"), 'Missing illustration ' + id);
-    }
+    assert.match(bento, /MCCapabilityMedia/);
+    assert.match(index, /mediaSource:/);
+    assert.match(index, /sanitizeHeroMediaUrl/);
+    assert.match(panel, /Conceptual sample product interface|conceptual sample product interface/);
+    assert.doesNotMatch(bento, /<img[^>]*illustration/);
   });
 
   await t.test('Kenyan industry routes remain available', () => {
@@ -192,6 +185,12 @@ test('Gate 3 built homepage renders safely without verified screenshots', async 
     assert.match(html, /Community-safe capabilities/);
     assert.match(html, /Analytics &amp; Webhooks|Analytics & Webhooks/);
     assert.match(html, /Tailored Industry Solutions/);
+    for (const id of [
+      'unified-inbox', 'mpesa-stk', 'markcopilot',
+      'automation-routing', 'contact-crm', 'help-center', 'analytics-webhooks',
+    ]) {
+      assert.match(html, new RegExp('data-mc-capability-frame="' + id + '"'));
+    }
     assert.match(html, /Core subscription plans/);
     assert.match(html, /Frequently Asked Questions/);
   });
