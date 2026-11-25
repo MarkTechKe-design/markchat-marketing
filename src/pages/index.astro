@@ -103,7 +103,7 @@ for (const feature of publishedFeatures) {
   }
 }
 
-const capabilities = [
+const capabilities = ([
   {
     id: 'unified-inbox',
     title: 'Unified Inbox',
@@ -157,7 +157,7 @@ const capabilities = [
     icon: 'lucide:chart-no-axes-combined',
     href: '/integrations/developer-api-webhooks',
   },
-].map((feature) => {
+] as const).map((feature) => {
   // Keep the historical SVG registry intact for older CMS consumers, but never render it
   // in the homepage bento. Use an approved published feature image when available.
   const illustration = communityIllustrations.find((item) => item.id === feature.id)?.path;
