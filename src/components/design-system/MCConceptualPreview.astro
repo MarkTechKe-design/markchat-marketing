@@ -1,106 +1,212 @@
 ---
 /**
- * Concept illustration only; no real chats, transactions, or dashboards.
- * Replaced by CMS-approved/verified Core screenshots via the hero and workbench.
+ * Product-like static UI examples, NOT screenshots, live activity or transactions.
+ * No customer identifiers, external resources or network requests.
  */
+import { Icon } from 'astro-icon/components';
+
+export type ConceptKind =
+  | 'inbox'
+  | 'mpesa'
+  | 'markcopilot'
+  | 'automation-routing'
+  | 'contact-crm'
+  | 'help-center'
+  | 'analytics-webhooks';
+
 interface Props {
-  kind?: 'inbox' | 'mpesa' | 'markcopilot';
+  kind?: ConceptKind;
   class?: string;
 }
 const { kind = 'inbox', class: className = '' } = Astro.props;
+const smallIcon = 'h-3.5 w-3.5 shrink-0';
 ---
 
 <div
   data-mc-conceptual-product
-  class:list={['overflow-hidden rounded-xl border border-border bg-background', className]}
+  data-mc-ui-kind={kind}
+  class:list={['min-w-0 overflow-hidden rounded-xl border border-border bg-surface-elevated', className]}
   role="img"
-  aria-label={'Conceptual ' + kind + ' workflow illustration, using synthetic example content'}
+  aria-label={'Conceptual ' + kind + ' interface, using fictional demonstration data'}
 >
   {
-    kind === 'inbox' ? (
-      <div class="min-w-0 overflow-hidden rounded-lg bg-[#171717] p-2 text-neutral-100 sm:p-3">
-        <div class="flex items-center justify-between border-b border-neutral-700 px-2 pb-3">
-          <div class="flex items-center gap-2 text-xs font-semibold">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-primary font-black">
-              M
-            </span>
+    kind === 'inbox' && (
+      <div class="flex h-full min-h-60 flex-col bg-[#171717] text-neutral-100">
+        <div class="flex items-center justify-between border-b border-neutral-700 px-4 py-3">
+          <div class="flex items-center gap-2 text-[11px] font-bold">
+            <span class="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-white">M</span>
             MarkChat <span class="font-normal text-neutral-400">/ Shared inbox</span>
           </div>
-          <span class="flex items-center gap-1 text-[10px] text-neutral-300">
-            <span class="h-1.5 w-1.5 rounded-full bg-primary" /> Demo workspace
+          <span class="flex items-center gap-1 text-[10px] text-neutral-400">
+            <span class="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Demo workspace
           </span>
         </div>
-        <div class="grid min-h-60 min-w-0 grid-cols-[minmax(0,31%)_minmax(0,69%)]">
-          <div class="space-y-2 border-r border-neutral-700 py-3 pr-2">
-            <p class="px-2 text-[10px] font-bold tracking-wider text-neutral-400">CONVERSATIONS</p>
-            <div class="rounded-md bg-neutral-700 px-2 py-2">
-              <p class="truncate text-xs font-semibold">Demo shopper</p>
-              <p class="mt-1 truncate text-[10px] text-neutral-300">Is this available?</p>
+        <div class="grid min-h-52 flex-1 grid-cols-[minmax(0,31%)_minmax(0,1fr)]">
+          <div class="space-y-2 border-r border-neutral-700 p-2 sm:p-3">
+            <p class="truncate text-[9px] font-bold uppercase tracking-wider text-neutral-400">Conversations</p>
+            <div class="rounded-lg border border-neutral-600 bg-neutral-700 p-2">
+              <p class="truncate text-[11px] font-semibold">Demo shopper</p>
+              <p class="mt-1 truncate text-[10px] text-neutral-300">WhatsApp · Available?</p>
             </div>
-            <div class="px-2 py-2">
-              <p class="truncate text-xs font-semibold">Example customer</p>
-              <p class="mt-1 truncate text-[10px] text-neutral-400">Thank you!</p>
+            <div class="rounded-lg p-2">
+              <p class="truncate text-[11px] font-semibold">Sample visitor</p>
+              <p class="mt-1 truncate text-[10px] text-neutral-400">Web chat · Delivery</p>
+            </div>
+            <div class="hidden rounded-lg p-2 sm:block">
+              <p class="truncate text-[11px] font-semibold">Example buyer</p>
+              <p class="mt-1 truncate text-[10px] text-neutral-400">Instagram · Thanks!</p>
             </div>
           </div>
-          <div class="flex min-w-0 flex-col justify-between p-3">
+          <div class="flex min-w-0 flex-col justify-between gap-3 p-3">
             <div>
-              <div class="flex items-center justify-between border-b border-neutral-700 pb-3">
-                <span class="text-xs font-semibold">Demo shopper</span>
-                <span class="rounded-md border border-neutral-600 px-2 py-1 text-[10px]">
-                  Assigned
-                </span>
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-700 pb-3">
+                <span class="text-[11px] font-semibold">Demo shopper</span>
+                <span class="rounded-md border border-neutral-600 px-2 py-1 text-[9px]">Assigned · Sales</span>
               </div>
-              <div class="mt-5 max-w-[85%] rounded-xl rounded-tl-sm bg-neutral-700 p-3 text-xs leading-relaxed">
-                Hi, can I check availability before ordering?
+              <div class="mt-4 max-w-[90%] rounded-lg bg-neutral-700 p-3 text-[11px] leading-relaxed">
+                Hi, is the item available for delivery?
               </div>
-              <div class="ml-auto mt-3 max-w-[85%] rounded-xl rounded-tr-sm bg-primary p-3 text-xs leading-relaxed text-white">
-                Yes! Let me help with the options.
+              <div class="ml-auto mt-2 max-w-[90%] rounded-lg bg-primary p-3 text-[11px] leading-relaxed text-white">
+                Yes! I can help you with the options.
+              </div>
+              <div class="mt-3 flex items-center gap-1 text-[9px] text-neutral-400">
+                <Icon name="lucide:contact" class={smallIcon} />
+                Customer context · New inquiry
               </div>
             </div>
-            <div class="mt-5 flex items-center justify-between rounded-lg border border-neutral-600 bg-neutral-800 p-3 text-[11px] text-neutral-400">
-              <>
-                <span>Write a reply...</span>
-                <span class="font-semibold text-neutral-200">Send ↗</span>
-              </>
+            <div class="flex items-center justify-between rounded-md border border-neutral-600 bg-neutral-800 px-3 py-2 text-[10px] text-neutral-400">
+              <span>Write a reply…</span><span class="font-semibold text-neutral-200">Send</span>
             </div>
           </div>
         </div>
       </div>
-    ) : kind === 'mpesa' ? (
-      <div class="p-5">
-        <div class="mb-5 flex flex-wrap items-center justify-between gap-2">
-          <p class="text-xs font-bold text-text">M-Pesa checkout</p>
-          <span class="rounded-md bg-primary/10 px-2 py-1 text-[10px] font-semibold text-primary">
-            Demo only
-          </span>
+    )
+  }
+  {
+    kind === 'mpesa' && (
+      <div class="flex h-full flex-col gap-3 p-4 sm:p-5">
+        <div class="flex items-center justify-between gap-2 border-b border-border pb-3">
+          <div class="flex items-center gap-2 text-xs font-bold text-text">
+            <Icon name="lucide:wallet" class="h-4 w-4 text-primary" /> M-Pesa checkout
+          </div>
+          <span class="rounded-md border border-border bg-surface px-2 py-1 text-[9px] text-text-muted">Demo</span>
         </div>
-        <div class="rounded-xl border border-border bg-surface p-4">
-          <p class="text-xs text-text-muted">Example merchant checkout</p>
-          <p class="mt-2 text-3xl font-bold text-text">KES 2,500</p>
-          <div class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4">
-            <span class="text-xs text-text-muted">STK request</span>
-            <span class="text-xs font-semibold text-primary">Awaiting approval</span>
+        <div class="rounded-lg border border-border bg-surface p-3">
+          <p class="text-[10px] text-text-muted">Example command</p>
+          <p class="mt-1 font-mono text-xs font-semibold text-text">/stk 2500 07••••••••</p>
+          <div class="mt-3 flex justify-between border-t border-border pt-3 text-xs">
+            <span class="text-text-muted">Customer prompt</span><strong class="text-text">KES 2,500</strong>
           </div>
         </div>
-        <p class="mt-3 break-words text-xs leading-relaxed text-text-muted">
-          Provider verification required for real payments.
-        </p>
+        <div class="mt-auto flex items-center gap-2 rounded-lg border border-border bg-background p-3 text-[11px]">
+          <Icon name="lucide:check-circle-2" class="h-4 w-4 shrink-0 text-primary" />
+          <span class="text-text">Demo callback received · Verified example</span>
+        </div>
       </div>
-    ) : (
-      <div class="p-5">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <span class="font-semibold text-text">Markcopilot AI</span>
-          <span class="rounded-md border border-border px-2 py-1 text-[10px] text-text-muted">
-            Suggestion
+    )
+  }
+  {
+    kind === 'markcopilot' && (
+      <div class="flex h-full flex-col gap-3 p-4 sm:p-5">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <div class="flex items-center gap-2 text-xs font-bold text-text">
+            <Icon name="lucide:sparkles" class="h-4 w-4 text-primary" /> Markcopilot AI
+          </div>
+          <span class="text-[10px] text-text-muted">Draft · Demo</span>
+        </div>
+        <p class="text-[10px] text-text-muted">Suggested reply for agent review</p>
+        <div class="rounded-lg border border-border bg-surface p-3 text-[11px] leading-relaxed text-text">
+          Hello! The item is available. Would you like delivery details?
+        </div>
+        <div class="mt-auto flex flex-wrap items-center justify-between gap-2">
+          <span class="text-[10px] text-text-muted">Human-controlled reply</span>
+          <span class="rounded-lg border border-primary bg-primary px-3 py-2 text-[10px] font-semibold text-white">
+            Review before sending
           </span>
         </div>
-        <p class="mt-5 text-xs text-text-muted">Suggested response · example only</p>
-        <div class="mt-3 rounded-lg border border-border bg-surface p-4 text-sm leading-relaxed text-text">
-          Hello! I can help you with availability, delivery, and checkout information.
+      </div>
+    )
+  }
+  {
+    kind === 'automation-routing' && (
+      <div class="flex h-full flex-col gap-3 p-4 sm:p-5">
+        <div class="flex items-center gap-2 border-b border-border pb-3 text-xs font-bold text-text">
+          <Icon name="lucide:workflow" class="h-4 w-4 text-primary" /> Automation rules
         </div>
-        <span class="mt-4 inline-flex rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white">
-          Review before sending
-        </span>
+        <div class="rounded-lg border border-border bg-surface p-3">
+          <p class="text-[10px] font-semibold uppercase tracking-wider text-text-muted">Example rule · Enabled</p>
+          <div class="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
+            <span class="rounded-md border border-border bg-background px-2 py-1 text-text">New inquiry</span>
+            <Icon name="lucide:arrow-right" class={smallIcon} />
+            <span class="rounded-md border border-border bg-background px-2 py-1 text-text">Assign Sales</span>
+          </div>
+          <p class="mt-3 text-[10px] text-text-muted">Condition: Channel = WhatsApp</p>
+        </div>
+      </div>
+    )
+  }
+  {
+    kind === 'contact-crm' && (
+      <div class="flex h-full flex-col gap-3 p-4 sm:p-5">
+        <div class="flex items-center gap-2 border-b border-border pb-3 text-xs font-bold text-text">
+          <Icon name="lucide:contact-round" class="h-4 w-4 text-primary" /> Contact workspace
+        </div>
+        <div class="rounded-lg border border-border bg-surface p-3">
+          <div class="flex items-center gap-3">
+            <span class="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-xs font-bold text-primary">DS</span>
+            <div>
+              <p class="text-xs font-bold text-text">Demo shopper</p>
+              <p class="text-[10px] text-text-muted">Example contact · Nairobi</p>
+            </div>
+          </div>
+          <div class="mt-3 grid grid-cols-2 gap-2 border-t border-border pt-3 text-[10px]">
+            <span class="text-text-muted">Last channel</span><strong class="text-right text-text">WhatsApp</strong>
+            <span class="text-text-muted">Assigned to</span><strong class="text-right text-text">Sales team</strong>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  {
+    kind === 'help-center' && (
+      <div class="flex h-full flex-col gap-2 p-4 sm:p-5">
+        <div class="flex items-center gap-2 border-b border-border pb-3 text-xs font-bold text-text">
+          <Icon name="lucide:book-open" class="h-4 w-4 text-primary" /> Help center
+        </div>
+        {
+          ['How do I track an order?', 'Payment options in Kenya', 'Delivery and returns'].map((article) => (
+            <div class="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2.5">
+              <span class="truncate text-[11px] text-text">{article}</span>
+              <Icon name="lucide:chevron-right" class={smallIcon + ' text-text-muted'} />
+            </div>
+          ))
+        }
+      </div>
+    )
+  }
+  {
+    kind === 'analytics-webhooks' && (
+      <div class="flex h-full flex-col gap-3 p-4 sm:p-5">
+        <div class="flex items-center justify-between border-b border-border pb-3">
+          <span class="flex items-center gap-2 text-xs font-bold text-text">
+            <Icon name="lucide:chart-no-axes-combined" class="h-4 w-4 text-primary" /> Activity & webhooks
+          </span>
+          <span class="text-[9px] text-text-muted">Illustrative</span>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-lg border border-border bg-surface p-3">
+            <p class="text-[10px] text-text-muted">Median response</p>
+            <p class="mt-1 text-xl font-bold text-text">4m</p>
+          </div>
+          <div class="rounded-lg border border-border bg-surface p-3">
+            <p class="text-[10px] text-text-muted">Demo events</p>
+            <p class="mt-1 text-xl font-bold text-text">24</p>
+          </div>
+        </div>
+        <div class="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-[10px]">
+          <span class="text-text-muted">conversation.updated</span>
+          <span class="font-semibold text-primary">Delivered · Demo</span>
+        </div>
       </div>
     )
   }
