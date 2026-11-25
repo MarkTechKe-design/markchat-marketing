@@ -224,7 +224,7 @@ const bridgeApiUrl = import.meta.env.PUBLIC_BRIDGE_API_URL || 'http://localhost:
             sessionStorage.setItem('markchat_admin_token', token);
             const requested = urlParams.get('redirect');
             const allowed = requested && !requested.startsWith('//') &&
-              /^\\/(?:_cms\\/)?dashboard(?:\\/|\\?|$)/.test(requested);
+              /^\/(?:_cms\/)?dashboard(?:\/|\?|$)/.test(requested);
             let destination = allowed ? requested : '/dashboard';
             if (mounted && !destination.startsWith('/_cms/')) destination = '/_cms' + destination;
             if (!mounted && destination.startsWith('/_cms/')) destination = destination.slice(5);
