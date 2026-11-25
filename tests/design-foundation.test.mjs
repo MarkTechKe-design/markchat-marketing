@@ -323,3 +323,23 @@ test('Responsive editorial media preserves the design system and no-overlap hier
   assert.doesNotMatch(hero, /-mt-12|-mt-16|-mt-20/);
   assert.doesNotMatch(renderer + hero, /radial-gradient|backdrop-blur|blur-3xl/);
 });
+
+test('homepage capabilities use seven CMS-first product UI panels', () => {
+  const bento = read('src/components/design-system/MCFeatureBento.astro');
+  const card = read('src/components/design-system/MCFeatureCard.astro');
+  const concept = read('src/components/design-system/MCConceptualPreview.astro');
+  const index = read('src/pages/index.astro');
+  const assets = read('src/data/product-assets.ts');
+  assert.match(bento, /<MCFeatureCard/);
+  assert.match(bento, /features\.slice\(3\)/);
+  assert.match(card, /resolvePublishedFeatureMedia\(feature\.cmsMedia\)/);
+  assert.match(card, /data-mc-feature-fallback/);
+  assert.match(card, /aspect-\[16\/10\]/);
+  assert.match(card, /aspect-\[16\/9\]/);
+  assert.match(assets, /media\?\.status === 'published'/);
+  assert.match(index, /cmsMedia: published/);
+  assert.doesNotMatch(bento, /feature\.illustration/);
+  for (const kind of ['inbox', 'mpesa', 'markcopilot', 'automation-routing', 'contact-crm', 'help-center', 'analytics-webhooks']) {
+    assert.ok(concept.includes("kind === '" + kind + "'"), 'Missing preview: ' + kind);
+  }
+});
