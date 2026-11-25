@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import type { HeroMediaPage, HeroMediaSettings } from '@/lib/types';
 import { normalizeHeroMedia } from '@/lib/hero-media';
+import MCConceptualPreview from './MCConceptualPreview.astro';
 
 interface Props {
   page: HeroMediaPage;
@@ -38,7 +39,37 @@ const scrims = {
 };
 const framed = presentation === 'framed';
 const focalClass = focalPoint === 'right' ? 'object-right' : 'object-center';
+const productLayouts = {
+  homepage: ['inbox', 'mpesa', 'markcopilot'],
+  features: ['inbox', 'automation-routing', 'analytics-webhooks'],
+  markcopilot: ['markcopilot', 'inbox', 'help-center'],
+  integrations: ['inbox', 'mpesa', 'automation-routing'],
+  solutions: ['inbox', 'contact-crm', 'help-center'],
+  about: ['inbox', 'markcopilot', 'mpesa'],
+} as const;
+const previewKinds = productLayouts[page];
 ---
+
+{
+  !image && framed && (
+    <figure
+      data-mc-layered-hero
+      data-hero-media-page={page}
+      class:list={['overflow-hidden rounded-xl border border-border bg-surface p-3 sm:p-4', className]}
+    >
+      <div class="grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
+        <MCConceptualPreview kind={previewKinds[0]} class="min-h-52" />
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+          <MCConceptualPreview kind={previewKinds[1]} />
+          <MCConceptualPreview kind={previewKinds[2]} />
+        </div>
+      </div>
+      <figcaption class="mt-3 text-right text-xs text-text-muted">
+        Conceptual product preview
+      </figcaption>
+    </figure>
+  )
+}
 
 {
   image && (
