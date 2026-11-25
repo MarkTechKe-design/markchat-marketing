@@ -388,6 +388,9 @@ const controlPlaneUrl =
         const errJson = await res.json().catch(() => ({}));
         let message =
           errJson.message || 'Unable to initialize checkout. Please ensure you are logged in.';
+        if (res.status === 403 && (chosenPlan === 'growth' || chosenPlan === 'scale')) {
+          message = 'Plan upgrades require MarkChat Super Admin approval. Your current plan has not changed and no upgrade payment was taken.';
+        }
         if (res.status === 401) {
           message = 'Please sign in to your workspace before initializing payment.';
           setTimeout(() => {
