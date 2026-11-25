@@ -39,6 +39,29 @@ describe('Batch 9: Paystack Billing Portal & Payment Return Integration', () => 
     assert.match(src, /billing\/return/, 'Must configure return callback URL');
   });
 
+  test('Growth and Scale ingress denial redirects pre-select tier and show upgrade context', () => {
+    const src = fs.readFileSync(billingPagePath, 'utf8');
+    assert.ok(src.includes("intent.get('plan')"));
+    assert.ok(src.includes("['starter', 'growth', 'scale'].includes(chosenPlan)"));
+    assert.ok(src.includes('if (radio) radio.checked = true'));
+    assert.ok(src.includes("chosenPlan === 'growth' || chosenPlan === 'scale'"));
+    assert.ok(src.includes('billing-upgrade-context'));
+    assert.ok(src.includes('Upgrade to '));
+  });
+
+  test('KES 82 verification return waits for provisioning before showing success', () => {
+    const src = fs.readFileSync(returnPagePath, 'utf8');
+    assert.ok(src.includes('markchat_verification_pending'));
+    assert.ok(src.includes("tx.purpose !== 'account_verification'"));
+    assert.ok(src.includes('tx.amountKesCents !== 8200'));
+    assert.ok(src.includes("statusData?.status === 'completed'"));
+    assert.ok(src.includes("statusData?.status === 'failed'"));
+    assert.ok(src.includes('state-pending'));
+    assert.ok(src.includes("tx.purpose !== 'subscription'"));
+    assert.ok(!src.includes('launchBtn.href = tx.ssoUrl'));
+    assert.ok(!src.includes("stateSuccess?.classList.remove('hidden');\n        if (receiptRef) receiptRef.textContent = reference"));
+  });
+
   test('Payment return page verifies reference and facilitates Chatwoot launch', () => {
     const src = fs.readFileSync(returnPagePath, 'utf8');
 
