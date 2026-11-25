@@ -107,8 +107,8 @@ export interface FeaturesPageSettings {
 
 export interface HomepageHeroSettings {
   badge: string;
-    /** Responsive editorial media overrides, independently optional for old API clients. */
-    heroMedia?: Partial<HeroMediaSettings>;
+  /** Responsive editorial media overrides, independently optional for old API clients. */
+  heroMedia?: Partial<HeroMediaSettings>;
   title: string;
   subtitle: string;
   primaryCtaLabel: string;
@@ -2943,7 +2943,6 @@ export async function fetchFeatureBySlug(slug: string): Promise<MarketingFeature
   return allFeatures.find((f) => f.slug === slug && f.status === 'published') || null;
 }
 
-
 /** Existing CMS bridge can optionally implement /api/public/hero-media/:page
  * and /api/admin/cms/hero-media/:page without changing existing endpoints.
  * Until then, the bundled default is safe for static builds and browser-local
@@ -2973,7 +2972,11 @@ export async function updateHeroMediaSettings(
   page: HeroMediaPage,
   provided: Partial<HeroMediaSettings>
 ): Promise<HeroMediaSettings> {
-  const normalized = normalizeHeroMedia(page, provided, import.meta.env.PUBLIC_CMS_MEDIA_HOST || '');
+  const normalized = normalizeHeroMedia(
+    page,
+    provided,
+    import.meta.env.PUBLIC_CMS_MEDIA_HOST || ''
+  );
   const current = getLocalItem<Partial<Record<HeroMediaPage, HeroMediaSettings>>>(
     STORAGE_KEYS.editorial_hero_settings,
     {}
@@ -2990,7 +2993,9 @@ export async function updateHeroMediaSettings(
     });
     if (!response.ok) {
       // Local-only editor fallback is intentionally not described as a published save.
-      console.warn('[MarkChat CMS] Hero media saved only in this browser; publishing requires a compatible CMS bridge.');
+      console.warn(
+        '[MarkChat CMS] Hero media saved only in this browser; publishing requires a compatible CMS bridge.'
+      );
     }
   } catch {
     // Preserve existing localStorage fallback behavior. No false publish confirmation.
@@ -3048,13 +3053,22 @@ export async function fetchFeaturesSettings(): Promise<FeaturesPageSettings> {
     });
     if (res.ok) {
       const data: FeaturesPageSettings = await res.json();
-      return { ...data, hero: { ...data.hero, heroMedia: normalizeHeroMedia('features', data.hero?.heroMedia) } };
+      return {
+        ...data,
+        hero: { ...data.hero, heroMedia: normalizeHeroMedia('features', data.hero?.heroMedia) },
+      };
     }
   } catch {
     // Fallback
   }
-  const local = getLocalItem<FeaturesPageSettings>(STORAGE_KEYS.features_settings, DEFAULT_FEATURES_SETTINGS);
-  return { ...local, hero: { ...local.hero, heroMedia: normalizeHeroMedia('features', local.hero?.heroMedia) } };
+  const local = getLocalItem<FeaturesPageSettings>(
+    STORAGE_KEYS.features_settings,
+    DEFAULT_FEATURES_SETTINGS
+  );
+  return {
+    ...local,
+    hero: { ...local.hero, heroMedia: normalizeHeroMedia('features', local.hero?.heroMedia) },
+  };
 }
 
 /**
@@ -3091,13 +3105,22 @@ export async function fetchHomepageSettings(): Promise<HomepageSettings> {
     });
     if (res.ok) {
       const data: HomepageSettings = await res.json();
-      return { ...data, hero: { ...data.hero, heroMedia: normalizeHeroMedia('homepage', data.hero?.heroMedia) } };
+      return {
+        ...data,
+        hero: { ...data.hero, heroMedia: normalizeHeroMedia('homepage', data.hero?.heroMedia) },
+      };
     }
   } catch {
     // Fallback
   }
-  const local = getLocalItem<HomepageSettings>(STORAGE_KEYS.homepage_settings, DEFAULT_HOMEPAGE_SETTINGS);
-  return { ...local, hero: { ...local.hero, heroMedia: normalizeHeroMedia('homepage', local.hero?.heroMedia) } };
+  const local = getLocalItem<HomepageSettings>(
+    STORAGE_KEYS.homepage_settings,
+    DEFAULT_HOMEPAGE_SETTINGS
+  );
+  return {
+    ...local,
+    hero: { ...local.hero, heroMedia: normalizeHeroMedia('homepage', local.hero?.heroMedia) },
+  };
 }
 
 /**
@@ -3114,13 +3137,22 @@ export async function adminFetchHomepageSettings(): Promise<HomepageSettings> {
     });
     if (res.ok) {
       const data: HomepageSettings = await res.json();
-      return { ...data, hero: { ...data.hero, heroMedia: normalizeHeroMedia('homepage', data.hero?.heroMedia) } };
+      return {
+        ...data,
+        hero: { ...data.hero, heroMedia: normalizeHeroMedia('homepage', data.hero?.heroMedia) },
+      };
     }
   } catch {
     // Fallback
   }
-  const local = getLocalItem<HomepageSettings>(STORAGE_KEYS.homepage_settings, DEFAULT_HOMEPAGE_SETTINGS);
-  return { ...local, hero: { ...local.hero, heroMedia: normalizeHeroMedia('homepage', local.hero?.heroMedia) } };
+  const local = getLocalItem<HomepageSettings>(
+    STORAGE_KEYS.homepage_settings,
+    DEFAULT_HOMEPAGE_SETTINGS
+  );
+  return {
+    ...local,
+    hero: { ...local.hero, heroMedia: normalizeHeroMedia('homepage', local.hero?.heroMedia) },
+  };
 }
 
 /**
@@ -3134,13 +3166,27 @@ export async function fetchMarkcopilotSettings(): Promise<MarkcopilotPageSetting
     });
     if (res.ok) {
       const data: MarkcopilotPageSettings = await res.json();
-      return { ...DEFAULT_MARKCOPILOT_SETTINGS, ...data, hero: { ...DEFAULT_MARKCOPILOT_SETTINGS.hero, ...data.hero, heroMedia: normalizeHeroMedia('markcopilot', data.hero?.heroMedia) } };
+      return {
+        ...DEFAULT_MARKCOPILOT_SETTINGS,
+        ...data,
+        hero: {
+          ...DEFAULT_MARKCOPILOT_SETTINGS.hero,
+          ...data.hero,
+          heroMedia: normalizeHeroMedia('markcopilot', data.hero?.heroMedia),
+        },
+      };
     }
   } catch {
     // Fallback
   }
-  const local = getLocalItem<MarkcopilotPageSettings>(STORAGE_KEYS.markcopilot_settings, DEFAULT_MARKCOPILOT_SETTINGS);
-  return { ...local, hero: { ...local.hero, heroMedia: normalizeHeroMedia('markcopilot', local.hero?.heroMedia) } };
+  const local = getLocalItem<MarkcopilotPageSettings>(
+    STORAGE_KEYS.markcopilot_settings,
+    DEFAULT_MARKCOPILOT_SETTINGS
+  );
+  return {
+    ...local,
+    hero: { ...local.hero, heroMedia: normalizeHeroMedia('markcopilot', local.hero?.heroMedia) },
+  };
 }
 
 /**
@@ -3157,13 +3203,27 @@ export async function adminFetchMarkcopilotSettings(): Promise<MarkcopilotPageSe
     });
     if (res.ok) {
       const data: MarkcopilotPageSettings = await res.json();
-      return { ...DEFAULT_MARKCOPILOT_SETTINGS, ...data, hero: { ...DEFAULT_MARKCOPILOT_SETTINGS.hero, ...data.hero, heroMedia: normalizeHeroMedia('markcopilot', data.hero?.heroMedia) } };
+      return {
+        ...DEFAULT_MARKCOPILOT_SETTINGS,
+        ...data,
+        hero: {
+          ...DEFAULT_MARKCOPILOT_SETTINGS.hero,
+          ...data.hero,
+          heroMedia: normalizeHeroMedia('markcopilot', data.hero?.heroMedia),
+        },
+      };
     }
   } catch {
     // Fallback
   }
-  const local = getLocalItem<MarkcopilotPageSettings>(STORAGE_KEYS.markcopilot_settings, DEFAULT_MARKCOPILOT_SETTINGS);
-  return { ...local, hero: { ...local.hero, heroMedia: normalizeHeroMedia('markcopilot', local.hero?.heroMedia) } };
+  const local = getLocalItem<MarkcopilotPageSettings>(
+    STORAGE_KEYS.markcopilot_settings,
+    DEFAULT_MARKCOPILOT_SETTINGS
+  );
+  return {
+    ...local,
+    hero: { ...local.hero, heroMedia: normalizeHeroMedia('markcopilot', local.hero?.heroMedia) },
+  };
 }
 
 /**
@@ -4047,7 +4107,11 @@ export async function updateFeaturesSettings(
   const updated: FeaturesPageSettings = {
     ...current,
     ...settings,
-    hero: { ...current.hero, ...(settings.hero || {}), heroMedia: normalizeHeroMedia('features', settings.hero?.heroMedia ?? current.hero.heroMedia) },
+    hero: {
+      ...current.hero,
+      ...(settings.hero || {}),
+      heroMedia: normalizeHeroMedia('features', settings.hero?.heroMedia ?? current.hero.heroMedia),
+    },
     developerSection: { ...current.developerSection, ...(settings.developerSection || {}) },
     markcopilotSection: { ...current.markcopilotSection, ...(settings.markcopilotSection || {}) },
     closingCta: { ...current.closingCta, ...(settings.closingCta || {}) },
@@ -4085,7 +4149,11 @@ export async function updateHomepageSettings(
   const updated: HomepageSettings = {
     ...current,
     ...settings,
-    hero: { ...current.hero, ...(settings.hero || {}), heroMedia: normalizeHeroMedia('homepage', settings.hero?.heroMedia ?? current.hero.heroMedia) },
+    hero: {
+      ...current.hero,
+      ...(settings.hero || {}),
+      heroMedia: normalizeHeroMedia('homepage', settings.hero?.heroMedia ?? current.hero.heroMedia),
+    },
     sections: { ...current.sections, ...(settings.sections || {}) },
     closingCta: { ...current.closingCta, ...(settings.closingCta || {}) },
     updatedAt: new Date().toISOString(),
@@ -4122,7 +4190,14 @@ export async function updateMarkcopilotSettings(
   const updated: MarkcopilotPageSettings = {
     ...current,
     ...settings,
-    hero: { ...current.hero, ...(settings.hero || {}), heroMedia: normalizeHeroMedia('markcopilot', settings.hero?.heroMedia ?? current.hero.heroMedia) },
+    hero: {
+      ...current.hero,
+      ...(settings.hero || {}),
+      heroMedia: normalizeHeroMedia(
+        'markcopilot',
+        settings.hero?.heroMedia ?? current.hero.heroMedia
+      ),
+    },
     introduction: { ...current.introduction, ...(settings.introduction || {}) },
     howItWorks: { ...current.howItWorks, ...(settings.howItWorks || {}) },
     video: { ...current.video, ...(settings.video || {}) },

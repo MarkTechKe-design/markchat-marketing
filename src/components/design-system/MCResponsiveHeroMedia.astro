@@ -22,10 +22,14 @@ const {
 const media = normalizeHeroMedia(page, settings, import.meta.env.PUBLIC_CMS_MEDIA_HOST || '');
 const isBundled = (url: string) =>
   url.startsWith('/media/') ? existsSync(path.join(process.cwd(), 'public', url.slice(1))) : true;
-const desktop = media.heroBackgroundImageUrl && isBundled(media.heroBackgroundImageUrl)
-  ? media.heroBackgroundImageUrl : '';
-const mobile = media.heroBackgroundMobileImageUrl && isBundled(media.heroBackgroundMobileImageUrl)
-  ? media.heroBackgroundMobileImageUrl : '';
+const desktop =
+  media.heroBackgroundImageUrl && isBundled(media.heroBackgroundImageUrl)
+    ? media.heroBackgroundImageUrl
+    : '';
+const mobile =
+  media.heroBackgroundMobileImageUrl && isBundled(media.heroBackgroundMobileImageUrl)
+    ? media.heroBackgroundMobileImageUrl
+    : '';
 const image = media.heroMediaMode === 'layered-preview' ? '' : desktop || mobile;
 const scrims = {
   subtle: 'bg-stone-100/55 dark:bg-neutral-900/60',
@@ -65,7 +69,12 @@ const focalClass = focalPoint === 'right' ? 'object-right' : 'object-center';
           data-editorial-picture
         />
       </picture>
-      {(presentation === 'backdrop' || media.heroMediaMode === 'editorial-backdrop') && <div class:list={['absolute inset-0', scrims[media.heroScrimStrength]]} aria-hidden="true" />}
+      {(presentation === 'backdrop' || media.heroMediaMode === 'editorial-backdrop') && (
+        <div
+          class:list={['absolute inset-0', scrims[media.heroScrimStrength]]}
+          aria-hidden="true"
+        />
+      )}
       {framed && (
         <figcaption class="relative border-t border-border bg-background px-4 py-2 text-xs text-text-muted">
           Editorial illustration · not a screenshot of MarkChat software
@@ -77,10 +86,11 @@ const focalClass = focalPoint === 'right' ? 'object-right' : 'object-center';
 
 <script>
   function initEditorialHeroMedia() {
-    document.querySelectorAll<HTMLImageElement>('[data-editorial-picture]').forEach(image => {
+    document.querySelectorAll<HTMLImageElement>('[data-editorial-picture]').forEach((image) => {
       if (image.dataset.errorBound) return;
       image.dataset.errorBound = 'true';
-      const fail = () => image.closest<HTMLElement>('[data-mc-responsive-hero]')?.classList.add('hidden');
+      const fail = () =>
+        image.closest<HTMLElement>('[data-mc-responsive-hero]')?.classList.add('hidden');
       image.addEventListener('error', fail);
       if (image.complete && !image.naturalWidth) fail();
     });

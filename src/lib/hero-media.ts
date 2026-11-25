@@ -5,7 +5,12 @@
 import type { HeroMediaPage, HeroMediaSettings, HeroMediaMode, HeroScrimStrength } from './types';
 
 export const HERO_MEDIA_PAGES: HeroMediaPage[] = [
-  'homepage', 'features', 'markcopilot', 'integrations', 'solutions', 'about',
+  'homepage',
+  'features',
+  'markcopilot',
+  'integrations',
+  'solutions',
+  'about',
 ];
 
 const preset = (file: string) => '/media/editorial/' + file;
@@ -33,7 +38,8 @@ export const DEFAULT_HERO_MEDIA: Record<HeroMediaPage, HeroMediaSettings> = {
   markcopilot: {
     heroBackgroundImageUrl: preset('ai-whatsapp-bot-concept-desktop.webp'),
     heroBackgroundMobileImageUrl: preset('ai-whatsapp-bot-concept-mobile.webp'),
-    heroBackgroundAlt: 'Concept illustration of a friendly messaging assistant, not actual MarkChat software',
+    heroBackgroundAlt:
+      'Concept illustration of a friendly messaging assistant, not actual MarkChat software',
     heroMediaMode: 'hybrid',
     heroScrimStrength: 'medium',
   },
@@ -70,7 +76,6 @@ function isControlCharacter(char: string): boolean {
   return code < 32 || code === 127;
 }
 
-
 export function sanitizeHeroMediaUrl(input: unknown, extraTrustedHost = ''): string {
   if (typeof input !== 'string') return '';
   const value = input.trim();
@@ -78,16 +83,22 @@ export function sanitizeHeroMediaUrl(input: unknown, extraTrustedHost = ''): str
     !value ||
     value.length > 2048 ||
     Array.from(value).some((char) => char === '\\' || isControlCharacter(char))
-  ) return '';
+  )
+    return '';
   if (value.startsWith('/')) {
-    if (!safeLocal.test(value) || value.includes('//') || value.split('/').some(x => x === '..' || x === '.')) {
+    if (
+      !safeLocal.test(value) ||
+      value.includes('//') ||
+      value.split('/').some((x) => x === '..' || x === '.')
+    ) {
       return '';
     }
     return value;
   }
   try {
     const url = new URL(value);
-    if (url.protocol !== 'https:' || url.username || url.password || url.hash || url.port) return '';
+    if (url.protocol !== 'https:' || url.username || url.password || url.hash || url.port)
+      return '';
     if (!/\.(?:avif|webp|png|jpe?g|svg)$/i.test(url.pathname)) return '';
     const hosts = new Set(['markchat.co.ke', 'www.markchat.co.ke']);
     if (extraTrustedHost) {
@@ -115,16 +126,18 @@ export function normalizeHeroMedia(
       raw.heroBackgroundMobileImageUrl,
       extraTrustedHost
     ),
-    heroBackgroundAlt: typeof raw.heroBackgroundAlt === 'string'
-      ? Array.from(raw.heroBackgroundAlt)
-          .filter((char) => char !== '<' && char !== '>' && !isControlCharacter(char))
-          .join('')
-          .trim()
-          .slice(0, 180)
-      : '',
+    heroBackgroundAlt:
+      typeof raw.heroBackgroundAlt === 'string'
+        ? Array.from(raw.heroBackgroundAlt)
+            .filter((char) => char !== '<' && char !== '>' && !isControlCharacter(char))
+            .join('')
+            .trim()
+            .slice(0, 180)
+        : '',
     heroMediaMode: modes.includes(raw.heroMediaMode) ? raw.heroMediaMode : defaults.heroMediaMode,
     heroScrimStrength: scrims.includes(raw.heroScrimStrength)
-      ? raw.heroScrimStrength : defaults.heroScrimStrength,
+      ? raw.heroScrimStrength
+      : defaults.heroScrimStrength,
   };
 }
 

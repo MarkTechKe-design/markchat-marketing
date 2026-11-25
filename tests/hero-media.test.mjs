@@ -26,12 +26,25 @@ test('hero media URLs reject external, protocol-relative, traversal and executab
     assert.equal(sanitizeHeroMediaUrl(value), '', 'Unsafe media URL passed: ' + value);
   }
   assert.equal(sanitizeHeroMediaUrl('/media/editorial/hero.webp'), '/media/editorial/hero.webp');
-  assert.equal(sanitizeHeroMediaUrl('https://markchat.co.ke/media/editorial/hero.webp'), 'https://markchat.co.ke/media/editorial/hero.webp');
-  assert.equal(sanitizeHeroMediaUrl('https://cdn.example.org/photo.webp', 'https://cdn.example.org'), 'https://cdn.example.org/photo.webp');
+  assert.equal(
+    sanitizeHeroMediaUrl('https://markchat.co.ke/media/editorial/hero.webp'),
+    'https://markchat.co.ke/media/editorial/hero.webp'
+  );
+  assert.equal(
+    sanitizeHeroMediaUrl('https://cdn.example.org/photo.webp', 'https://cdn.example.org'),
+    'https://cdn.example.org/photo.webp'
+  );
 });
 
 test('hero media contract roundtrips all six pages with sanitization and defaults', () => {
-  for (const page of ['homepage','features','markcopilot','integrations','solutions','about']) {
+  for (const page of [
+    'homepage',
+    'features',
+    'markcopilot',
+    'integrations',
+    'solutions',
+    'about',
+  ]) {
     const normalized = normalizeHeroMedia(page, {
       heroBackgroundImageUrl: '/media/editorial/photo.webp',
       heroBackgroundMobileImageUrl: '/media/editorial/photo-mobile.webp',
@@ -52,7 +65,7 @@ test('hero media contract roundtrips all six pages with sanitization and default
     assert.equal(invalid.heroBackgroundImageUrl, '');
     assert.equal(invalid.heroBackgroundMobileImageUrl, '');
     assert.doesNotMatch(invalid.heroBackgroundAlt, /[<>]/);
-    assert.ok(['layered-preview','editorial-backdrop','hybrid'].includes(invalid.heroMediaMode));
+    assert.ok(['layered-preview', 'editorial-backdrop', 'hybrid'].includes(invalid.heroMediaMode));
   }
 });
 
@@ -90,8 +103,11 @@ test('admin media editor retains CMS Bearer token and avoids false publish claim
   const editor = readFileSync('src/components/dashboard/MCHeroMediaEditor.astro', 'utf8');
   const cms = readFileSync('src/lib/cms-api.ts', 'utf8');
   for (const field of [
-    'heroBackgroundImageUrl','heroBackgroundMobileImageUrl','heroBackgroundAlt',
-    'heroMediaMode','heroScrimStrength',
+    'heroBackgroundImageUrl',
+    'heroBackgroundMobileImageUrl',
+    'heroBackgroundAlt',
+    'heroMediaMode',
+    'heroScrimStrength',
   ]) {
     assert.match(editor, new RegExp(field));
     assert.match(cms, new RegExp(field + '|HeroMediaSettings'));
@@ -104,5 +120,6 @@ test('admin media editor retains CMS Bearer token and avoids false publish claim
     'src/pages/dashboard/features.astro',
     'src/pages/dashboard/markcopilot.astro',
     'src/pages/dashboard/integrations.astro',
-  ]) assert.match(readFileSync(file, 'utf8'), /MCHeroMediaEditor/);
+  ])
+    assert.match(readFileSync(file, 'utf8'), /MCHeroMediaEditor/);
 });
