@@ -13,62 +13,31 @@ export const HERO_MEDIA_PAGES: HeroMediaPage[] = [
   'about',
 ];
 
-const preset = (file: string) => '/media/editorial/' + file;
-
 /**
- * The files are delivered in the accompanying media package. The renderer
- * checks local file existence at build time, and falls back without a request
- * when an asset has not yet been deployed.
+ * Empty by design: product UI is the default visual, not a bundled illustration.
+ * A published CMS image can still choose a framed or full-bleed presentation.
  */
+const cleanDefault = (): HeroMediaSettings => ({
+  heroBackgroundImageUrl: '',
+  heroBackgroundMobileImageUrl: '',
+  heroBackgroundAlt: '',
+  heroMediaMode: 'layered-preview',
+  heroScrimStrength: 'subtle',
+});
+
 export const DEFAULT_HERO_MEDIA: Record<HeroMediaPage, HeroMediaSettings> = {
-  homepage: {
-    heroBackgroundImageUrl: preset('social-ecosystem-hand-desktop.webp'),
-    heroBackgroundMobileImageUrl: preset('social-ecosystem-hand-mobile.webp'),
-    heroBackgroundAlt: 'Illustration of several social-media channels arranged above a hand',
-    heroMediaMode: 'hybrid',
-    heroScrimStrength: 'medium',
-  },
-  features: {
-    heroBackgroundImageUrl: preset('questions-support-portrait-desktop.webp'),
-    heroBackgroundMobileImageUrl: preset('questions-support-portrait-mobile.webp'),
-    heroBackgroundAlt: 'Illustrative portrait representing a customer seeking answers',
-    heroMediaMode: 'hybrid',
-    heroScrimStrength: 'medium',
-  },
-  markcopilot: {
-    heroBackgroundImageUrl: preset('ai-whatsapp-bot-concept-desktop.webp'),
-    heroBackgroundMobileImageUrl: preset('ai-whatsapp-bot-concept-mobile.webp'),
-    heroBackgroundAlt:
-      'Concept illustration of a friendly messaging assistant, not actual MarkChat software',
-    heroMediaMode: 'hybrid',
-    heroScrimStrength: 'medium',
-  },
-  integrations: {
-    heroBackgroundImageUrl: preset('social-ecosystem-hand-desktop.webp'),
-    heroBackgroundMobileImageUrl: preset('social-ecosystem-hand-mobile.webp'),
-    heroBackgroundAlt: 'Concept illustration of social platforms; logos do not imply endorsement',
-    heroMediaMode: 'hybrid',
-    heroScrimStrength: 'subtle',
-  },
-  solutions: {
-    heroBackgroundImageUrl: preset('questions-support-portrait-desktop.webp'),
-    heroBackgroundMobileImageUrl: preset('questions-support-portrait-mobile.webp'),
-    heroBackgroundAlt: 'Illustration of a customer thinking about a question',
-    heroMediaMode: 'hybrid',
-    heroScrimStrength: 'subtle',
-  },
-  about: {
-    heroBackgroundImageUrl: '',
-    heroBackgroundMobileImageUrl: '',
-    heroBackgroundAlt: '',
-    heroMediaMode: 'editorial-backdrop',
-    heroScrimStrength: 'strong',
-  },
+  homepage: cleanDefault(),
+  features: cleanDefault(),
+  markcopilot: cleanDefault(),
+  integrations: cleanDefault(),
+  solutions: cleanDefault(),
+  about: cleanDefault(),
 };
 
 const modes: HeroMediaMode[] = ['layered-preview', 'editorial-backdrop', 'hybrid'];
 const scrims: HeroScrimStrength[] = ['subtle', 'medium', 'strong'];
 const safeLocal = /^\/media\/[A-Za-z0-9_\-/]+\.(?:avif|webp|png|jpe?g|svg)$/i;
+const retiredEditorial = /\/media\/editorial\/(?:social-ecosystem-hand|ai-whatsapp-bot-concept|questions-support-portrait)(?:-[a-z0-9-]+)?\.(?:webp|png|jpe?g|avif)$/i;
 
 /** Check ASCII controls without a control-character regex (ESLint no-control-regex). */
 function isControlCharacter(char: string): boolean {
@@ -79,6 +48,8 @@ function isControlCharacter(char: string): boolean {
 export function sanitizeHeroMediaUrl(input: unknown, extraTrustedHost = ''): string {
   if (typeof input !== 'string') return '';
   const value = input.trim();
+  // Retire old clipart even when an earlier CMS draft cached its former URL.
+  if (retiredEditorial.test(value)) return '';
   if (
     !value ||
     value.length > 2048 ||
@@ -120,12 +91,12 @@ export function normalizeHeroMedia(
 ): HeroMediaSettings {
   const defaults = DEFAULT_HERO_MEDIA[page];
   const raw = { ...defaults, ...(provided || {}) };
+  const desktop = sanitizeHeroMediaUrl(raw.heroBackgroundImageUrl, extraTrustedHost);
+  const mobile = sanitizeHeroMediaUrl(raw.heroBackgroundMobileImageUrl, extraTrustedHost);
+  const hasPicture = Boolean(desktop || mobile);
   return {
-    heroBackgroundImageUrl: sanitizeHeroMediaUrl(raw.heroBackgroundImageUrl, extraTrustedHost),
-    heroBackgroundMobileImageUrl: sanitizeHeroMediaUrl(
-      raw.heroBackgroundMobileImageUrl,
-      extraTrustedHost
-    ),
+    heroBackgroundImageUrl: desktop,
+    heroBackgroundMobileImageUrl: mobile,
     heroBackgroundAlt:
       typeof raw.heroBackgroundAlt === 'string'
         ? Array.from(raw.heroBackgroundAlt)
@@ -134,7 +105,11 @@ export function normalizeHeroMedia(
             .trim()
             .slice(0, 180)
         : '',
-    heroMediaMode: modes.includes(raw.heroMediaMode) ? raw.heroMediaMode : defaults.heroMediaMode,
+    heroMediaMode: hasPicture
+      ? modes.includes(raw.heroMediaMode)
+        ? raw.heroMediaMode
+        : 'hybrid'
+      : 'layered-preview',
     heroScrimStrength: scrims.includes(raw.heroScrimStrength)
       ? raw.heroScrimStrength
       : defaults.heroScrimStrength,
