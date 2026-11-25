@@ -6,7 +6,7 @@
  */
 
 import type { HeroMediaPage, HeroMediaSettings } from './types';
-import { normalizeHeroMedia } from './hero-media';
+import { normalizeHeroMedia } from './hero-media.ts';
 
 export type CmsLifecycleStatus = 'published' | 'draft' | 'paused' | 'archived';
 

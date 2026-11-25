@@ -97,7 +97,8 @@ test('admin media editor retains CMS Bearer token and avoids false publish claim
     assert.match(cms, new RegExp(field + '|HeroMediaSettings'));
   }
   assert.match(cms, /Authorization: `Bearer \$\{getAdminToken\(\)\}`/);
-  assert.match(editor, /compatible CMS bridge/);
+  assert.match(editor, /Saved in this browser/);
+  assert.match(editor, /CMS bridge/);
   for (const file of [
     'src/pages/dashboard/homepage.astro',
     'src/pages/dashboard/features.astro',
