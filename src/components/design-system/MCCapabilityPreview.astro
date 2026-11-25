@@ -222,7 +222,7 @@ const { id } = Astro.props;
         </div>
         <div class="flex h-12 items-end gap-2 border-b border-border pb-1.5">
           {[45, 65, 52, 82, 68, 95, 76].map((height) => (
-            <div class="flex-1 rounded-t bg-primary/75" style={{ height: height + '%' }} />
+            <div class="flex-1 rounded-t bg-primary/75" style={`height: ${height}%`} />
           ))}
         </div>
         <div class="space-y-1 text-[9px]">
