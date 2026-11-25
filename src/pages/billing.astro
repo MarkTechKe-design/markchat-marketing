@@ -23,7 +23,6 @@ const controlPlaneUrl =
     data-api-url={controlPlaneUrl}
     id="billing-portal-container"
   >
-
     <div class="max-w-4xl mx-auto relative z-10">
       <!-- Top Navigation & Brand -->
       <div class="flex items-center justify-between mb-8">
@@ -53,9 +52,7 @@ const controlPlaneUrl =
         >
           Self-Service Billing
         </span>
-        <h1
-          class="text-3xl font-extrabold tracking-tight text-text sm:text-4xl"
-        >
+        <h1 class="text-3xl font-extrabold tracking-tight text-text sm:text-4xl">
           Subscription & Plans
         </h1>
         <p class="mt-2 text-sm text-text-muted max-w-xl mx-auto">
@@ -67,7 +64,7 @@ const controlPlaneUrl =
       <!-- Active Subscription Summary Banner -->
       <div
         id="subscription-summary-card"
-        class="mb-8 p-6 rounded-xl border border-border bg-background dark:bg-surface  shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+        class="mb-8 p-6 rounded-xl border border-border bg-background dark:bg-surface shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
       >
         <div>
           <span class="text-xs font-bold uppercase tracking-wider text-slate-400"
@@ -91,16 +88,15 @@ const controlPlaneUrl =
         </div>
         <div class="flex flex-col sm:items-end gap-2 shrink-0">
           <div class="sm:text-right">
-            <span class="text-xs font-medium text-text-muted"
-              >Payment Currency</span
-            >
+            <span class="text-xs font-medium text-text-muted">Payment Currency</span>
             <p class="text-base font-bold text-text">KES (Kenyan Shillings)</p>
           </div>
         </div>
       </div>
 
       <p class="mb-5 text-sm text-text-muted">
-        This checkout covers MarkChat Core workspace subscriptions only. Third-party channel and payment provider fees are handled separately.
+        This checkout covers MarkChat Core workspace subscriptions only. Third-party channel and
+        payment provider fees are handled separately.
       </p>
       <!-- 3 Canonical Plans Selection Grid -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -113,9 +109,7 @@ const controlPlaneUrl =
             <span class="text-sm font-bold text-text">Starter</span>
             <span class="text-xs font-semibold text-slate-500">KES 1,500/mo</span>
           </div>
-          <p class="text-xs text-text-muted mb-3">
-            For micro-teams & emerging merchants.
-          </p>
+          <p class="text-xs text-text-muted mb-3">For micro-teams & emerging merchants.</p>
           <ul class="text-xs space-y-1.5 text-slate-600 dark:text-slate-300 mt-auto">
             <li class="flex items-center gap-1.5">&check; 3 Agent Seats</li>
             <li class="flex items-center gap-1.5">&check; 2 Connected Inboxes</li>
@@ -137,9 +131,7 @@ const controlPlaneUrl =
             <span class="text-sm font-bold text-text">Growth</span>
             <span class="text-xs font-bold text-primary">KES 3,500/mo</span>
           </div>
-          <p class="text-xs text-text-muted mb-3">
-            For growing omnichannel businesses.
-          </p>
+          <p class="text-xs text-text-muted mb-3">For growing omnichannel businesses.</p>
           <ul class="text-xs space-y-1.5 text-slate-600 dark:text-slate-300 mt-auto">
             <li class="flex items-center gap-1.5">&check; 10 Agent Seats</li>
             <li class="flex items-center gap-1.5">&check; 5 Connected Inboxes</li>
@@ -161,9 +153,7 @@ const controlPlaneUrl =
             <span class="text-sm font-bold text-text">Scale</span>
             <span class="text-xs font-semibold text-slate-500">KES 5,000/mo</span>
           </div>
-          <p class="text-xs text-text-muted mb-3">
-            High-volume enterprises & agencies.
-          </p>
+          <p class="text-xs text-text-muted mb-3">High-volume enterprises & agencies.</p>
           <ul class="text-xs space-y-1.5 text-slate-600 dark:text-slate-300 mt-auto">
             <li class="flex items-center gap-1.5">&check; 25 Agent Seats</li>
             <li class="flex items-center gap-1.5">&check; Unlimited Inboxes</li>
@@ -175,7 +165,7 @@ const controlPlaneUrl =
 
       <!-- Checkout Configuration Card -->
       <div
-        class="p-6 sm:p-8 rounded-xl border border-border bg-background dark:bg-surface  shadow-none"
+        class="p-6 sm:p-8 rounded-xl border border-border bg-background dark:bg-surface shadow-none"
       >
         <h3 class="text-lg font-bold text-text mb-4">Payment Method</h3>
 
@@ -192,14 +182,10 @@ const controlPlaneUrl =
               class="text-primary focus:ring-primary"
             />
             <div>
-              <span
-                class="text-sm font-bold text-text flex items-center gap-1.5"
-              >
+              <span class="text-sm font-bold text-text flex items-center gap-1.5">
                 Safaricom M-Pesa
               </span>
-              <p class="text-xs text-text-muted">
-                Instant STK prompt on your mobile phone
-              </p>
+              <p class="text-xs text-text-muted">Instant STK prompt on your mobile phone</p>
             </div>
           </label>
 
@@ -213,14 +199,10 @@ const controlPlaneUrl =
               class="text-primary focus:ring-primary"
             />
             <div>
-              <span
-                class="text-sm font-bold text-text flex items-center gap-1.5"
-              >
+              <span class="text-sm font-bold text-text flex items-center gap-1.5">
                 Debit / Credit Card
               </span>
-              <p class="text-xs text-text-muted">
-                Visa, Mastercard, & International Cards
-              </p>
+              <p class="text-xs text-text-muted">Visa, Mastercard, & International Cards</p>
             </div>
           </label>
         </div>

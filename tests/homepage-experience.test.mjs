@@ -33,10 +33,7 @@ test('Gate 3 homepage source composition and CMS compatibility', async (t) => {
   const dashboard = read('src/pages/dashboard/homepage.astro');
 
   await t.test('ScrewFast-inspired hero has correct product-first message and CTAs', () => {
-    assert.match(
-      hero,
-      /Every conversation\. One smarter inbox\./
-    );
+    assert.match(hero, /Every conversation\. One smarter inbox\./);
     assert.match(index, /Built for Kenyan businesses/);
     assert.match(hero, /lg:grid-cols-\[0\.95fr_1\.05fr\]/);
     assert.match(hero, /label: 'Get Started', href: '\/register'/);

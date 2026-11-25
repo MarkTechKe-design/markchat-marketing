@@ -37,8 +37,12 @@ const dark = resolveProductAsset(workflow, 'dark', cmsMedia);
       <h3 class="text-xl font-bold text-text">{name}</h3>
       <p class="mt-2 max-w-xl text-sm leading-relaxed text-text-muted">{description}</p>
     </div>
-    {(!light.src && !dark.src) && (
-      <span class="text-xs font-medium text-text-muted">Conceptual illustration · not a live screenshot</span>
-    )}
+    {
+      !light.src && !dark.src && (
+        <span class="text-xs font-medium text-text-muted">
+          Conceptual illustration · not a live screenshot
+        </span>
+      )
+    }
   </div>
 </div>

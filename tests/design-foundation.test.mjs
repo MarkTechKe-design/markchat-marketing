@@ -96,15 +96,23 @@ test('P0 all seven SVG illustrations are strict well-formed XML', () => {
     assert.equal(
       result.status,
       0,
-      'Invalid SVG XML or missing Python 3: ' + pathname + '\\n' + (result.stderr || result.error || '')
+      'Invalid SVG XML or missing Python 3: ' +
+        pathname +
+        '\\n' +
+        (result.stderr || result.error || '')
     );
   }
 });
 
 test('P0 all seven public SVG assets load from the built preview', async () => {
   for (const id of [
-    'unified-inbox', 'mpesa-stk', 'markcopilot', 'automation-routing',
-    'contact-crm', 'help-center', 'analytics-webhooks',
+    'unified-inbox',
+    'mpesa-stk',
+    'markcopilot',
+    'automation-routing',
+    'contact-crm',
+    'help-center',
+    'analytics-webhooks',
   ]) {
     const response = await fetch('http://localhost:4321/media/illustrations/' + id + '.svg', {
       signal: AbortSignal.timeout(6000),

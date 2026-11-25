@@ -10,7 +10,10 @@ const tabs = [
 ];
 ---
 
-<div data-mc-product-tabs class:list={['grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-10', className]}>
+<div
+  data-mc-product-tabs
+  class:list={['grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-10', className]}
+>
   <div
     role="tablist"
     aria-label="MarkChat product workflows"
@@ -35,7 +38,9 @@ const tabs = [
           ]}
         >
           <span class="block text-base font-semibold">{tab.label}</span>
-          <span class="mt-2 hidden text-xs leading-relaxed text-text-muted lg:block">{tab.description}</span>
+          <span class="mt-2 hidden text-xs leading-relaxed text-text-muted lg:block">
+            {tab.description}
+          </span>
         </button>
       ))
     }
@@ -44,10 +49,22 @@ const tabs = [
     <div id="mc-panel-inbox" data-mc-panel="inbox" role="tabpanel" aria-labelledby="mc-tab-inbox">
       <slot name="inbox" />
     </div>
-    <div id="mc-panel-mpesa" data-mc-panel="mpesa" role="tabpanel" aria-labelledby="mc-tab-mpesa" hidden>
+    <div
+      id="mc-panel-mpesa"
+      data-mc-panel="mpesa"
+      role="tabpanel"
+      aria-labelledby="mc-tab-mpesa"
+      hidden
+    >
       <slot name="mpesa" />
     </div>
-    <div id="mc-panel-markcopilot" data-mc-panel="markcopilot" role="tabpanel" aria-labelledby="mc-tab-markcopilot" hidden>
+    <div
+      id="mc-panel-markcopilot"
+      data-mc-panel="markcopilot"
+      role="tabpanel"
+      aria-labelledby="mc-tab-markcopilot"
+      hidden
+    >
       <slot name="markcopilot" />
     </div>
   </div>
@@ -78,7 +95,9 @@ const tabs = [
       tabs.forEach((tab, index) => {
         tab.addEventListener('click', () => activate(index));
         tab.addEventListener('keydown', (event) => {
-          if (!['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key))
+          if (
+            !['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)
+          )
             return;
           event.preventDefault();
           const forward = event.key === 'ArrowRight' || event.key === 'ArrowDown';

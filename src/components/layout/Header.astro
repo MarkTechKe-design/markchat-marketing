@@ -22,8 +22,14 @@ const ghostCTAs = headerCtas.filter((cta) => cta.variant === 'ghost');
 const primaryCTA = headerCtas.find((cta) => cta.variant === 'primary');
 ---
 
-<header id="site-header" class="sticky top-0 z-50 mx-auto mt-4 w-full max-w-[85rem] px-4 sm:px-6 lg:px-8">
-  <nav class="relative mx-auto max-w-[85rem] rounded-2xl border border-border bg-surface/95 px-5 py-2 shadow-xs dark:bg-surface/95" aria-label="Main navigation">
+<header
+  id="site-header"
+  class="sticky top-0 z-50 mx-auto mt-4 w-full max-w-[85rem] px-4 sm:px-6 lg:px-8"
+>
+  <nav
+    class="relative mx-auto max-w-[85rem] rounded-2xl border border-border bg-surface/95 px-5 py-2 shadow-xs dark:bg-surface/95"
+    aria-label="Main navigation"
+  >
     <div class="flex items-center justify-between min-h-12">
       <!-- Logo / Site Name -->
       <a href="/" class="flex items-center gap-2 font-semibold text-lg text-text shrink-0">

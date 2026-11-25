@@ -59,7 +59,10 @@ const defaultTitle = title === 'Every conversation. One smarter inbox.';
           <MCButton href={primaryCTA.href}>{primaryCTA.label}</MCButton>
           <MCButton href={secondaryCTA.href} variant="secondary">{secondaryCTA.label}</MCButton>
         </div>
-        <div class="mt-10 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-5 text-xs font-medium text-text-muted" aria-label="Capabilities">
+        <div
+          class="mt-10 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-5 text-xs font-medium text-text-muted"
+          aria-label="Capabilities"
+        >
           <span>Shared conversations</span>
           <span>AI-assisted replies</span>
           <span>Configured M-Pesa</span>
@@ -70,10 +73,18 @@ const defaultTitle = title === 'Every conversation. One smarter inbox.';
           light.src || dark.src ? (
             <>
               <div class="dark:hidden">
-                <MCProductFrame src={light.src} alt={light.alt} label="Unified Inbox product demonstration" />
+                <MCProductFrame
+                  src={light.src}
+                  alt={light.alt}
+                  label="Unified Inbox product demonstration"
+                />
               </div>
               <div class="hidden dark:block">
-                <MCProductFrame src={dark.src} alt={dark.alt} label="Unified Inbox product demonstration" />
+                <MCProductFrame
+                  src={dark.src}
+                  alt={dark.alt}
+                  label="Unified Inbox product demonstration"
+                />
               </div>
             </>
           ) : (
