@@ -15,7 +15,7 @@ export const url = import.meta.env.SITE_URL || 'https://markchat.co.ke';
 
 export const author = 'MarkChat Technologies Ltd';
 
-export const logo = '/logo.svg';
+export const logo = '/brand/markchat-logo.png';
 
 export const ogImage = '/images/og-image.png';
 
