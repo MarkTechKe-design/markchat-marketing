@@ -33,13 +33,22 @@ const primaryCTA = headerCtas.find((cta) => cta.variant === 'primary');
     <div class="flex items-center justify-between min-h-12">
       <!-- Logo / Site Name -->
       <a href="/" class="flex items-center gap-2 font-semibold text-lg text-text shrink-0">
-        {
-          siteConfig.logo ? (
-            <img src={siteConfig.logo} alt={siteConfig.name} class="h-8 w-auto" />
-          ) : (
-            siteConfig.name
-          )
-        }
+        <img
+          src="/brand/markchat-logo.png"
+          alt="MarkChat — Connect, Support, Grow"
+          width="1100"
+          height="329"
+          class="block dark:hidden h-9 w-auto max-w-[176px] object-contain"
+          decoding="async"
+        />
+        <img
+          src="/brand/markchat-logo-dark.png"
+          alt="MarkChat — Connect, Support, Grow"
+          width="1100"
+          height="329"
+          class="hidden dark:block h-9 w-auto max-w-[176px] object-contain"
+          decoding="async"
+        />
       </a>
 
       <!-- Desktop Navigation with 3-Column Mega-Menus -->
