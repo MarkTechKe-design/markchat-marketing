@@ -263,7 +263,8 @@ const controlPlaneUrl =
       !targetUrl.includes('\\') &&
       !targetUrl.includes(':') &&
       !Array.from(targetUrl).some((char) => char.charCodeAt(0) < 32) &&
-      !/%(?:0[0-9a-f]|5c)/i.test(targetUrl)
+      !/%(?:0[0-9a-f]|2e|2f|5c|25)/i.test(targetUrl) &&
+      !targetUrl.includes("#") && targetUrl.length <= 512
     ) {
       return targetUrl;
     }
@@ -447,7 +448,19 @@ const controlPlaneUrl =
         formStatus?.classList.remove('hidden');
         formSuccess?.classList.remove('hidden');
 
-        const destination = payload.ssoUrl || targetRedirect;
+        // A successful login API response cannot redirect to arbitrary origins.
+        let destination = targetRedirect;
+        if (typeof payload.ssoUrl === 'string') {
+          try {
+            const candidate = new URL(payload.ssoUrl);
+            const allowed = ['https://app.markchat.co.ke',
+              'http://localhost:3000', 'http://127.0.0.1:3000'];
+            if (allowed.includes(candidate.origin) && candidate.pathname.startsWith('/app/'))
+              destination = candidate.href;
+          } catch {
+            destination = targetRedirect;
+          }
+        }
         setTimeout(() => {
           window.location.href = destination;
         }, 800);
