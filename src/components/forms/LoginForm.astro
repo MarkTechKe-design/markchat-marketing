@@ -20,6 +20,7 @@ const controlPlaneUrl =
   import.meta.env.PUBLIC_CONTROL_PLANE_URL ||
   import.meta.env.PUBLIC_CONTROL_PLANE_API_URL ||
   'http://localhost:5000';
+import { primaryCtaClasses } from '@/lib/cta-classes';
 ---
 
 <div class="w-full">
@@ -194,7 +195,7 @@ const controlPlaneUrl =
     <button
       type="submit"
       id="login-submit-button"
-      class="w-full h-11 cursor-pointer px-6 rounded-xl bg-primary hover:bg-primary-dark text-white font-medium text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed shadow-xs flex items-center justify-center"
+      class:list={['w-full h-11 cursor-pointer px-6 rounded-xl font-medium text-sm focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center', primaryCtaClasses]}
     >
       <span id="login-button-text">Sign in to workspace</span>
       <span id="login-button-loading" class="hidden items-center gap-2">

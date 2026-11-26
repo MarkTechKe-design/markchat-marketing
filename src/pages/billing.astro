@@ -12,6 +12,7 @@ const controlPlaneUrl =
   import.meta.env.PUBLIC_CONTROL_PLANE_URL ||
   import.meta.env.PUBLIC_CONTROL_PLANE_API_URL ||
   'http://localhost:5000';
+import { primaryCtaClasses } from '@/lib/cta-classes';
 ---
 
 <BaseLayout
@@ -250,7 +251,7 @@ const controlPlaneUrl =
         <button
           type="button"
           id="billing-checkout-btn"
-          class="w-full cursor-pointer px-6 py-4 rounded-xl bg-primary text-white font-bold hover:bg-primary-hover transition-colors shadow-none text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+          class:list={['w-full cursor-pointer px-6 py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50', primaryCtaClasses]}
         >
           <span id="btn-label">Proceed to Paystack Checkout &rarr;</span>
           <span id="btn-loading" class="hidden">

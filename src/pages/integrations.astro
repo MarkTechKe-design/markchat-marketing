@@ -45,6 +45,7 @@ const filterCategories = [
   'AI & Productivity',
   'Developer & Business Systems',
 ];
+import { primaryCtaClasses } from '@/lib/cta-classes';
 ---
 
 <MarketingLayout
@@ -97,7 +98,7 @@ const filterCategories = [
       <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
         <a
           href="#directory"
-          class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 rounded-xl font-bold text-sm text-white bg-primary hover:brightness-110 shadow-none shadow-primary/25 transition-all"
+          class:list={['w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 rounded-xl font-bold text-sm', primaryCtaClasses]}
         >
           <Icon name="lucide:grid" class="w-4 h-4 mr-2" />
           Explore Integrations

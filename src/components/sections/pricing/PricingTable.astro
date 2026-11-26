@@ -95,6 +95,7 @@ function getAnnualPrice(monthlyPrice: number): number {
 function formatPrice(price: number): string {
   return price === 0 ? 'KES 0' : `KES ${price.toLocaleString()}`;
 }
+import { primaryCtaClasses } from '@/lib/cta-classes';
 ---
 
 {
@@ -155,7 +156,7 @@ function formatPrice(price: number): string {
                 class:list={[
                   'mt-7 inline-flex min-h-11 items-center justify-center rounded-lg border px-4 py-3 text-sm font-semibold transition-colors',
                   plan.highlighted
-                    ? 'border-primary bg-primary text-white hover:bg-primary-dark'
+                    ? primaryCtaClasses
                     : 'border-border bg-background text-text hover:border-primary/50',
                 ]}
               >
@@ -319,7 +320,7 @@ function formatPrice(price: number): string {
                     class:list={[
                       'block w-full text-center px-6 py-3 rounded-md font-medium transition-colors',
                       plan.highlighted
-                        ? 'bg-primary text-white hover:bg-primary-dark'
+                        ? primaryCtaClasses
                         : 'bg-surface border border-border text-text hover:bg-background hover:border-primary/50',
                     ]}
                   >
