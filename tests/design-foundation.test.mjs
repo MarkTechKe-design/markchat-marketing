@@ -80,19 +80,28 @@ test('P0 all seven SVG illustrations are strict well-formed XML', () => {
     'help-center',
     'analytics-webhooks',
   ];
-  const python = process.platform === 'win32' ? 'py' : 'python3';
+  const candidates =
+    process.platform === 'win32'
+      ? [
+          ['python', []],
+          ['py', ['-3']],
+        ]
+      : [['python3', []]];
   for (const id of ids) {
     const pathname = 'public/media/illustrations/' + id + '.svg';
-    const result = spawnSync(
-      python,
-      [
-        ...(process.platform === 'win32' ? ['-3'] : []),
-        '-c',
-        'import sys, xml.etree.ElementTree as ET; root=ET.parse(sys.argv[1]).getroot(); assert root.tag == "{http://www.w3.org/2000/svg}svg"',
-        pathname,
-      ],
-      { encoding: 'utf8' }
-    );
+    const script =
+      'import sys, xml.etree.ElementTree as ET; root=ET.parse(sys.argv[1]).getroot(); assert root.tag == "{http://www.w3.org/2000/svg}svg"';
+    let result = { status: 1, stderr: 'Python 3 not found' };
+    for (const [bin, prefixArgs] of candidates) {
+      const attempt = spawnSync(bin, [...prefixArgs, '-c', script, pathname], {
+        encoding: 'utf8',
+      });
+      if (!attempt.error && attempt.status === 0) {
+        result = attempt;
+        break;
+      }
+      result = attempt;
+    }
     assert.equal(
       result.status,
       0,
