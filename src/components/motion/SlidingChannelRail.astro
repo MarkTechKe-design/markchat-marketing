@@ -1,0 +1,89 @@
+---
+import { Icon } from 'astro-icon/components';
+import MCStatusBadge from '@/components/design-system/MCStatusBadge.astro';
+
+const channels = [
+  { title: 'WhatsApp Cloud API', icon: 'lucide:message-circle', href: '/integrations/whatsapp-cloud-api', status: 'Requires setup' },
+  { title: 'Instagram DM', icon: 'lucide:instagram', href: '/integrations/instagram-facebook-messenger', status: 'Requires setup' },
+  { title: 'Facebook Messenger', icon: 'lucide:messages-square', href: '/integrations/instagram-facebook-messenger', status: 'Requires setup' },
+  { title: 'TikTok Business Messaging', icon: 'lucide:video', href: '/integrations/tiktok-business-messaging', status: 'Check availability' },
+  { title: 'Telegram', icon: 'lucide:send', href: '/integrations/telegram', status: 'Requires setup' },
+  { title: 'Website Live Chat', icon: 'lucide:message-square', href: '/integrations/website-live-chat', status: 'Requires setup' },
+  { title: 'Email Inbox', icon: 'lucide:mail', href: '/integrations/email-inbox', status: 'Requires setup' },
+];
+---
+
+<section aria-label="Messaging channel connections" class="min-w-0">
+  <div class="mc-channel-viewport" data-mc-channel-rail>
+    <div class="mc-channel-track">
+      <div class="mc-channel-group">
+        {channels.map((channel) => (
+          <a
+            href={channel.href}
+            class="inline-flex min-w-56 shrink-0 items-center gap-3 rounded-xl border border-border bg-surface-elevated px-4 py-3 text-text transition-colors hover:border-primary/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            <Icon name={channel.icon} class="h-5 w-5 shrink-0 text-primary" />
+            <span class="min-w-0">
+              <span class="block text-xs font-semibold">{channel.title}</span>
+              <MCStatusBadge label={channel.status} />
+            </span>
+          </a>
+        ))}
+      </div>
+      <div class="mc-channel-group" aria-hidden="true">
+        {channels.map((channel) => (
+          <span class="inline-flex min-w-56 shrink-0 items-center gap-3 rounded-xl border border-border bg-surface-elevated px-4 py-3 text-text">
+            <Icon name={channel.icon} class="h-5 w-5 shrink-0 text-primary" />
+            <span class="min-w-0">
+              <span class="block text-xs font-semibold">{channel.title}</span>
+              <span class="text-xs text-text-muted">{channel.status}</span>
+            </span>
+          </span>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .mc-channel-viewport {
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
+  }
+  .mc-channel-track {
+    display: flex;
+    width: max-content;
+    animation: mc-marquee-left 43s linear infinite;
+    will-change: transform;
+  }
+  .mc-channel-group {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  .mc-channel-viewport:hover .mc-channel-track,
+  .mc-channel-viewport:focus-within .mc-channel-track {
+    animation-play-state: paused;
+  }
+  @keyframes mc-marquee-left {
+    to {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mc-channel-viewport {
+      overflow-x: auto;
+      mask-image: none;
+      -webkit-mask-image: none;
+    }
+    .mc-channel-track {
+      animation: none;
+      will-change: auto;
+    }
+    .mc-channel-group[aria-hidden='true'] {
+      display: none;
+    }
+  }
+</style>
