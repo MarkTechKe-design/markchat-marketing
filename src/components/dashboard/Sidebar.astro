@@ -64,7 +64,8 @@ function isActive(href: string, children?: any[]): boolean {
     <!-- Logo/Brand Area -->
     <div class="sidebar-header">
       <a href="/dashboard" class="sidebar-logo">
-        <Icon name="lucide:layout-dashboard" class="sidebar-logo-icon" />
+        <img src="/apple-touch-icon.png" alt="" width="36" height="36"
+          class="sidebar-logo-icon object-contain" decoding="async" />
         <span class="sidebar-logo-text">MarkChat CMS</span>
       </a>
     </div>
@@ -200,8 +201,9 @@ function isActive(href: string, children?: any[]): boolean {
   }
 
   .sidebar-logo-icon {
-    width: 1.5rem;
-    height: 1.5rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    object-fit: contain;
     flex-shrink: 0;
     color: var(--color-primary, #6366f1);
   }
@@ -467,6 +469,16 @@ function isActive(href: string, children?: any[]): boolean {
   }
 
   :global(.sidebar-collapsed) .sidebar-toggle-btn[aria-expanded='false'] {
+    justify-content: center;
+  }
+
+  :global(.sidebar-collapsed) .sidebar-header {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    justify-content: center;
+  }
+  :global(.sidebar-collapsed) .sidebar-logo {
+    gap: 0;
     justify-content: center;
   }
 
