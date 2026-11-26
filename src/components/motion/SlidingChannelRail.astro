@@ -6,42 +6,56 @@ const channels = [
   {
     title: 'WhatsApp Cloud API',
     icon: 'lucide:message-circle',
+    iconClasses:
+      'bg-[#25D366]/12 text-[#15803D] border-[#25D366]/30 dark:bg-[#25D366]/18 dark:text-[#4ADE80] dark:border-[#25D366]/35',
     href: '/integrations/whatsapp-cloud-api',
     status: 'Requires setup',
   },
   {
     title: 'Instagram DM',
     icon: 'lucide:instagram',
+    iconClasses:
+      'bg-[#E1306C]/12 text-[#BE185D] border-[#E1306C]/30 dark:bg-[#E1306C]/18 dark:text-[#F472B6] dark:border-[#E1306C]/35',
     href: '/integrations/instagram-facebook-messenger',
     status: 'Requires setup',
   },
   {
     title: 'Facebook Messenger',
     icon: 'lucide:messages-square',
+    iconClasses:
+      'bg-[#0084FF]/12 text-[#0369A1] border-[#0084FF]/30 dark:bg-[#0084FF]/18 dark:text-[#38BDF8] dark:border-[#0084FF]/35',
     href: '/integrations/instagram-facebook-messenger',
     status: 'Requires setup',
   },
   {
     title: 'TikTok Business Messaging',
     icon: 'lucide:video',
+    iconClasses:
+      'bg-[#0F172A]/8 text-[#0F172A] border-[#0F172A]/20 dark:bg-[#25F4EE]/15 dark:text-[#25F4EE] dark:border-[#25F4EE]/30',
     href: '/integrations/tiktok-business-messaging',
     status: 'Check availability',
   },
   {
     title: 'Telegram',
     icon: 'lucide:send',
+    iconClasses:
+      'bg-[#26A5E4]/12 text-[#0284C7] border-[#26A5E4]/30 dark:bg-[#26A5E4]/18 dark:text-[#38BDF8] dark:border-[#26A5E4]/35',
     href: '/integrations/telegram',
     status: 'Requires setup',
   },
   {
     title: 'Website Live Chat',
     icon: 'lucide:message-square',
+    iconClasses:
+      'bg-[#2563EB]/12 text-[#1D4ED8] border-[#2563EB]/30 dark:bg-[#3B82F6]/18 dark:text-[#60A5FA] dark:border-[#3B82F6]/35',
     href: '/integrations/website-live-chat',
     status: 'Requires setup',
   },
   {
     title: 'Email Inbox',
     icon: 'lucide:mail',
+    iconClasses:
+      'bg-[#6366F1]/12 text-[#4338CA] border-[#6366F1]/30 dark:bg-[#818CF8]/18 dark:text-[#A5B4FC] dark:border-[#818CF8]/35',
     href: '/integrations/email-inbox',
     status: 'Requires setup',
   },
@@ -58,7 +72,15 @@ const channels = [
               href={channel.href}
               class="inline-flex min-w-56 shrink-0 items-center gap-3 rounded-xl border border-border bg-surface-elevated px-4 py-3 text-text transition-colors hover:border-primary/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              <Icon name={channel.icon} class="h-5 w-5 shrink-0 text-primary" />
+              <span
+                data-mc-brand-icon={channel.title}
+                class:list={[
+                  'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border',
+                  channel.iconClasses,
+                ]}
+              >
+                <Icon name={channel.icon} class="h-4 w-4" />
+              </span>
               <span class="min-w-0">
                 <span class="block text-xs font-semibold">{channel.title}</span>
                 <MCStatusBadge label={channel.status} />
@@ -71,7 +93,15 @@ const channels = [
         {
           channels.map((channel) => (
             <span class="inline-flex min-w-56 shrink-0 items-center gap-3 rounded-xl border border-border bg-surface-elevated px-4 py-3 text-text">
-              <Icon name={channel.icon} class="h-5 w-5 shrink-0 text-primary" />
+              <span
+                data-mc-brand-icon={channel.title}
+                class:list={[
+                  'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border',
+                  channel.iconClasses,
+                ]}
+              >
+                <Icon name={channel.icon} class="h-4 w-4" />
+              </span>
               <span class="min-w-0">
                 <span class="block text-xs font-semibold">{channel.title}</span>
                 <span class="text-xs text-text-muted">{channel.status}</span>
