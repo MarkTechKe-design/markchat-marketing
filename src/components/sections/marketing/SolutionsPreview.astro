@@ -1,6 +1,7 @@
 ---
 import MCContainer from '@/components/design-system/MCContainer.astro';
 import MCSectionHeading from '@/components/design-system/MCSectionHeading.astro';
+import KineticWorkflowCard from '@/components/motion/KineticWorkflowCard.astro';
 import { Icon } from 'astro-icon/components';
 
 const industryUseCases = [
@@ -77,8 +78,9 @@ const industryUseCases = [
     </div>
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {
-        industryUseCases.map((item) => (
-          <a
+        industryUseCases.map((item, index) => (
+          <KineticWorkflowCard class="border-0 bg-transparent" delay={(index % 3) * 100}>
+            <a
             href={item.href}
             class="group flex h-full flex-col gap-4 rounded-xl border border-border bg-surface-elevated p-5 transition-colors hover:border-primary/50 sm:p-7"
           >
@@ -93,7 +95,8 @@ const industryUseCases = [
             <span class="mt-auto text-sm font-semibold text-primary">
               View workflow <Icon name="lucide:arrow-right" class="ml-1 inline h-4 w-4" />
             </span>
-          </a>
+            </a>
+          </KineticWorkflowCard>
         ))
       }
     </div>

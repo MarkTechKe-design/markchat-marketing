@@ -26,6 +26,8 @@
  * ```
  */
 
+import { primaryCtaClasses, secondaryCtaClasses } from '@/lib/cta-classes';
+
 interface Props {
   /** Headline text for the CTA section */
   title: string;
@@ -85,7 +87,7 @@ const bgClass = {
       <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
         <a
           href={action.href}
-          class="inline-flex min-h-11 items-center justify-center rounded-lg border border-primary bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
+          class:list={['inline-flex min-h-11 items-center justify-center rounded-lg px-6 py-3 text-sm font-semibold', primaryCtaClasses]}
         >
           {action.label}
         </a>
@@ -94,10 +96,8 @@ const bgClass = {
             <a
               href={secondaryAction.href}
               class:list={[
-                'inline-flex min-h-11 items-center justify-center rounded-lg border px-6 py-3 text-sm font-semibold transition-colors',
-                variant === 'dark'
-                  ? 'border-neutral-500 bg-[#262626] text-white hover:border-primary'
-                  : 'border-border bg-background text-text hover:border-primary/50',
+                'inline-flex min-h-11 items-center justify-center rounded-lg px-6 py-3 text-sm font-semibold', secondaryCtaClasses,
+                variant === 'dark' ? 'border-neutral-500' : 'hover:border-primary/50',
               ]}
             >
               {secondaryAction.label}

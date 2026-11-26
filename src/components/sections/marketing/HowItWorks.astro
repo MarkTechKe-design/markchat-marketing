@@ -21,6 +21,7 @@
  */
 
 import { Icon } from 'astro-icon/components';
+import KineticWorkflowCard from '@/components/motion/KineticWorkflowCard.astro';
 
 interface Step {
   /** Step title */
@@ -82,7 +83,8 @@ const hasHeading = title || subtitle;
       variant === 'horizontal' && (
         <div class="grid gap-4 md:grid-cols-3">
           {steps.map((step, index) => (
-            <article class="flex h-full flex-col rounded-xl border border-border bg-surface-elevated p-6">
+            <KineticWorkflowCard delay={index * 80} class="border-0 bg-transparent">
+              <article class="flex h-full flex-col rounded-xl border border-border bg-surface-elevated p-6">
               <div class="mb-5 flex items-center justify-between">
                 <span class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-surface text-primary">
                   {step.icon ? (
@@ -102,7 +104,8 @@ const hasHeading = title || subtitle;
                   <img src={step.image} alt={step.title} class="h-auto w-full" loading="lazy" />
                 </div>
               )}
-            </article>
+              </article>
+            </KineticWorkflowCard>
           ))}
         </div>
       )
