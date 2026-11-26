@@ -96,8 +96,9 @@ const controlPlaneUrl =
     function fail() {
       loading?.classList.add('hidden');
       errorPanel?.classList.remove('hidden');
-      if (errorMessage) errorMessage.textContent =
-        'Google sign-in could not be verified. Please restart the sign-in process.';
+      if (errorMessage)
+        errorMessage.textContent =
+          'Google sign-in could not be verified. Please restart the sign-in process.';
     }
     const params = new URLSearchParams(window.location.search);
     const ticket = params.get('ticket');
@@ -109,14 +110,17 @@ const controlPlaneUrl =
       return;
     }
     const apiUrl = (document.getElementById('oauth-exchange') as HTMLElement)?.dataset.apiUrl;
-    if (!apiUrl) { fail(); return; }
+    if (!apiUrl) {
+      fail();
+      return;
+    }
     try {
       const response = await fetch(apiUrl.replace(/\/$/, '') + '/api/v1/auth/google/exchange', {
         method: 'POST',
         credentials: 'include',
         cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticket })
+        body: JSON.stringify({ ticket }),
       });
       if (!response.ok) throw new Error('OAuth handoff rejected');
       const payload = (await response.json()).data;
@@ -131,14 +135,19 @@ const controlPlaneUrl =
           (char) => char === '\\' || char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127
         ) &&
         !/%(?:2f|5c|2e|25)/i.test(redirect) &&
-        !redirect.includes(':') && !redirect.includes('#')
-          ? redirect : '/billing';
+        !redirect.includes(':') &&
+        !redirect.includes('#')
+          ? redirect
+          : '/billing';
       localStorage.setItem('markchat_cp_token', payload.token);
       let destination = safeRedirect;
       if (typeof payload.ssoUrl === 'string' && !payload.isNewUser) {
         const link = new URL(payload.ssoUrl);
-        const allowed = new Set(['https://app.markchat.co.ke',
-          'http://localhost:3000', 'http://127.0.0.1:3000']);
+        const allowed = new Set([
+          'https://app.markchat.co.ke',
+          'http://localhost:3000',
+          'http://127.0.0.1:3000',
+        ]);
         if (allowed.has(link.origin) && link.pathname.startsWith('/app/'))
           destination = link.toString();
       }
