@@ -6,13 +6,13 @@
  * and initiate secure M-Pesa / Card checkout through Paystack.
  */
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { primaryCtaClasses } from '@/lib/cta-classes';
 import { siteConfig } from '@/config';
 
 const controlPlaneUrl =
   import.meta.env.PUBLIC_CONTROL_PLANE_URL ||
   import.meta.env.PUBLIC_CONTROL_PLANE_API_URL ||
   'http://localhost:5000';
-import { primaryCtaClasses } from '@/lib/cta-classes';
 ---
 
 <BaseLayout
@@ -251,7 +251,7 @@ import { primaryCtaClasses } from '@/lib/cta-classes';
         <button
           type="button"
           id="billing-checkout-btn"
-          class:list={['w-full cursor-pointer px-6 py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50', primaryCtaClasses]}
+          class={primaryCtaClasses + ' w-full cursor-pointer rounded-xl px-6 py-4 text-sm font-bold flex items-center justify-center gap-2'}
         >
           <span id="btn-label">Proceed to Paystack Checkout &rarr;</span>
           <span id="btn-loading" class="hidden">
