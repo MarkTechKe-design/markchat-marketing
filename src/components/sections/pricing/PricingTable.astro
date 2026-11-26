@@ -27,6 +27,7 @@
  */
 
 import { Icon } from 'astro-icon/components';
+import { primaryCtaClasses } from '@/lib/cta-classes';
 
 /** Individual pricing plan configuration */
 interface PricingPlan {
@@ -95,7 +96,6 @@ function getAnnualPrice(monthlyPrice: number): number {
 function formatPrice(price: number): string {
   return price === 0 ? 'KES 0' : `KES ${price.toLocaleString()}`;
 }
-import { primaryCtaClasses } from '@/lib/cta-classes';
 ---
 
 {

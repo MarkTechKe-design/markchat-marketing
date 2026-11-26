@@ -20,6 +20,7 @@ import FeaturedIntegrationsSection from '@/components/sections/integrations/Feat
 import CTA from '@sections/marketing/CTA.astro';
 import { siteConfig } from '@/config';
 import { fetchIntegrations, fetchHeroMediaSettings } from '@/lib/cms-api';
+import { primaryCtaClasses } from '@/lib/cta-classes';
 
 const integrations = await fetchIntegrations();
 const editorialHero = await fetchHeroMediaSettings('integrations');
@@ -46,7 +47,6 @@ const filterCategories = [
   'AI & Productivity',
   'Developer & Business Systems',
 ];
-import { primaryCtaClasses } from '@/lib/cta-classes';
 ---
 
 <MarketingLayout

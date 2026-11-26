@@ -22,6 +22,7 @@ import {
   type MarkcopilotCapability,
   type MarkcopilotPageSettings,
 } from '@/lib/cms-api';
+import { primaryCtaClasses } from '@/lib/cta-classes';
 
 // Parallel data retrieval from authoritative CMS API
 const [settings, capabilities]: [MarkcopilotPageSettings, MarkcopilotCapability[]] =
@@ -36,7 +37,6 @@ const badgeColorMap: Record<string, string> = {
   shared:
     'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-300',
 };
-import { primaryCtaClasses } from '@/lib/cta-classes';
 ---
 
 <MarketingLayout

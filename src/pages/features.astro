@@ -20,6 +20,7 @@ import FeatureVisualShowcase from '@sections/features/FeatureVisualShowcase.astr
 import FAQSection from '@sections/content/FAQSection.astro';
 import { fetchFeatures, fetchFeaturesSettings } from '@/lib/cms-api';
 import { siteConfig } from '@/config';
+import { primaryCtaClasses } from '@/lib/cta-classes';
 
 // Retrieve published features and global page settings from authoritative CMS bridge
 const features = await fetchFeatures();
@@ -96,7 +97,6 @@ const markcopilotCapabilities = [
     icon: 'lucide:sparkles',
   },
 ];
-import { primaryCtaClasses } from '@/lib/cta-classes';
 ---
 
 <MarketingLayout

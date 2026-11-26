@@ -9,6 +9,7 @@
  */
 import EnterpriseScopeFields from '@/components/enterprise/EnterpriseScopeFields.astro';
 import { Icon } from 'astro-icon/components';
+import { primaryCtaClasses } from '@/lib/cta-classes';
 
 interface Props {
   /** Optional external action URL; defaults to CMS lead pipeline */
@@ -22,7 +23,6 @@ interface Props {
 }
 
 const { action = '', method = 'POST', netlify = false, formName = 'contact' } = Astro.props;
-import { primaryCtaClasses } from '@/lib/cta-classes';
 ---
 
 <div class="contact-form-wrapper">

@@ -12,6 +12,7 @@
  * - Zero premature validation errors on initial load
  */
 import SocialAuthButtons from './SocialAuthButtons.astro';
+import { primaryCtaClasses } from '@/lib/cta-classes';
 
 interface Props {
   action?: string;
@@ -33,7 +34,6 @@ const controlPlaneUrl =
   import.meta.env.PUBLIC_CONTROL_PLANE_URL ||
   import.meta.env.PUBLIC_CONTROL_PLANE_API_URL ||
   'http://localhost:5000';
-import { primaryCtaClasses } from '@/lib/cta-classes';
 ---
 
 <div class="w-full">
