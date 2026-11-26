@@ -12,6 +12,7 @@
  */
 import MCResponsiveHeroMedia from '@/components/design-system/MCResponsiveHeroMedia.astro';
 import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import KineticWorkflowCard from '@/components/motion/KineticWorkflowCard.astro';
 import ProductOperations from '@/components/enterprise/ProductOperations.astro';
 import { Icon } from 'astro-icon/components';
 import WorkspaceHeroShowcase from '@sections/features/WorkspaceHeroShowcase.astro';
@@ -417,8 +418,8 @@ import { primaryCtaClasses } from '@/lib/cta-classes';
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
       {
-        markcopilotCapabilities.map((cap) => (
-          <div class="p-6 rounded-xl border border-border dark:border-border bg-background dark:bg-surface shadow-none shadow-none transition-all space-y-3">
+        markcopilotCapabilities.map((cap, index) => (
+          <KineticWorkflowCard delay={index * 100} class="p-6 space-y-3">
             <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
               <Icon name={cap.icon || 'lucide:sparkles'} class="w-5 h-5" />
             </div>
@@ -428,7 +429,7 @@ import { primaryCtaClasses } from '@/lib/cta-classes';
             <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
               {cap.description}
             </p>
-          </div>
+          </KineticWorkflowCard>
         ))
       }
     </div>

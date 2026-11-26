@@ -10,6 +10,7 @@
  */
 import MCResponsiveHeroMedia from '@/components/design-system/MCResponsiveHeroMedia.astro';
 import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import SlidingIntegrationRail from '@/components/motion/SlidingIntegrationRail.astro';
 import DeveloperPlayground from '@/components/enterprise/DeveloperPlayground.astro';
 import ServiceBoundaryNotice from '@/components/common/ServiceBoundaryNotice.astro';
 import { Icon } from 'astro-icon/components';
@@ -128,6 +129,9 @@ import { primaryCtaClasses } from '@/lib/cta-classes';
   <!-- 2. CORE FEATURED INTEGRATIONS SHOWCASES                  -->
   <!-- ======================================================== -->
   <FeaturedIntegrationsSection />
+  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" aria-label="Explore supported and planned integration pathways">
+    <SlidingIntegrationRail />
+  </div>
 
   <!-- ======================================================== -->
   <!-- 3. ALL INTEGRATIONS DIRECTORY & DISCOVERY EXPERIENCE     -->

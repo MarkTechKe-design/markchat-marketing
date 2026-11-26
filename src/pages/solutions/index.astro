@@ -4,6 +4,7 @@
  */
 import MCResponsiveHeroMedia from '@/components/design-system/MCResponsiveHeroMedia.astro';
 import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import KineticWorkflowCard from '@/components/motion/KineticWorkflowCard.astro';
 import IndustryBlueprints from '@/components/enterprise/IndustryBlueprints.astro';
 import ServiceBoundaryNotice from '@/components/common/ServiceBoundaryNotice.astro';
 import PageHeader from '@sections/content/PageHeader.astro';
@@ -46,8 +47,9 @@ const editorialHero = await fetchHeroMediaSettings('solutions');
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {
-          [...byTeam, ...bySize].map((item) => (
-            <a
+          [...byTeam, ...bySize].map((item, index) => (
+            <KineticWorkflowCard class="border-0 bg-transparent" delay={(index % 3) * 100}>
+              <a
               href={`/solutions/${item.slug}`}
               class="group flex flex-col justify-between p-6 rounded-xl border border-border bg-background hover:border-primary/50 shadow-none transition-all"
             >
@@ -74,7 +76,8 @@ const editorialHero = await fetchHeroMediaSettings('solutions');
                 <span>View solution guide</span>
                 <span class="group-hover:translate-x-1 transition-transform">→</span>
               </div>
-            </a>
+              </a>
+            </KineticWorkflowCard>
           ))
         }
       </div>
@@ -93,8 +96,9 @@ const editorialHero = await fetchHeroMediaSettings('solutions');
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {
-          byIndustry.map((item) => (
-            <a
+          byIndustry.map((item, index) => (
+            <KineticWorkflowCard class="border-0 bg-transparent" delay={(index % 3) * 100}>
+              <a
               href={`/solutions/${item.slug}`}
               class="group flex flex-col justify-between p-6 rounded-xl border border-border bg-surface hover:border-primary/50 shadow-none transition-all"
             >
@@ -121,7 +125,8 @@ const editorialHero = await fetchHeroMediaSettings('solutions');
                 <span>Explore industry workflow</span>
                 <span class="group-hover:translate-x-1 transition-transform">→</span>
               </div>
-            </a>
+              </a>
+            </KineticWorkflowCard>
           ))
         }
       </div>

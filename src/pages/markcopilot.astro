@@ -10,6 +10,7 @@ import MCResponsiveHeroMedia from '@/components/design-system/MCResponsiveHeroMe
 import MarketingLayout from '@/layouts/MarketingLayout.astro';
 import ServiceBoundaryNotice from '@/components/common/ServiceBoundaryNotice.astro';
 import ProductOperations from '@/components/enterprise/ProductOperations.astro';
+import FloatingTelemetryCard from '@/components/motion/FloatingTelemetryCard.astro';
 import { Icon } from 'astro-icon/components';
 import { siteConfig } from '@/config';
 import FAQSection from '@sections/content/FAQSection.astro';
@@ -168,8 +169,10 @@ import { primaryCtaClasses } from '@/lib/cta-classes';
         </div>
 
         <!-- Floating Chat Bubble (Markcopilot Grounded Response) -->
-        <div
-          class="hidden md:block absolute right-8 bottom-10 max-w-sm p-4 rounded-xl rounded-br-sm bg-background border border-primary/30 shadow-none pointer-events-none transform rotate-1"
+        <FloatingTelemetryCard
+          class="hidden md:block absolute right-8 bottom-10 max-w-sm pointer-events-none"
+          delay={-2.8}
+          statusLabel="Suggested reply demo"
         >
           <div class="flex items-center gap-2 mb-2">
             <div
@@ -188,7 +191,7 @@ import { primaryCtaClasses } from '@/lib/cta-classes';
             "Habari! Ndiyo, size 42 zipo kwa stock. Delivery hadi Kilimani ni KES 250 kwa boda.
             Jumla ni KES 3,450. Nitumie nambari yako ya M-Pesa nikurushie STK prompt sasa hivi?"
           </p>
-        </div>
+        </FloatingTelemetryCard>
 
         <!-- Center Interactive Callout -->
         <div
