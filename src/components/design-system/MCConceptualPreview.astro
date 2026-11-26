@@ -41,7 +41,7 @@ const smallIcon = 'h-3.5 w-3.5 shrink-0';
             MarkChat <span class="font-normal text-neutral-400">/ Shared inbox</span>
           </div>
           <span class="flex items-center gap-1 text-[10px] text-neutral-400">
-            <span class="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Demo workspace
+            <span class="mc-demo-status h-1.5 w-1.5 rounded-full bg-emerald-400" /> Demo workspace
           </span>
         </div>
         <div class="grid min-h-52 flex-1 grid-cols-[minmax(0,31%)_minmax(0,1fr)]">
@@ -49,11 +49,11 @@ const smallIcon = 'h-3.5 w-3.5 shrink-0';
             <p class="truncate text-[9px] font-bold uppercase tracking-wider text-neutral-400">
               Conversations
             </p>
-            <div class="rounded-lg border border-neutral-600 bg-neutral-700 p-2">
+            <div class="rounded-lg border border-neutral-600 bg-neutral-700 p-2 transition-colors duration-200 hover:bg-neutral-600">
               <p class="truncate text-[11px] font-semibold">Demo shopper</p>
               <p class="mt-1 truncate text-[10px] text-neutral-300">WhatsApp · Available?</p>
             </div>
-            <div class="rounded-lg p-2">
+            <div class="rounded-lg p-2 transition-colors duration-200 hover:bg-neutral-700">
               <p class="truncate text-[11px] font-semibold">Sample visitor</p>
               <p class="mt-1 truncate text-[10px] text-neutral-400">Web chat · Delivery</p>
             </div>
@@ -241,3 +241,23 @@ const smallIcon = 'h-3.5 w-3.5 shrink-0';
     )
   }
 </div>
+
+<style>
+  .mc-demo-status {
+    animation: mc-demo-status 2.5s ease-in-out infinite;
+  }
+  @keyframes mc-demo-status {
+    0%,
+    100% {
+      opacity: 0.55;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mc-demo-status {
+      animation: none;
+    }
+  }
+</style>
