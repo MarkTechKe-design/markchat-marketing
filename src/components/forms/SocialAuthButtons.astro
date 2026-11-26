@@ -71,7 +71,17 @@ const googleLabel = 'Continue with Google';
         const url = new URL(googleBtn.href, window.location.origin);
         const searchParams = new URLSearchParams(window.location.search);
         const redirectParam = searchParams.get('redirect');
-        if (redirectParam && /^\/(?![/\\])/.test(redirectParam) && !/[\\\\\x00-\x1f\x7f]/.test(redirectParam) && !/%(?:2f|5c|2e|25)/i.test(redirectParam) && !redirectParam.includes(':')) {
+        if (
+          redirectParam &&
+          redirectParam.length <= 512 &&
+          /^\/(?![/\\])/.test(redirectParam) &&
+          !Array.from(redirectParam).some(
+            (char) => char === '\\' || char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127
+          ) &&
+          !/%(?:2f|5c|2e|25)/i.test(redirectParam) &&
+          !redirectParam.includes(':') &&
+          !redirectParam.includes('#')
+        ) {
           url.searchParams.set('redirect', redirectParam);
         }
         const planInput = document.getElementById('planId') as HTMLInputElement | null;
