@@ -86,8 +86,7 @@ const { title, description, breadcrumbs } = Astro.props;
               ?.split('=')[1];
 
           if (!token) {
-            window.location.href =
-              prefix + '/dashboard/login?redirect=' + encodeURIComponent(path);
+            window.location.href = prefix + '/dashboard/login?redirect=' + encodeURIComponent(path);
           }
         }
       }
