@@ -264,7 +264,8 @@ const controlPlaneUrl =
       !targetUrl.includes(':') &&
       !Array.from(targetUrl).some((char) => char.charCodeAt(0) < 32) &&
       !/%(?:0[0-9a-f]|2e|2f|5c|25)/i.test(targetUrl) &&
-      !targetUrl.includes("#") && targetUrl.length <= 512
+      !targetUrl.includes('#') &&
+      targetUrl.length <= 512
     ) {
       return targetUrl;
     }
@@ -453,8 +454,11 @@ const controlPlaneUrl =
         if (typeof payload.ssoUrl === 'string') {
           try {
             const candidate = new URL(payload.ssoUrl);
-            const allowed = ['https://app.markchat.co.ke',
-              'http://localhost:3000', 'http://127.0.0.1:3000'];
+            const allowed = [
+              'https://app.markchat.co.ke',
+              'http://localhost:3000',
+              'http://127.0.0.1:3000',
+            ];
             if (allowed.includes(candidate.origin) && candidate.pathname.startsWith('/app/'))
               destination = candidate.href;
           } catch {
