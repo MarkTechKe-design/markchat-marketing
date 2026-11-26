@@ -1,0 +1,72 @@
+---
+interface Props {
+  class?: string;
+  delay?: number;
+  duration?: number;
+  statusLabel?: string;
+}
+const {
+  class: className = '',
+  delay = 0,
+  duration = 6,
+  statusLabel = 'Demo workspace',
+} = Astro.props;
+const safeDelay = Number.isFinite(delay) ? Math.max(-6, Math.min(6, delay)) : 0;
+const safeDuration = Number.isFinite(duration) ? Math.max(5.5, Math.min(6.5, duration)) : 6;
+---
+
+<div
+  data-mc-floating-card
+  class:list={[
+    'rounded-xl border border-border bg-surface-elevated shadow-sm transition-shadow duration-200 hover:shadow-md',
+    className,
+  ]}
+  style={`--mc-float-delay: ${safeDelay}s; --mc-float-duration: ${safeDuration}s`}
+>
+  <div class="flex items-center justify-end gap-1.5 px-3 pt-3 text-[10px] text-text-muted">
+    <span class="mc-telemetry-dot h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
+    <span>{statusLabel}</span>
+  </div>
+  <div class="p-2 sm:p-3">
+    <slot />
+  </div>
+</div>
+
+<style>
+  [data-mc-floating-card] {
+    animation: mc-float var(--mc-float-duration) ease-in-out var(--mc-float-delay) infinite;
+  }
+  [data-mc-floating-card]:hover,
+  [data-mc-floating-card]:focus-within {
+    animation-play-state: paused;
+  }
+  .mc-telemetry-dot {
+    animation: mc-demo-pulse 2.6s ease-in-out infinite;
+  }
+  @keyframes mc-float {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+    50% {
+      transform: translate3d(0, -5px, 0);
+    }
+  }
+  @keyframes mc-demo-pulse {
+    0%,
+    100% {
+      opacity: 0.65;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-mc-floating-card],
+    .mc-telemetry-dot {
+      animation: none;
+      transform: none;
+      transition: none;
+    }
+  }
+</style>

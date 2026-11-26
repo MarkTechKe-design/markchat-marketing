@@ -1,0 +1,46 @@
+---
+interface Props {
+  as?: 'div' | 'article' | 'li';
+  class?: string;
+  delay?: number;
+}
+const { as: Tag = 'div', class: className = '', delay = 0 } = Astro.props;
+const safeDelay = Number.isFinite(delay) ? Math.max(0, Math.min(delay, 500)) : 0;
+---
+
+<Tag
+  data-mc-reveal
+  data-mc-kinetic-card
+  style={`--mc-reveal-delay: ${safeDelay}ms`}
+  class:list={[
+    'min-w-0 rounded-xl border border-border bg-surface-elevated transition-[opacity,transform,border-color,box-shadow] duration-500 hover:border-primary/50 hover:shadow-sm',
+    className,
+  ]}
+>
+  <slot />
+</Tag>
+
+<style>
+  [data-mc-reveal] {
+    transition-delay: var(--mc-reveal-delay, 0ms);
+  }
+  [data-mc-reveal][data-mc-reveal-pending='true'] {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  [data-mc-reveal][data-mc-visible='true'] {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  [data-mc-reveal][data-mc-visible='true']:hover,
+  [data-mc-reveal][data-mc-visible='true']:focus-within {
+    transform: translate3d(0, -4px, 0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-mc-reveal] {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+</style>
