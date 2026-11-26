@@ -87,7 +87,10 @@ const bgClass = {
       <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
         <a
           href={action.href}
-          class:list={['inline-flex min-h-11 items-center justify-center rounded-lg px-6 py-3 text-sm font-semibold', primaryCtaClasses]}
+          class:list={[
+            'inline-flex min-h-11 items-center justify-center rounded-lg px-6 py-3 text-sm font-semibold',
+            primaryCtaClasses,
+          ]}
         >
           {action.label}
         </a>
@@ -96,7 +99,8 @@ const bgClass = {
             <a
               href={secondaryAction.href}
               class:list={[
-                'inline-flex min-h-11 items-center justify-center rounded-lg px-6 py-3 text-sm font-semibold', secondaryCtaClasses,
+                'inline-flex min-h-11 items-center justify-center rounded-lg px-6 py-3 text-sm font-semibold',
+                secondaryCtaClasses,
                 variant === 'dark' ? 'border-neutral-500' : 'hover:border-primary/50',
               ]}
             >

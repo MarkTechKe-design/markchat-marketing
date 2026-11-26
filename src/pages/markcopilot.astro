@@ -85,7 +85,10 @@ const badgeColorMap: Record<string, string> = {
         <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <a
             href={settings.hero.primaryCtaHref || '/demo'}
-            class:list={['inline-flex items-center justify-center px-6 py-3.5 rounded-xl font-semibold w-full sm:w-auto', primaryCtaClasses]}
+            class:list={[
+              'inline-flex items-center justify-center px-6 py-3.5 rounded-xl font-semibold w-full sm:w-auto',
+              primaryCtaClasses,
+            ]}
           >
             <span>{settings.hero.primaryCtaLabel || 'Book Live Demo'}</span>
             <Icon name="lucide:arrow-right" class="w-4 h-4 ml-2" />

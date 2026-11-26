@@ -255,7 +255,10 @@ const { action = '', method = 'POST', netlify = false, formName = 'contact' } = 
       <button
         type="submit"
         id="contact-submit-btn"
-        class:list={['w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none', primaryCtaClasses]}
+        class:list={[
+          'w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none',
+          primaryCtaClasses,
+        ]}
       >
         <span id="btn-text" class="flex items-center gap-2">
           <span>Send Message</span>

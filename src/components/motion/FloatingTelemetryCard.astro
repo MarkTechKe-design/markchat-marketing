@@ -24,7 +24,8 @@ const safeDuration = Number.isFinite(duration) ? Math.max(5.5, Math.min(6.5, dur
   style={`--mc-float-delay: ${safeDelay}s; --mc-float-duration: ${safeDuration}s`}
 >
   <div class="flex items-center justify-end gap-1.5 px-3 pt-3 text-[10px] text-text-muted">
-    <span class="mc-telemetry-dot h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
+    <span class="mc-telemetry-dot h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true"
+    ></span>
     <span>{statusLabel}</span>
   </div>
   <div class="p-2 sm:p-3">

@@ -242,7 +242,10 @@ const controlPlaneUrl =
         <button
           type="button"
           id="btn-continue-step1"
-          class:list={['w-full h-11 cursor-pointer px-6 rounded-xl font-medium text-sm focus-visible:ring-offset-background flex items-center justify-center gap-2 group', primaryCtaClasses]}
+          class:list={[
+            'w-full h-11 cursor-pointer px-6 rounded-xl font-medium text-sm focus-visible:ring-offset-background flex items-center justify-center gap-2 group',
+            primaryCtaClasses,
+          ]}
         >
           <span>Continue to account setup</span>
           <svg
@@ -484,7 +487,10 @@ const controlPlaneUrl =
         <button
           type="submit"
           id="register-submit-button"
-          class:list={['flex-1 h-11 cursor-pointer px-6 rounded-xl font-medium text-sm focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2', primaryCtaClasses]}
+          class:list={[
+            'flex-1 h-11 cursor-pointer px-6 rounded-xl font-medium text-sm focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2',
+            primaryCtaClasses,
+          ]}
         >
           <span id="register-button-text"> Create MarkChat Account </span>
           <span id="register-button-loading" class="hidden items-center gap-2">

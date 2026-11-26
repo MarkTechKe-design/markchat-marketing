@@ -849,7 +849,10 @@ const primaryCTA = headerCtas.find((cta) => cta.variant === 'primary');
           primaryCTA && (
             <a
               href={primaryCTA.href}
-              class:list={['block w-full py-2.5 text-center text-sm font-semibold rounded-xl', primaryCtaClasses]}
+              class:list={[
+                'block w-full py-2.5 text-center text-sm font-semibold rounded-xl',
+                primaryCtaClasses,
+              ]}
             >
               {primaryCTA.label}
             </a>
@@ -902,7 +905,8 @@ const primaryCTA = headerCtas.find((cta) => cta.variant === 'primary');
   function initHeaderControllers() {
     const containers = document.querySelectorAll<HTMLElement>('.mega-menu-container');
     const stickyHeader = document.getElementById('site-header');
-    if (!containers.length || !stickyHeader || stickyHeader.dataset.controllerBound === 'true') return;
+    if (!containers.length || !stickyHeader || stickyHeader.dataset.controllerBound === 'true')
+      return;
     stickyHeader.dataset.controllerBound = 'true';
 
     const syncScrollState = () => {

@@ -99,7 +99,10 @@ const filterCategories = [
       <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
         <a
           href="#directory"
-          class:list={['w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 rounded-xl font-bold text-sm', primaryCtaClasses]}
+          class:list={[
+            'w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 rounded-xl font-bold text-sm',
+            primaryCtaClasses,
+          ]}
         >
           <Icon name="lucide:grid" class="w-4 h-4 mr-2" />
           Explore Integrations
@@ -129,7 +132,10 @@ const filterCategories = [
   <!-- 2. CORE FEATURED INTEGRATIONS SHOWCASES                  -->
   <!-- ======================================================== -->
   <FeaturedIntegrationsSection />
-  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" aria-label="Explore supported and planned integration pathways">
+  <div
+    class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"
+    aria-label="Explore supported and planned integration pathways"
+  >
     <SlidingIntegrationRail />
   </div>
 

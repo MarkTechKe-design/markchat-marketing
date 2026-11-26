@@ -3,13 +3,48 @@ import { Icon } from 'astro-icon/components';
 import MCStatusBadge from '@/components/design-system/MCStatusBadge.astro';
 
 const integrations = [
-  { title: 'Safaricom M-Pesa Daraja', icon: 'lucide:wallet-cards', href: '/integrations/safaricom-mpesa-daraja', status: 'Requires setup' },
-  { title: 'Pochi la Biashara Sync', icon: 'lucide:receipt', href: '/integrations/pochi-la-biashara-sync', status: 'Check availability' },
-  { title: 'Shared Bank Paybill', icon: 'lucide:landmark', href: '/integrations/shared-bank-paybill', status: 'Check availability' },
-  { title: "Africa's Talking SMS", icon: 'lucide:smartphone', href: '/integrations/africas-talking-bulk-sms', status: 'Separate SMS service' },
-  { title: 'Shopify', icon: 'lucide:shopping-bag', href: '/integrations/shopify', status: 'Requires setup' },
-  { title: 'REST APIs & Webhooks', icon: 'lucide:braces', href: '/integrations/developer-api-webhooks', status: 'Developer setup' },
-  { title: 'Google SSO', icon: 'lucide:key-round', href: '/integrations/google-microsoft-sso', status: 'Check availability' },
+  {
+    title: 'Safaricom M-Pesa Daraja',
+    icon: 'lucide:wallet-cards',
+    href: '/integrations/safaricom-mpesa-daraja',
+    status: 'Requires setup',
+  },
+  {
+    title: 'Pochi la Biashara Sync',
+    icon: 'lucide:receipt',
+    href: '/integrations/pochi-la-biashara-sync',
+    status: 'Check availability',
+  },
+  {
+    title: 'Shared Bank Paybill',
+    icon: 'lucide:landmark',
+    href: '/integrations/shared-bank-paybill',
+    status: 'Check availability',
+  },
+  {
+    title: "Africa's Talking SMS",
+    icon: 'lucide:smartphone',
+    href: '/integrations/africas-talking-bulk-sms',
+    status: 'Separate SMS service',
+  },
+  {
+    title: 'Shopify',
+    icon: 'lucide:shopping-bag',
+    href: '/integrations/shopify',
+    status: 'Requires setup',
+  },
+  {
+    title: 'REST APIs & Webhooks',
+    icon: 'lucide:braces',
+    href: '/integrations/developer-api-webhooks',
+    status: 'Developer setup',
+  },
+  {
+    title: 'Google SSO',
+    icon: 'lucide:key-round',
+    href: '/integrations/google-microsoft-sso',
+    status: 'Check availability',
+  },
 ];
 ---
 
@@ -17,29 +52,33 @@ const integrations = [
   <div class="mc-integration-viewport" data-mc-integration-rail>
     <div class="mc-integration-track">
       <div class="mc-integration-group">
-        {integrations.map((integration) => (
-          <a
-            href={integration.href}
-            class="inline-flex min-w-60 shrink-0 items-center gap-3 rounded-xl border border-border bg-surface-elevated px-4 py-3 text-text transition-colors hover:border-primary/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            <Icon name={integration.icon} class="h-5 w-5 shrink-0 text-primary" />
-            <span class="min-w-0">
-              <span class="block text-xs font-semibold">{integration.title}</span>
-              <MCStatusBadge label={integration.status} />
-            </span>
-          </a>
-        ))}
+        {
+          integrations.map((integration) => (
+            <a
+              href={integration.href}
+              class="inline-flex min-w-60 shrink-0 items-center gap-3 rounded-xl border border-border bg-surface-elevated px-4 py-3 text-text transition-colors hover:border-primary/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <Icon name={integration.icon} class="h-5 w-5 shrink-0 text-primary" />
+              <span class="min-w-0">
+                <span class="block text-xs font-semibold">{integration.title}</span>
+                <MCStatusBadge label={integration.status} />
+              </span>
+            </a>
+          ))
+        }
       </div>
       <div class="mc-integration-group" aria-hidden="true">
-        {integrations.map((integration) => (
-          <span class="inline-flex min-w-60 shrink-0 items-center gap-3 rounded-xl border border-border bg-surface-elevated px-4 py-3 text-text">
-            <Icon name={integration.icon} class="h-5 w-5 shrink-0 text-primary" />
-            <span class="min-w-0">
-              <span class="block text-xs font-semibold">{integration.title}</span>
-              <span class="text-xs text-text-muted">{integration.status}</span>
+        {
+          integrations.map((integration) => (
+            <span class="inline-flex min-w-60 shrink-0 items-center gap-3 rounded-xl border border-border bg-surface-elevated px-4 py-3 text-text">
+              <Icon name={integration.icon} class="h-5 w-5 shrink-0 text-primary" />
+              <span class="min-w-0">
+                <span class="block text-xs font-semibold">{integration.title}</span>
+                <span class="text-xs text-text-muted">{integration.status}</span>
+              </span>
             </span>
-          </span>
-        ))}
+          ))
+        }
       </div>
     </div>
   </div>
