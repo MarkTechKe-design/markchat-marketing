@@ -3,6 +3,7 @@ import MCContainer from '@/components/design-system/MCContainer.astro';
 import MCButton from '@/components/design-system/MCButton.astro';
 import MCProductFrame from '@/components/design-system/MCProductFrame.astro';
 import MCConceptualPreview from '@/components/design-system/MCConceptualPreview.astro';
+import FloatingTelemetryCard from '@/components/motion/FloatingTelemetryCard.astro';
 import MCResponsiveHeroMedia from '@/components/design-system/MCResponsiveHeroMedia.astro';
 import { normalizeHeroMedia } from '@/lib/hero-media';
 import type { HeroMediaSettings } from '@/lib/types';
@@ -101,8 +102,12 @@ const defaultTitle = title === 'Every conversation. One smarter inbox.';
               <MCResponsiveHeroMedia page="homepage" settings={editorial} focalPoint="right" />
               {editorial.heroMediaMode === 'hybrid' && (
                 <div class="grid gap-3 sm:grid-cols-2">
-                  <MCConceptualPreview kind="mpesa" />
-                  <MCConceptualPreview kind="markcopilot" />
+                  <FloatingTelemetryCard delay={0} statusLabel="Payment demo">
+                    <MCConceptualPreview kind="mpesa" />
+                  </FloatingTelemetryCard>
+                  <FloatingTelemetryCard delay={-2.8} statusLabel="Suggested-reply demo">
+                    <MCConceptualPreview kind="markcopilot" />
+                  </FloatingTelemetryCard>
                 </div>
               )}
             </div>
@@ -131,8 +136,12 @@ const defaultTitle = title === 'Every conversation. One smarter inbox.';
                 )}
               </div>
               <div class="grid items-stretch gap-3 sm:grid-cols-2">
-                <MCConceptualPreview kind="mpesa" />
-                <MCConceptualPreview kind="markcopilot" />
+                <FloatingTelemetryCard delay={0} statusLabel="Payment demo">
+                  <MCConceptualPreview kind="mpesa" />
+                </FloatingTelemetryCard>
+                <FloatingTelemetryCard delay={-2.8} statusLabel="Suggested-reply demo">
+                  <MCConceptualPreview kind="markcopilot" />
+                </FloatingTelemetryCard>
               </div>
               <p class="text-right text-xs text-text-muted">
                 Conceptual product preview · synthetic example content

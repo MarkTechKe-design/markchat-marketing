@@ -3,6 +3,7 @@ import MCContainer from '@/components/design-system/MCContainer.astro';
 import MCProductTabs from '@/components/design-system/MCProductTabs.astro';
 import MCSectionHeading from '@/components/design-system/MCSectionHeading.astro';
 import MCWorkflowPreview from '@/components/design-system/MCWorkflowPreview.astro';
+import FloatingTelemetryCard from '@/components/motion/FloatingTelemetryCard.astro';
 import type { ProductWorkflow, CmsProductMediaOverride } from '@/data/product-assets';
 
 interface Props {
@@ -31,18 +32,20 @@ const { cmsMedia = {} } = Astro.props;
         cmsMedia={cmsMedia.inbox}
         description="Manage eligible customer channels, shared context, and team assignments in one place."
       />
-      <MCWorkflowPreview
-        slot="mpesa"
-        workflow="mpesa"
-        cmsMedia={cmsMedia.mpesa}
-        description="Explore configured Daraja checkout requests and provider-verified payment outcomes."
-      />
-      <MCWorkflowPreview
-        slot="markcopilot"
-        workflow="markcopilot"
-        cmsMedia={cmsMedia.markcopilot}
-        description="Draft contextual replies and let an authorized agent review them before sending."
-      />
+      <FloatingTelemetryCard slot="mpesa" delay={0} statusLabel="Demo workspace">
+        <MCWorkflowPreview
+          workflow="mpesa"
+          cmsMedia={cmsMedia.mpesa}
+          description="Explore configured Daraja checkout requests and provider-verified payment outcomes."
+        />
+      </FloatingTelemetryCard>
+      <FloatingTelemetryCard slot="markcopilot" delay={-2.8} statusLabel="Demo workspace">
+        <MCWorkflowPreview
+          workflow="markcopilot"
+          cmsMedia={cmsMedia.markcopilot}
+          description="Draft contextual replies and let an authorized agent review them before sending."
+        />
+      </FloatingTelemetryCard>
     </MCProductTabs>
   </MCContainer>
 </section>

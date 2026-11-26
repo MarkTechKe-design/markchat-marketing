@@ -31,7 +31,7 @@ const tabs = [
           aria-selected={index === 0 ? 'true' : 'false'}
           tabindex={index === 0 ? 0 : -1}
           class:list={[
-            'min-w-48 shrink-0 rounded-xl border px-5 py-4 text-left focus-visible:outline-2 focus-visible:outline-primary lg:w-full',
+            'relative min-w-48 shrink-0 rounded-xl border px-5 py-4 text-left transition-[background-color,border-color,transform] duration-200 focus-visible:outline-2 focus-visible:outline-primary lg:w-full',
             index === 0
               ? 'border-primary bg-surface-elevated text-text'
               : 'border-transparent bg-transparent text-text-muted',
@@ -117,3 +117,36 @@ const tabs = [
   initMCProductTabs();
   document.addEventListener('astro:page-load', initMCProductTabs);
 </script>
+
+<style>
+  [data-mc-tab][aria-selected='true']::before {
+    content: '';
+    position: absolute;
+    inset-block: 0.75rem;
+    left: 0;
+    width: 3px;
+    border-radius: 3px;
+    background: #2563eb;
+  }
+  [data-mc-panel]:not([hidden]) {
+    animation: mc-panel-crossfade 230ms ease-out both;
+  }
+  @keyframes mc-panel-crossfade {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 6px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-mc-panel]:not([hidden]) {
+      animation: none;
+    }
+    [data-mc-tab] {
+      transition: none;
+    }
+  }
+</style>

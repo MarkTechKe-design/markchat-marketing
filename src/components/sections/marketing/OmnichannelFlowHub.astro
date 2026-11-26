@@ -1,17 +1,8 @@
 ---
 import MCContainer from '@/components/design-system/MCContainer.astro';
-import MCIntegrationIcon from '@/components/design-system/MCIntegrationIcon.astro';
+import SlidingChannelRail from '@/components/motion/SlidingChannelRail.astro';
+import SlidingIntegrationRail from '@/components/motion/SlidingIntegrationRail.astro';
 
-const channels = [
-  { id: 'whatsapp', name: 'WhatsApp' },
-  { id: 'mpesa', name: 'M-Pesa' },
-  { id: 'instagram', name: 'Instagram' },
-  { id: 'messenger', name: 'Messenger' },
-  { id: 'tiktok', name: 'TikTok' },
-  { id: 'telegram', name: 'Telegram' },
-  { id: 'shopify', name: 'Shopify' },
-  { id: 'email', name: 'Email' },
-];
 ---
 
 <section
@@ -32,17 +23,9 @@ const channels = [
         >Integration setup and availability →</a
       >
     </div>
-    <div class="grid grid-cols-4 items-center gap-3 sm:grid-cols-8">
-      {
-        channels.map((channel) => (
-          <div class="flex min-w-0 flex-col items-center gap-2.5 py-2 text-center">
-            <MCIntegrationIcon iconKey={channel.id} name={channel.name} size="sm" />
-            <span class="text-[11px] font-medium leading-tight text-text-muted">
-              {channel.name}
-            </span>
-          </div>
-        ))
-      }
+    <div class="space-y-4" aria-label="Integration discovery rails">
+      <SlidingChannelRail />
+      <SlidingIntegrationRail />
     </div>
   </MCContainer>
 </section>
