@@ -165,7 +165,12 @@ test('Brand-colored marquee icon tiles appear in production HTML on both rails',
     'Shopify',
     'REST APIs & Webhooks',
   ]) {
-    assert.ok(html.includes(`data-mc-brand-icon="${title}"`), `Missing brand icon for ${title}`);
+    // Astro escapes ampersands in serialized HTML attributes (e.g. &amp;).
+    const escapedTitle = title.replaceAll('&', '&amp;');
+    assert.ok(
+      html.includes(`data-mc-brand-icon="${escapedTitle}"`),
+      `Missing brand icon for ${title}`
+    );
   }
   assert.ok(html.includes('bg-[#25D366]/12'), 'Missing WhatsApp icon color in HTML');
   assert.ok(html.includes('dark:text-[#A3E635]'), 'Missing Shopify dark-mode icon color in HTML');
