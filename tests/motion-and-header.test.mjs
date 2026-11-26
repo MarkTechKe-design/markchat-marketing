@@ -159,13 +159,16 @@ test('Brand-colored marquee icon tiles appear in production HTML on both rails',
   const html = await response.text();
   // Astro may serialize '&' as a named or numeric HTML entity. Compare decoded
   // attribute values rather than coupling this test to its escaping strategy.
-  const brandIconTitles = Array.from(html.matchAll(/data-mc-brand-icon="([^"]*)"/g), ([, value]) => {
-    let decoded = value;
-    for (let pass = 0; pass < 2; pass++) {
-      decoded = decoded.replace(/&(?:amp|#0*38|#x0*26);/gi, '&');
+  const brandIconTitles = Array.from(
+    html.matchAll(/data-mc-brand-icon="([^"]*)"/g),
+    ([, value]) => {
+      let decoded = value;
+      for (let pass = 0; pass < 2; pass++) {
+        decoded = decoded.replace(/&(?:amp|#0*38|#x0*26);/gi, '&');
+      }
+      return decoded;
     }
-    return decoded;
-  });
+  );
   for (const title of [
     'WhatsApp Cloud API',
     'Instagram DM',
