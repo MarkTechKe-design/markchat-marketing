@@ -111,7 +111,7 @@ const controlPlaneUrl =
     const apiUrl = (document.getElementById('oauth-exchange') as HTMLElement)?.dataset.apiUrl;
     if (!apiUrl) { fail(); return; }
     try {
-      const response = await fetch(apiUrl.replace(/\\/$/, '') + '/api/v1/auth/google/exchange', {
+      const response = await fetch(apiUrl.replace(/\/$/, '') + '/api/v1/auth/google/exchange', {
         method: 'POST',
         credentials: 'include',
         cache: 'no-store',
@@ -126,7 +126,7 @@ const controlPlaneUrl =
       const safeRedirect =
         typeof redirect === 'string' &&
         redirect.length <= 512 &&
-        /^\\/(?![\\/\\\\])/.test(redirect) &&
+        /^\/(?![\/\\])/.test(redirect) &&
         !/[\\\\\\x00-\\x1f\\x7f]/.test(redirect) &&
         !/%(?:2f|5c|2e|25)/i.test(redirect) &&
         !redirect.includes(':') && !redirect.includes('#')
