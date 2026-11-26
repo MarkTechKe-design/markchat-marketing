@@ -13,7 +13,6 @@
  */
 import BaseLayout from './BaseLayout.astro';
 import ThemeToggle from '@/components/ui/ThemeToggle.astro';
-import { siteConfig } from '@/config';
 
 interface Props {
   title: string;
@@ -36,8 +35,7 @@ const { title, description, pageType = 'login', noindex = true } = Astro.props;
           class="flex items-center gap-2 font-semibold text-lg text-text shrink-0"
           aria-label="MarkChat Home"
         >
-          {
-            <span class="inline-flex items-center shrink-0">
+          <span class="inline-flex items-center shrink-0">
               <img src="/brand/markchat-logo.png" alt="MarkChat — Connect, Support, Grow"
                 width="1100" height="329"
                 class="block dark:hidden h-9 w-auto max-w-[176px] object-contain"
@@ -46,8 +44,7 @@ const { title, description, pageType = 'login', noindex = true } = Astro.props;
                 width="1100" height="329"
                 class="hidden dark:block h-9 w-auto max-w-[176px] object-contain"
                 decoding="async" />
-            </span>
-          }
+          </span>
         </a>
 
         <!-- Contextual Action & Theme Toggle -->
