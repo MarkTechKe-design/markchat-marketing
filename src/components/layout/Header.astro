@@ -9,6 +9,7 @@
  */
 import { Icon } from 'astro-icon/components';
 import ThemeToggle from '@ui/ThemeToggle.astro';
+import { primaryCtaClasses, secondaryCtaClasses } from '@/lib/cta-classes';
 import {
   productMegaMenu,
   solutionsMegaMenu,
@@ -23,10 +24,12 @@ const primaryCTA = headerCtas.find((cta) => cta.variant === 'primary');
 
 <header
   id="site-header"
-  class="sticky top-0 z-50 mx-auto mt-4 w-full max-w-[85rem] px-4 sm:px-6 lg:px-8"
+  data-scrolled="false"
+  class="sticky top-3 sm:top-4 z-50 mx-auto mt-3 w-full max-w-7xl px-4 sm:px-6 lg:px-8"
 >
   <nav
-    class="relative mx-auto max-w-[85rem] rounded-2xl border border-border bg-surface/95 px-5 py-2 shadow-xs dark:bg-surface/95"
+    class="relative mx-auto max-w-7xl rounded-2xl border border-border bg-surface/95 border-border/80 bg-surface/90 px-5 py-2 shadow-sm backdrop-blur-md dark:bg-surface/90"
+    style="background-color: color-mix(in srgb, var(--color-surface) 90%, transparent)"
     aria-label="Main navigation"
   >
     <div class="flex items-center justify-between min-h-12">
@@ -75,7 +78,7 @@ const primaryCTA = headerCtas.find((cta) => cta.variant === 'primary');
           <!-- Dropdown bridge & container -->
           <div
             id="mega-panel-product"
-            class="mega-menu-panel invisible opacity-0 translate-y-1 transition-all duration-200 pointer-events-none absolute left-1/2 -translate-x-1/2 top-full pt-1.5 z-50 w-[880px] xl:w-[920px] max-w-[calc(100vw-2rem)]"
+            class="mega-menu-panel invisible opacity-0 translate-y-1 transition-all duration-200 pointer-events-none absolute left-0 top-full pt-1.5 z-50 w-[880px] xl:w-[920px] max-w-[calc(100vw-2rem)]"
             role="region"
             aria-label="Product navigation menu"
           >
@@ -257,7 +260,7 @@ const primaryCTA = headerCtas.find((cta) => cta.variant === 'primary');
           <!-- Dropdown bridge & container -->
           <div
             id="mega-panel-solutions"
-            class="mega-menu-panel invisible opacity-0 translate-y-1 transition-all duration-200 pointer-events-none absolute left-1/2 -translate-x-1/2 top-full pt-1.5 z-50 w-[880px] xl:w-[920px] max-w-[calc(100vw-2rem)]"
+            class="mega-menu-panel invisible opacity-0 translate-y-1 transition-all duration-200 pointer-events-none absolute left-0 top-full pt-1.5 z-50 w-[880px] xl:w-[920px] max-w-[calc(100vw-2rem)]"
             role="region"
             aria-label="Solutions navigation menu"
           >
@@ -439,7 +442,7 @@ const primaryCTA = headerCtas.find((cta) => cta.variant === 'primary');
           <!-- Dropdown bridge & container -->
           <div
             id="mega-panel-resources"
-            class="mega-menu-panel invisible opacity-0 translate-y-1 transition-all duration-200 pointer-events-none absolute left-1/2 -translate-x-1/2 top-full pt-1.5 z-50 w-[880px] xl:w-[920px] max-w-[calc(100vw-2rem)]"
+            class="mega-menu-panel invisible opacity-0 translate-y-1 transition-all duration-200 pointer-events-none absolute left-0 top-full pt-1.5 z-50 w-[880px] xl:w-[920px] max-w-[calc(100vw-2rem)]"
             role="region"
             aria-label="Resources navigation menu"
           >
@@ -609,7 +612,7 @@ const primaryCTA = headerCtas.find((cta) => cta.variant === 'primary');
           ghostCTAs.map((cta) => (
             <a
               href={cta.href}
-              class="text-text-muted hover:text-text transition-colors text-sm font-medium rounded-lg px-3 py-2 focus-visible:ring-2 focus-visible:ring-primary focus:outline-none"
+              class:list={['text-sm font-medium rounded-lg px-3 py-2', secondaryCtaClasses]}
             >
               {cta.label}
             </a>
@@ -619,7 +622,7 @@ const primaryCTA = headerCtas.find((cta) => cta.variant === 'primary');
           primaryCTA && (
             <a
               href={primaryCTA.href}
-              class="px-4 py-2 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-semibold transition-all duration-200   focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              class:list={['px-4 py-2 rounded-xl text-sm font-semibold', primaryCtaClasses]}
             >
               {primaryCTA.label}
             </a>
@@ -846,7 +849,7 @@ const primaryCTA = headerCtas.find((cta) => cta.variant === 'primary');
           primaryCTA && (
             <a
               href={primaryCTA.href}
-              class="block w-full py-2.5 text-center text-sm font-semibold rounded-xl bg-primary hover:bg-primary-dark text-white transition-colors shadow-xs"
+              class:list={['block w-full py-2.5 text-center text-sm font-semibold rounded-xl', primaryCtaClasses]}
             >
               {primaryCTA.label}
             </a>
@@ -858,6 +861,10 @@ const primaryCTA = headerCtas.find((cta) => cta.variant === 'primary');
 </div>
 
 <style>
+  #site-header[data-scrolled='true'] nav {
+    box-shadow: 0 14px 28px -20px rgba(15, 23, 42, 0.38);
+  }
+
   .mega-menu-panel {
     visibility: hidden;
     opacity: 0;
@@ -894,7 +901,23 @@ const primaryCTA = headerCtas.find((cta) => cta.variant === 'primary');
   // ---------------------------------------------------------------------------
   function initHeaderControllers() {
     const containers = document.querySelectorAll<HTMLElement>('.mega-menu-container');
-    if (!containers.length) return;
+    const stickyHeader = document.getElementById('site-header');
+    if (!containers.length || !stickyHeader || stickyHeader.dataset.controllerBound === 'true') return;
+    stickyHeader.dataset.controllerBound = 'true';
+
+    const syncScrollState = () => {
+      stickyHeader.dataset.scrolled = String(window.scrollY > 16);
+    };
+    syncScrollState();
+    window.addEventListener('scroll', syncScrollState, { passive: true });
+
+    function positionPanel(container: HTMLElement, panel: HTMLElement) {
+      const rect = container.getBoundingClientRect();
+      const width = Math.min(window.innerWidth - 32, window.innerWidth >= 1280 ? 920 : 880);
+      const desired = rect.left + rect.width / 2 - width / 2;
+      const left = Math.max(16, Math.min(desired, window.innerWidth - width - 16));
+      panel.style.left = `${left - rect.left}px`;
+    }
 
     let activeMenuId: string | null = null;
     let openedBy: 'hover' | 'click' | null = null;
@@ -922,6 +945,7 @@ const primaryCTA = headerCtas.find((cta) => cta.variant === 'primary');
         const chevron = container.querySelector<HTMLElement>('.chevron-icon');
 
         if (id === menuId) {
+          if (panel) positionPanel(container, panel);
           container.setAttribute('data-state', 'open');
           trigger?.setAttribute('aria-expanded', 'true');
           panel?.classList.remove('invisible', 'opacity-0', 'pointer-events-none', 'translate-y-1');
@@ -1085,7 +1109,8 @@ const primaryCTA = headerCtas.find((cta) => cta.variant === 'primary');
     function updateMenuPosition() {
       if (header && mobileMenuPanel) {
         const headerRect = header.getBoundingClientRect();
-        mobileMenuPanel.style.top = `${headerRect.bottom}px`;
+        mobileMenuPanel.style.top = `${headerRect.bottom + 8}px`;
+        mobileMenuPanel.style.maxHeight = `calc(100dvh - ${headerRect.bottom + 20}px)`;
       }
     }
 
@@ -1115,6 +1140,14 @@ const primaryCTA = headerCtas.find((cta) => cta.variant === 'primary');
       }
     }
 
+    window.addEventListener('resize', () => {
+      containers.forEach((container) => {
+        if (container.getAttribute('data-state') !== 'open') return;
+        const panel = container.querySelector<HTMLElement>('.mega-menu-panel');
+        if (panel) positionPanel(container, panel);
+      });
+      if (mobileMenuButton?.getAttribute('aria-expanded') === 'true') updateMenuPosition();
+    });
     mobileMenuButton?.addEventListener('click', toggleMobileMenu);
     mobileMenuBackdrop?.addEventListener('click', closeMobileMenu);
 

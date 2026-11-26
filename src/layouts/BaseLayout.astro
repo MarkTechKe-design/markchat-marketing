@@ -100,5 +100,38 @@ const {
       Skip to main content
     </a>
     <slot />
+    <script>
+      // The shared observer only animates cards once JS is active; without JS they remain visible.
+      function initMCScrollReveal() {
+        const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-mc-reveal]'));
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reducedMotion || !('IntersectionObserver' in window)) {
+          cards.forEach((card) => {
+            card.removeAttribute('data-mc-reveal-pending');
+            card.dataset.mcVisible = 'true';
+          });
+          return;
+        }
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (!entry.isIntersecting) return;
+              const card = entry.target as HTMLElement;
+              card.removeAttribute('data-mc-reveal-pending');
+              card.dataset.mcVisible = 'true';
+              observer.unobserve(card);
+            });
+          },
+          { rootMargin: '0px 0px -20px 0px', threshold: 0.08 }
+        );
+        cards.forEach((card) => {
+          if (card.dataset.mcVisible === 'true') return;
+          card.dataset.mcRevealPending = 'true';
+          observer.observe(card);
+        });
+      }
+      initMCScrollReveal();
+      document.addEventListener('astro:page-load', initMCScrollReveal);
+    </script>
   </body>
 </html>
