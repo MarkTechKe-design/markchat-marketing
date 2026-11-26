@@ -3,11 +3,15 @@
  * OAuth Callback Page - Handles Google OAuth 2.0 + PKCE return
  *
  * Implemented using AuthLayout with noindex.
- * Consumes hash fragment tokens (#token=...&ssoUrl=...&redirect=...&isNew=...)
- * immediately scrubbing them from browser history via replaceState to prevent Referer
- * or history token leakage (CWE-598).
+ * Redeems a single-use, browser-bound ticket through the verified Control Plane
+ * API. No JWT or Core SSO secret is accepted from URL fragments.
  */
 import AuthLayout from '@/layouts/AuthLayout.astro';
+
+const controlPlaneUrl =
+  import.meta.env.PUBLIC_CONTROL_PLANE_URL ||
+  import.meta.env.PUBLIC_CONTROL_PLANE_API_URL ||
+  'http://localhost:5000';
 ---
 
 <AuthLayout
@@ -16,7 +20,7 @@ import AuthLayout from '@/layouts/AuthLayout.astro';
   pageType="login"
   noindex={true}
 >
-  <div class="w-full max-w-md mx-auto">
+  <div class="w-full max-w-md mx-auto" id="oauth-exchange" data-api-url={controlPlaneUrl}>
     <div class="bg-surface border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
       <!-- Loading State -->
       <div id="oauth-loading-state" class="text-center py-6 space-y-4">
@@ -85,72 +89,60 @@ import AuthLayout from '@/layouts/AuthLayout.astro';
 </AuthLayout>
 
 <script>
-  (function handleOAuthCallback() {
-    const loadingState = document.getElementById('oauth-loading-state');
-    const errorState = document.getElementById('oauth-error-state');
-    const errorMsg = document.getElementById('oauth-error-message');
-
-    // Parse URL fragment (hash)
-    const rawHash = window.location.hash.startsWith('#')
-      ? window.location.hash.substring(1)
-      : window.location.hash;
-
-    // Immediately scrub the fragment from browser address bar & history to prevent token leakage (CWE-598)
+  (async function redeemGoogleSession() {
+    const loading = document.getElementById('oauth-loading-state');
+    const errorPanel = document.getElementById('oauth-error-state');
+    const errorMessage = document.getElementById('oauth-error-message');
+    function fail() {
+      loading?.classList.add('hidden');
+      errorPanel?.classList.remove('hidden');
+      if (errorMessage) errorMessage.textContent =
+        'Google sign-in could not be verified. Please restart the sign-in process.';
+    }
+    const params = new URLSearchParams(window.location.search);
+    const ticket = params.get('ticket');
+    const hadFragment = Boolean(window.location.hash);
+    // Strip handoff selector and any malicious fragment before making requests.
     window.history.replaceState({}, document.title, window.location.pathname);
-
-    if (!rawHash) {
-      showError(
-        'Authentication response was missing required credentials. Please try signing in again.'
-      );
+    if (hadFragment || !ticket || !/^[A-Za-z0-9_-]{43}$/.test(ticket)) {
+      fail();
       return;
     }
-
-    const params = new URLSearchParams(rawHash);
-    const token = params.get('token');
-    const ssoUrl = params.get('ssoUrl');
-    const redirectParam = params.get('redirect');
-    const isNew = params.get('isNew');
-
-    if (!token) {
-      showError('Authentication token could not be verified. Please try signing in again.');
-      return;
-    }
-
-    // Persist session token
+    const apiUrl = (document.getElementById('oauth-exchange') as HTMLElement)?.dataset.apiUrl;
+    if (!apiUrl) { fail(); return; }
     try {
-      localStorage.setItem('markchat_cp_token', token);
-    } catch {
-      // Storage unavailable or quota exceeded
-    }
-
-    // Safe relative redirect sanitization
-    let safeRedirect = '/billing';
-    if (redirectParam && /^\/(?![/\\])/.test(redirectParam) && !redirectParam.includes(':')) {
-      safeRedirect = redirectParam;
-    }
-
-    // Determine target destination
-    let destination = safeRedirect;
-    if (ssoUrl && isNew !== '1') {
-      try {
-        const parsed = new URL(ssoUrl);
-        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-          destination = ssoUrl;
-        }
-      } catch {
-        destination = safeRedirect;
+      const response = await fetch(apiUrl.replace(/\\/$/, '') + '/api/v1/auth/google/exchange', {
+        method: 'POST',
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticket })
+      });
+      if (!response.ok) throw new Error('OAuth handoff rejected');
+      const payload = (await response.json()).data;
+      if (typeof payload?.token !== 'string' || payload.token.split('.').length !== 3)
+        throw new Error('Missing verified session');
+      const redirect = payload.redirect;
+      const safeRedirect =
+        typeof redirect === 'string' &&
+        redirect.length <= 512 &&
+        /^\\/(?![\\/\\\\])/.test(redirect) &&
+        !/[\\\\\\x00-\\x1f\\x7f]/.test(redirect) &&
+        !/%(?:2f|5c|2e|25)/i.test(redirect) &&
+        !redirect.includes(':') && !redirect.includes('#')
+          ? redirect : '/billing';
+      localStorage.setItem('markchat_cp_token', payload.token);
+      let destination = safeRedirect;
+      if (typeof payload.ssoUrl === 'string' && !payload.isNewUser) {
+        const link = new URL(payload.ssoUrl);
+        const allowed = new Set(['https://app.markchat.co.ke',
+          'http://localhost:3000', 'http://127.0.0.1:3000']);
+        if (allowed.has(link.origin) && link.pathname.startsWith('/app/'))
+          destination = link.toString();
       }
-    }
-
-    // Execute redirection
-    setTimeout(() => {
-      window.location.href = destination;
-    }, 400);
-
-    function showError(message: string) {
-      if (loadingState) loadingState.classList.add('hidden');
-      if (errorState) errorState.classList.remove('hidden');
-      if (errorMsg) errorMsg.textContent = message;
+      window.location.replace(destination);
+    } catch {
+      fail();
     }
   })();
 </script>
