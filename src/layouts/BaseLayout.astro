@@ -100,6 +100,35 @@ const {
       Skip to main content
     </a>
     <slot />
+    <style is:global>
+      /* Shared progressive enhancement for CMS cards that cannot be wrapped
+         without disturbing their filtering and selection contracts. */
+      [data-mc-reveal] {
+        transition:
+          opacity 500ms ease,
+          transform 500ms ease,
+          border-color 200ms ease;
+      }
+      [data-mc-reveal][data-mc-reveal-pending='true'] {
+        opacity: 0;
+        transform: translate3d(0, 18px, 0);
+      }
+      [data-mc-reveal][data-mc-visible='true'] {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+      }
+      [data-mc-reveal][data-mc-visible='true']:hover,
+      [data-mc-reveal][data-mc-visible='true']:focus-within {
+        transform: translate3d(0, -4px, 0);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        [data-mc-reveal] {
+          opacity: 1 !important;
+          transform: none !important;
+          transition: none !important;
+        }
+      }
+    </style>
     <script>
       // The shared observer only animates cards once JS is active; without JS they remain visible.
       function initMCScrollReveal() {
