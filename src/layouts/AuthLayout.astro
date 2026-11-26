@@ -37,11 +37,16 @@ const { title, description, pageType = 'login', noindex = true } = Astro.props;
           aria-label="MarkChat Home"
         >
           {
-            siteConfig.logo ? (
-              <img src={siteConfig.logo} alt={siteConfig.name} class="h-8 w-auto" />
-            ) : (
-              <span class="tracking-tight">{siteConfig.name}</span>
-            )
+            <span class="inline-flex items-center shrink-0">
+              <img src="/brand/markchat-logo.png" alt="MarkChat — Connect, Support, Grow"
+                width="1100" height="329"
+                class="block dark:hidden h-9 w-auto max-w-[176px] object-contain"
+                decoding="async" />
+              <img src="/brand/markchat-logo-dark.png" alt="MarkChat — Connect, Support, Grow"
+                width="1100" height="329"
+                class="hidden dark:block h-9 w-auto max-w-[176px] object-contain"
+                decoding="async" />
+            </span>
           }
         </a>
 
