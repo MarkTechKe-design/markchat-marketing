@@ -37,7 +37,11 @@ async function persistLead(
   lead: ReturnType<typeof leadEnvelope>
 ): Promise<boolean> {
   const base = trustedHttpsBase(context.env.CMS_API_BASE_URL);
-  if (!base) return false;
+  if (!base) {
+    // Operational codes only: never log names, email, phone, payloads, URLs, or credentials.
+    console.warn('LEADS_CMS_BASE_UNCONFIGURED');
+    return false;
+  }
   const url = new URL('/api/public/leads', base);
   // Do not embed server credentials in the lead or return them to the browser.
   try {
@@ -56,12 +60,18 @@ async function persistLead(
       redirect: 'error',
       cache: 'no-store',
     });
-    if (response.status !== 200 && response.status !== 201) return false;
+    if (response.status !== 200 && response.status !== 201) {
+      console.warn('LEADS_CMS_HTTP_REJECTED', response.status);
+      return false;
+    }
     const json: unknown = await response.json();
-    return Boolean(
+    const confirmed = Boolean(
       json && typeof json === 'object' && (json as { success?: unknown }).success === true
     );
+    if (!confirmed) console.warn('LEADS_CMS_RESPONSE_NOT_CONFIRMED');
+    return confirmed;
   } catch {
+    console.warn('LEADS_CMS_TRANSPORT_OR_RESPONSE_ERROR');
     return false;
   }
 }
@@ -149,8 +159,9 @@ export async function onRequestPost(context: EdgeContext): Promise<Response> {
 
   const lead = leadEnvelope(input);
   const persisted = await persistLead(context, lead);
-  const notified = await notifyAdmin(context, lead);
-  if (!persisted && !notified) {
+  // Sending an email is not a database write. Never notify or claim success
+  // until the CMS explicitly confirms HTTP 200/201 with success === true.
+  if (!persisted) {
     return httpJson(
       {
         success: false,
@@ -159,6 +170,7 @@ export async function onRequestPost(context: EdgeContext): Promise<Response> {
       502
     );
   }
+  const notified = await notifyAdmin(context, lead);
   return httpJson(
     {
       success: true,

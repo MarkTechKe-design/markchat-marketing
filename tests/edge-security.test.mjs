@@ -119,6 +119,49 @@ test('lead success is conditional on explicit persistence confirmation', async (
   }
 });
 
+test('a delivered email must never substitute for a confirmed CMS save', async () => {
+  const previousFetch = globalThis.fetch;
+  const previousWarn = console.warn;
+  const calls = [];
+  const warnings = [];
+  try {
+    console.warn = (...args) => { warnings.push(args[0]); };
+    // A rejected CMS write must fail closed even when Resend would accept email.
+    globalThis.fetch = async (url) => {
+      calls.push(String(url));
+      if (String(url).includes('/api/public/leads')) {
+        return Response.json({ success: false }, { status: 201 });
+      }
+      return Response.json({ id: 'provider-notification-id' }, { status: 200 });
+    };
+    const env = {
+      MARKCHAT_RATE_DB: fakeD1(),
+      RATE_HASH_SECRET,
+      CMS_API_BASE_URL: 'https://cms.example.co.ke',
+      RESEND_API_KEY: 'test-only-resend-secret',
+      RESEND_FROM_EMAIL: 'leads@example.co.ke',
+    };
+    const failed = await submitLead({ request: request('/api/leads', validLead()), env });
+    assert.equal(failed.status, 502);
+    assert.equal((await failed.json()).success, false);
+    assert.deepEqual(calls, ['https://cms.example.co.ke/api/public/leads']);
+    assert.ok(warnings.includes('LEADS_CMS_RESPONSE_NOT_CONFIRMED'));
+
+    // Missing CMS URL must not try sending a notification either.
+    calls.length = 0;
+    const missing = await submitLead({
+      request: request('/api/leads', validLead()),
+      env: { ...env, CMS_API_BASE_URL: undefined },
+    });
+    assert.equal(missing.status, 502);
+    assert.deepEqual(calls, []);
+    assert.ok(warnings.includes('LEADS_CMS_BASE_UNCONFIGURED'));
+  } finally {
+    globalThis.fetch = previousFetch;
+    console.warn = previousWarn;
+  }
+});
+
 test('deterministic Product Guide never fabricates prices or claims fund custody', () => {
   const unknown = productGuide('Compare KES pricing plans', {
     plans: [],
