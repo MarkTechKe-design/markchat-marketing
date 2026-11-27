@@ -17,7 +17,7 @@
     },
   ],
   "vars": {
-    "RESEND_FROM_EMAIL": "MarkChat Leads <leads@markchat.co.ke>",
+    "RESEND_FROM_EMAIL": "leads@markchat.co.ke",
   },
   "previews": {
     "d1_databases": [
@@ -28,7 +28,7 @@
       },
     ],
     "vars": {
-      "RESEND_FROM_EMAIL": "MarkChat Leads <leads@markchat.co.ke>",
+      "RESEND_FROM_EMAIL": "leads@markchat.co.ke",
     },
   },
 }
