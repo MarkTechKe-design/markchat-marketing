@@ -22,7 +22,7 @@ const {
 } = Astro.props;
 const media = normalizeHeroMedia(page, settings, import.meta.env.PUBLIC_CMS_MEDIA_HOST || '');
 const isBundled = (url: string) =>
-  url.startsWith('/media/') ? existsSync(path.join(process.cwd(), 'public', url.slice(1))) : true;
+  url.startsWith('/') ? existsSync(path.join(process.cwd(), 'public', url.slice(1))) : true;
 const desktop =
   media.heroBackgroundImageUrl && isBundled(media.heroBackgroundImageUrl)
     ? media.heroBackgroundImageUrl
@@ -46,12 +46,13 @@ const productLayouts = {
   integrations: ['inbox', 'mpesa', 'automation-routing'],
   solutions: ['inbox', 'contact-crm', 'help-center'],
   about: ['inbox', 'markcopilot', 'mpesa'],
+  careers: ['inbox', 'markcopilot', 'mpesa'],
 } as const;
 const previewKinds = productLayouts[page];
 ---
 
 {
-  !image && framed && (
+  page !== 'careers' && !image && framed && (
     <figure
       data-mc-layered-hero
       data-hero-media-page={page}
@@ -75,7 +76,7 @@ const previewKinds = productLayouts[page];
 }
 
 {
-  image && (
+  page !== 'careers' && image && (
     <figure
       data-mc-responsive-hero
       data-hero-media-page={page}
@@ -118,7 +119,131 @@ const previewKinds = productLayouts[page];
   )
 }
 
+{
+  page === 'careers' && (
+    <figure
+      data-careers-hero
+      data-hero-media-page="careers"
+      class:list={[
+        'overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900',
+        className,
+      ]}
+      style={`--hero-x:${media.heroFocalX}%;--hero-y:${media.heroFocalY}%;--hero-mobile-x:${media.heroMobileFocalX}%;--hero-mobile-y:${media.heroMobileFocalY}%`}
+    >
+      <div class="relative aspect-[16/10] w-full overflow-hidden">
+        <picture>
+          <source media="(max-width: 767px)" srcset={mobile || undefined} />
+          <img
+            src={image || undefined}
+            alt={media.heroBackgroundAlt}
+            width="1600"
+            height="1066"
+            decoding="async"
+            loading="eager"
+            fetchpriority="high"
+            data-careers-picture
+            class:list={[
+              'careers-hero-picture absolute inset-0 block h-full w-full object-cover',
+              !image && 'invisible',
+            ]}
+          />
+        </picture>
+        <div
+          data-careers-picture-fallback
+          class:list={[
+            'absolute inset-0 flex flex-col items-center justify-center gap-2 bg-slate-100 px-8 text-center dark:bg-slate-900',
+            Boolean(image) && 'hidden',
+          ]}
+        >
+          <span class="text-lg font-semibold text-slate-900 dark:text-white">
+            Careers at MarkChat
+          </span>
+          <span class="text-sm text-slate-600 dark:text-slate-300">
+            Explore our open roles and join the talent pool.
+          </span>
+        </div>
+      </div>
+    </figure>
+  )
+}
+
+<style>
+  .careers-hero-picture {
+    object-position: var(--hero-x, 62%) var(--hero-y, 50%);
+  }
+  @media (max-width: 767px) {
+    .careers-hero-picture {
+      object-position: var(--hero-mobile-x, 65%) var(--hero-mobile-y, 50%);
+    }
+  }
+</style>
+
 <script>
+  import { normalizeHeroMedia } from '@/lib/hero-media';
+
+  function initCareersHero() {
+    document.querySelectorAll<HTMLElement>('[data-careers-hero]').forEach((frame) => {
+      if (frame.dataset.bound) return;
+      frame.dataset.bound = 'true';
+      const picture = frame.querySelector<HTMLImageElement>('[data-careers-picture]');
+      const fallback = frame.querySelector<HTMLElement>('[data-careers-picture-fallback]');
+      const source = frame.querySelector<HTMLSourceElement>('source');
+      if (!picture || !fallback || !source) return;
+      const failed = () => {
+        picture.classList.add('invisible');
+        fallback.classList.remove('hidden');
+      };
+      picture.addEventListener('error', failed);
+      picture.addEventListener('load', () => {
+        picture.classList.remove('invisible');
+        fallback.classList.add('hidden');
+      });
+      if (picture.complete && !picture.naturalWidth) failed();
+      // Keep the fixed frame while loading a durable CMS override. No candidate
+      // information or admin credentials are involved in this public request.
+      void fetch('/api/careers/hero', { credentials: 'omit', signal: AbortSignal.timeout(5000) })
+        .then(async (response) => {
+          if (!response.ok || !response.headers.get('content-type')?.includes('application/json'))
+            return;
+          const data = await response.json();
+          if (!data || typeof data !== 'object' || Array.isArray(data)) return;
+          const settings = normalizeHeroMedia(
+            'careers',
+            data,
+            import.meta.env.PUBLIC_CMS_MEDIA_HOST || ''
+          );
+          const url =
+            settings.heroMediaMode === 'layered-preview'
+              ? ''
+              : settings.heroBackgroundImageUrl || settings.heroBackgroundMobileImageUrl;
+          for (const [name, value] of [
+            ['x', settings.heroFocalX],
+            ['y', settings.heroFocalY],
+            ['mobile-x', settings.heroMobileFocalX],
+            ['mobile-y', settings.heroMobileFocalY],
+          ] as const)
+            frame.style.setProperty('--hero-' + name, String(value) + '%');
+          picture.alt = settings.heroBackgroundAlt;
+          if (!url) {
+            source.removeAttribute('srcset');
+            picture.removeAttribute('src');
+            failed();
+            return;
+          }
+          if (settings.heroBackgroundMobileImageUrl)
+            source.srcset = settings.heroBackgroundMobileImageUrl;
+          else source.removeAttribute('srcset');
+          if (picture.getAttribute('src') !== url) picture.src = url;
+          if (picture.complete && picture.naturalWidth) {
+            picture.classList.remove('invisible');
+            fallback.classList.add('hidden');
+          }
+        })
+        .catch(() => {
+          /* Bundled image stays visible if public settings are unavailable. */
+        });
+    });
+  }
   function initEditorialHeroMedia() {
     document.querySelectorAll<HTMLImageElement>('[data-editorial-picture]').forEach((image) => {
       if (image.dataset.errorBound) return;
@@ -130,5 +255,7 @@ const previewKinds = productLayouts[page];
     });
   }
   initEditorialHeroMedia();
+  initCareersHero();
   document.addEventListener('astro:page-load', initEditorialHeroMedia);
+  document.addEventListener('astro:page-load', initCareersHero);
 </script>

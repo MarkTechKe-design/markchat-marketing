@@ -325,7 +325,14 @@ export interface CareerApplication {
   coverLetter?: string;
   consentAgreed?: boolean;
   submittedAt: string;
-  status: 'new' | 'reviewed' | 'contacted' | 'rejected';
+  status: 'new' | 'shortlisted' | 'interview' | 'rejected' | 'hired' | 'reviewed' | 'contacted';
+  specialization?: string;
+  githubUrl?: string;
+  cvFilename?: string;
+  cvSize?: number;
+  cvMime?: string;
+  hasCv?: boolean;
+  notificationSent?: boolean;
 }
 
 export interface CareersBenefit {
@@ -2632,133 +2639,171 @@ export async function updateCareersContent(
   return updated;
 }
 
-const DEFAULT_CAREER_APPLICATIONS: CareerApplication[] = [
-  {
-    id: 'app-1',
-    careerId: 'job-1',
-    careerTitle: 'Senior Full-Stack Engineer (Fintech & WhatsApp Cloud API)',
-    fullName: 'Peter Mwangi',
-    email: 'pmwangi@gmail.com',
-    phone: '+254 712 334 455',
-    location: 'Nairobi, Kenya',
-    linkedinUrl: 'https://linkedin.com/in/petermwangi',
-    submittedAt: '2026-11-10T14:20:00Z',
-    status: 'new',
-    consentAgreed: true,
-    coverLetter:
-      '4 years experience integrating Safaricom Daraja API and Meta Cloud API at a regional payments gateway in Nairobi.',
-  },
-  {
-    id: 'app-2',
-    careerId: 'job-2',
-    careerTitle: 'Kenya Customer Success & M-Pesa Onboarding Lead',
-    fullName: 'Naomi Chepkemoi',
-    email: 'naomi.chep@outlook.com',
-    phone: '+254 722 889 900',
-    location: 'Nairobi, Kenya',
-    linkedinUrl: 'https://linkedin.com/in/naomichep',
-    submittedAt: '2026-11-11T10:15:00Z',
-    status: 'reviewed',
-    consentAgreed: true,
-    coverLetter:
-      'Experienced onboarding 150+ Kenyan retail shops onto electronic POS and mobile till solutions.',
-  },
-];
+/** Careers applications are private runtime data, never browser-local CMS drafts. */
+export interface CareerApplicationPage {
+  applications: CareerApplication[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+export interface CareerApplicationQuery {
+  status?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+  id?: string;
+}
+const CAREER_APPLICATION_ID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-/**
- * Submit candidate job application
- */
+function careersAdminHeaders(): Record<string, string> {
+  const token = getAdminToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+/** No localStorage fallback: only the edge's confirmed INSERT can acknowledge an application. */
 export async function submitCareerApplication(
   careerId: string,
-  data: Omit<CareerApplication, 'id' | 'careerId' | 'careerTitle' | 'submittedAt' | 'status'>
+  data:
+    | FormData
+    | (Omit<CareerApplication, 'id' | 'careerId' | 'careerTitle' | 'submittedAt' | 'status'> & {
+        cv?: File;
+        startedAt?: number;
+      })
 ): Promise<{ success: boolean; id: string; message: string }> {
-  const career = await fetchCareerBySlug(careerId);
-  const application: CareerApplication = {
-    id: `app-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-    careerId: career ? career.id : careerId,
-    careerTitle: career ? career.title : 'General Application (Talent Pool)',
-    submittedAt: new Date().toISOString(),
-    status: 'new',
-    ...data,
-  };
-
-  try {
-    const res = await apiFetch(
-      `${BRIDGE_API_URL}/api/public/careers/${encodeURIComponent(careerId)}/apply`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(application),
-      }
-    );
-    if (res.ok) {
-      return { success: true, id: application.id, message: 'Application submitted successfully!' };
+  const body = data instanceof FormData ? data : new FormData();
+  if (!(data instanceof FormData)) {
+    for (const key of [
+      'fullName',
+      'email',
+      'phone',
+      'location',
+      'linkedinUrl',
+      'githubUrl',
+      'portfolioUrl',
+      'coverLetter',
+      'specialization',
+    ] as const) {
+      if (typeof data[key] === 'string') body.set(key, data[key] || '');
     }
-  } catch {
-    // Local fallback
+    if (data.cv) body.set('cv', data.cv, data.cv.name);
+    body.set('consent', String(data.consentAgreed === true));
+    body.set('startedAt', String(data.startedAt || 0));
+    body.set('website', '');
   }
-
-  const existingApps = [
-    ...getLocalItem<CareerApplication[]>(STORAGE_KEYS.applications, DEFAULT_CAREER_APPLICATIONS),
-  ];
-  existingApps.unshift(application);
-  setLocalItem(STORAGE_KEYS.applications, existingApps);
-  return { success: true, id: application.id, message: 'Application received and saved!' };
-}
-
-/**
- * Fetch candidate applications for dashboard review
- */
-export async function fetchCareerApplications(): Promise<CareerApplication[]> {
+  body.set('careerId', careerId);
+  const cv = body.get('cv');
+  if (!(cv instanceof File) || cv.size === 0)
+    throw new Error('Please attach your CV as a PDF, DOC or DOCX file.');
+  let response: Response;
   try {
-    const res = await apiFetch(`${BRIDGE_API_URL}/api/admin/cms/applications`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${getAdminToken()}`,
-      },
+    response = await fetch('/api/careers/apply', {
+      method: 'POST',
+      body,
+      credentials: 'same-origin',
+      signal: AbortSignal.timeout(45000),
     });
-    if (res.ok) {
-      return await res.json();
-    }
   } catch {
-    // Fallback
+    throw new Error(
+      'We could not confirm your application. Keep this form open and contact hello@markchat.co.ke if you need help.'
+    );
   }
-  return getLocalItem<CareerApplication[]>(STORAGE_KEYS.applications, DEFAULT_CAREER_APPLICATIONS);
+  const result = await response.json().catch(() => null);
+  if (
+    response.status !== 201 ||
+    result?.success !== true ||
+    !CAREER_APPLICATION_ID.test(result?.id || '')
+  ) {
+    throw new Error(
+      typeof result?.error === 'string'
+        ? result.error
+        : 'Your application could not be saved. Please try again.'
+    );
+  }
+  return {
+    success: true,
+    id: result.id,
+    message:
+      typeof result.message === 'string' ? result.message : 'Your application has been saved.',
+  };
 }
 
-/**
- * Update candidate application review status
- */
+export async function fetchCareerApplicationPage(
+  query: CareerApplicationQuery = {}
+): Promise<CareerApplicationPage> {
+  // Static output must never contain candidate PII, including when builds have credentials.
+  if (typeof window === 'undefined') return { applications: [], total: 0, limit: 25, offset: 0 };
+  const parameters = new URLSearchParams();
+  for (const [key, value] of Object.entries(query))
+    if (value !== undefined && value !== '') parameters.set(key, String(value));
+  const response = await fetch('/api/careers/applications?' + parameters, {
+    headers: careersAdminHeaders(),
+    credentials: 'same-origin',
+    signal: AbortSignal.timeout(15000),
+  });
+  const result = await response.json().catch(() => null);
+  if (
+    !response.ok ||
+    result?.success !== true ||
+    !Array.isArray(result.applications) ||
+    !Number.isInteger(result.total)
+  ) {
+    throw new Error(
+      response.status === 401 || response.status === 403
+        ? 'Your admin session is not authorized. Sign in again.'
+        : 'Applications are unavailable. Check the CMS session and Careers service.'
+    );
+  }
+  return {
+    applications: result.applications,
+    total: result.total,
+    limit: result.limit,
+    offset: result.offset,
+  };
+}
+
+/** Retained CMS client export, backed by authenticated D1 queries. */
+export async function fetchCareerApplications(
+  query: CareerApplicationQuery = {}
+): Promise<CareerApplication[]> {
+  return (await fetchCareerApplicationPage(query)).applications;
+}
+
 export async function updateCareerApplicationStatus(
   appId: string,
   status: CareerApplication['status']
 ): Promise<boolean> {
-  const apps = [
-    ...getLocalItem<CareerApplication[]>(STORAGE_KEYS.applications, DEFAULT_CAREER_APPLICATIONS),
-  ];
-  const idx = apps.findIndex((a) => a.id === appId);
-  if (idx !== -1) {
-    apps[idx] = { ...apps[idx], status };
-    setLocalItem(STORAGE_KEYS.applications, apps);
-  }
+  if (!CAREER_APPLICATION_ID.test(appId)) throw new Error('Invalid application.');
+  const canonical =
+    status === 'reviewed' ? 'shortlisted' : status === 'contacted' ? 'interview' : status;
+  if (!['new', 'shortlisted', 'interview', 'rejected', 'hired'].includes(canonical))
+    throw new Error('Invalid review status.');
+  const response = await fetch('/api/careers/applications/' + encodeURIComponent(appId), {
+    method: 'PATCH',
+    headers: { ...careersAdminHeaders(), 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify({ status: canonical }),
+    signal: AbortSignal.timeout(15000),
+  });
+  const result = await response.json().catch(() => null);
+  if (!response.ok || result?.success !== true)
+    throw new Error('The status was not saved. Check your admin session and try again.');
+  return true;
+}
 
-  try {
-    await apiFetch(
-      `${BRIDGE_API_URL}/api/admin/cms/applications/${encodeURIComponent(appId)}/status`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${getAdminToken()}`,
-        },
-        body: JSON.stringify({ status }),
-      }
-    );
-    return true;
-  } catch {
-    return true;
-  }
+/** Fetch bytes using authorization; never expose R2 object keys or tokens in URLs. */
+export async function downloadCareerCv(appId: string): Promise<Blob> {
+  if (!CAREER_APPLICATION_ID.test(appId)) throw new Error('Invalid application.');
+  const response = await fetch('/api/careers/cv/' + encodeURIComponent(appId), {
+    headers: careersAdminHeaders(),
+    credentials: 'same-origin',
+    signal: AbortSignal.timeout(30000),
+  });
+  if (!response.ok || !response.headers.get('Content-Disposition')?.startsWith('attachment;'))
+    throw new Error('CV download is unavailable. Check your admin session and try again.');
+  const blob = await response.blob();
+  if (!blob.size || blob.size > 5 * 1024 * 1024) throw new Error('Invalid CV download.');
+  return blob;
 }
 
 /**
@@ -2963,6 +3008,15 @@ export async function fetchFeatureBySlug(slug: string): Promise<MarketingFeature
  * edits are a best-effort preview (not a site-wide publish).
  */
 export async function fetchHeroMediaSettings(page: HeroMediaPage): Promise<HeroMediaSettings> {
+  if (page === 'careers' && typeof window !== 'undefined') {
+    const response = await fetch('/api/careers/hero', { signal: AbortSignal.timeout(5000) });
+    if (!response.ok) throw new Error('Careers hero settings are unavailable.');
+    return normalizeHeroMedia(
+      page,
+      await response.json(),
+      import.meta.env?.PUBLIC_CMS_MEDIA_HOST || ''
+    );
+  }
   try {
     const res = await apiFetch(`${BRIDGE_API_URL}/api/public/hero-media/${page}`, {
       method: 'GET',
@@ -2970,7 +3024,7 @@ export async function fetchHeroMediaSettings(page: HeroMediaPage): Promise<HeroM
     });
     if (res.ok) {
       const json = (await res.json()) as Partial<HeroMediaSettings>;
-      return normalizeHeroMedia(page, json, import.meta.env.PUBLIC_CMS_MEDIA_HOST || '');
+      return normalizeHeroMedia(page, json, import.meta.env?.PUBLIC_CMS_MEDIA_HOST || '');
     }
   } catch {
     // Existing CMS bridge may not yet expose the optional endpoint.
@@ -2979,7 +3033,7 @@ export async function fetchHeroMediaSettings(page: HeroMediaPage): Promise<HeroM
     STORAGE_KEYS.editorial_hero_settings,
     {} as Record<HeroMediaPage, Partial<HeroMediaSettings>>
   );
-  return normalizeHeroMedia(page, local[page], import.meta.env.PUBLIC_CMS_MEDIA_HOST || '');
+  return normalizeHeroMedia(page, local[page], import.meta.env?.PUBLIC_CMS_MEDIA_HOST || '');
 }
 
 export async function updateHeroMediaSettings(
@@ -2989,8 +3043,28 @@ export async function updateHeroMediaSettings(
   const normalized = normalizeHeroMedia(
     page,
     provided,
-    import.meta.env.PUBLIC_CMS_MEDIA_HOST || ''
+    import.meta.env?.PUBLIC_CMS_MEDIA_HOST || ''
   );
+  if (page === 'careers') {
+    for (const key of ['heroBackgroundImageUrl', 'heroBackgroundMobileImageUrl'] as const) {
+      if (provided[key]?.trim() && !normalized[key])
+        throw new Error('Use a same-origin image path or an approved HTTPS media origin.');
+    }
+    const response = await fetch('/api/careers/hero', {
+      method: 'PUT',
+      headers: { ...careersAdminHeaders(), 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(normalized),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!response.ok)
+      throw new Error('Careers hero was not saved. Check your admin session and media URL.');
+    return normalizeHeroMedia(
+      page,
+      await response.json(),
+      import.meta.env?.PUBLIC_CMS_MEDIA_HOST || ''
+    );
+  }
   const current = getLocalItem<Partial<Record<HeroMediaPage, HeroMediaSettings>>>(
     STORAGE_KEYS.editorial_hero_settings,
     {}
@@ -3050,7 +3124,7 @@ export async function uploadHeroMediaAsset(
   const approved = normalizeHeroMedia(
     page,
     { heroBackgroundImageUrl: result?.url || result?.data?.url || '' },
-    import.meta.env.PUBLIC_CMS_MEDIA_HOST || ''
+    import.meta.env?.PUBLIC_CMS_MEDIA_HOST || ''
   ).heroBackgroundImageUrl;
   if (!approved) throw new Error('CMS upload returned an untrusted or invalid media URL.');
   return approved;
@@ -3422,7 +3496,8 @@ export async function adminFetchAllCmsData() {
     DEFAULT_FAQ_CATEGORIES
   );
   const leads = getLocalItem<LeadItem[]>(STORAGE_KEYS.leads, DEFAULT_LEADS);
-  const applications = getLocalItem<CareerApplication[]>(STORAGE_KEYS.applications, []);
+  // Private applications are loaded by the authenticated Careers runtime API.
+  const applications: CareerApplication[] = [];
   const integrations = getLocalItem<MarketingIntegration[]>(
     STORAGE_KEYS.integrations,
     DEFAULT_INTEGRATIONS
@@ -3550,6 +3625,56 @@ export async function upsertBlogPost(
   return saved;
 }
 
+/** Preserve existing CMS contracts while rejecting failed or HTML fallback responses. */
+async function confirmCareerCmsMutation(
+  url: string,
+  options: ApiRequestOptions,
+  expected?: Pick<Career, 'id'> & Partial<Pick<Career, 'title' | 'status'>>
+): Promise<void> {
+  let response: Response;
+  try {
+    response = await apiFetch(url, options);
+  } catch {
+    throw new Error('The Careers CMS could not be reached. No change was confirmed.');
+  }
+  if (!response.ok)
+    throw new Error('The Careers CMS rejected this change. Check your session and try again.');
+  if (response.status === 204) return;
+  const data: unknown = response.headers.get('Content-Type')?.includes('application/json')
+    ? await response.json().catch(() => null)
+    : null;
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    const result = data as Record<string, unknown>;
+    if (result.error == null && result.success === true) return;
+    // Also accept an expected saved Career resource, without treating arbitrary JSON as success.
+    const resource = result.career ?? result.data ?? result;
+    if (
+      expected &&
+      result.error == null &&
+      result.success === undefined &&
+      resource &&
+      typeof resource === 'object' &&
+      !Array.isArray(resource)
+    ) {
+      const saved = resource as Record<string, unknown>;
+      if (
+        saved.id === expected.id &&
+        typeof saved.title === 'string' &&
+        saved.title.trim() &&
+        typeof saved.department === 'string' &&
+        saved.department.trim() &&
+        typeof saved.location === 'string' &&
+        saved.location.trim() &&
+        ['published', 'draft', 'paused', 'archived'].includes(String(saved.status)) &&
+        (!expected.title || saved.title.trim() === expected.title.trim()) &&
+        (!expected.status || saved.status === expected.status)
+      )
+        return;
+    }
+  }
+  throw new Error('The Careers CMS did not confirm the change.');
+}
+
 function generateCareerSlug(title: string): string {
   return title
     .toLowerCase()
@@ -3565,7 +3690,9 @@ function generateCareerSlug(title: string): string {
 export async function upsertCareer(
   career: Partial<Career> & { title: string; department: string; location: string }
 ): Promise<Career> {
-  const careers = getLocalItem<Career[]>(STORAGE_KEYS.careers, DEFAULT_CAREERS);
+  const careers = getLocalItem<Career[]>(STORAGE_KEYS.careers, DEFAULT_CAREERS).map((item) => ({
+    ...item,
+  }));
   let saved: Career;
   const now = new Date().toISOString().split('T')[0];
   const slug = career.slug || generateCareerSlug(career.title);
@@ -3639,20 +3766,16 @@ export async function upsertCareer(
     careers.unshift(saved);
   }
 
-  setLocalItem(STORAGE_KEYS.careers, careers);
-
-  try {
-    await apiFetch(`${BRIDGE_API_URL}/api/admin/cms/careers`, {
+  await confirmCareerCmsMutation(
+    `${BRIDGE_API_URL}/api/admin/cms/careers`,
+    {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${getAdminToken()}`,
-      },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAdminToken()}` },
       body: JSON.stringify(saved),
-    });
-  } catch {
-    // Offline local state persisted
-  }
+    },
+    { id: saved.id, title: saved.title, status: saved.status }
+  );
+  setLocalItem(STORAGE_KEYS.careers, careers);
 
   return saved;
 }
@@ -4363,19 +4486,30 @@ export async function updateItemStatus(
   id: string,
   status: CmsLifecycleStatus | 'new' | 'contacted' | 'qualified' | 'closed'
 ): Promise<boolean> {
+  if (collection === 'careers') {
+    if (!['draft', 'published', 'paused', 'archived'].includes(status))
+      throw new Error('Invalid role status.');
+    await confirmCareerCmsMutation(
+      `${BRIDGE_API_URL}/api/admin/cms/status`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAdminToken()}` },
+        body: JSON.stringify({ collection, id, status }),
+      },
+      { id, status: status as CmsLifecycleStatus }
+    );
+    const list = getLocalItem<Career[]>(STORAGE_KEYS.careers, DEFAULT_CAREERS).map((item) =>
+      item.id === id ? { ...item, status: status as CmsLifecycleStatus } : item
+    );
+    setLocalItem(STORAGE_KEYS.careers, list);
+    return true;
+  }
   if (collection === 'blogs') {
     const list = getLocalItem<BlogPost[]>(STORAGE_KEYS.blogs, DEFAULT_BLOG_POSTS);
     const item = list.find((i) => i.id === id);
     if (item) {
       item.status = status as CmsLifecycleStatus;
       setLocalItem(STORAGE_KEYS.blogs, list);
-    }
-  } else if (collection === 'careers') {
-    const list = getLocalItem<Career[]>(STORAGE_KEYS.careers, DEFAULT_CAREERS);
-    const item = list.find((i) => i.id === id);
-    if (item) {
-      item.status = status as CmsLifecycleStatus;
-      setLocalItem(STORAGE_KEYS.careers, list);
     }
   } else if (collection === 'faqs') {
     const list = getLocalItem<FaqItem[]>(STORAGE_KEYS.faqs, DEFAULT_FAQS);
@@ -4453,14 +4587,24 @@ export async function deleteCmsItem(
     'blogs' | 'careers' | 'faqs' | 'leads' | 'integrations' | 'legal' | 'features' | 'markcopilot',
   id: string
 ): Promise<boolean> {
+  if (collection === 'careers') {
+    await confirmCareerCmsMutation(
+      `${BRIDGE_API_URL}/api/admin/cms/careers/${encodeURIComponent(id)}`,
+      {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${getAdminToken()}` },
+      }
+    );
+    const list = getLocalItem<Career[]>(STORAGE_KEYS.careers, DEFAULT_CAREERS).filter(
+      (item) => item.id !== id
+    );
+    setLocalItem(STORAGE_KEYS.careers, list);
+    return true;
+  }
   if (collection === 'blogs') {
     const list = getLocalItem<BlogPost[]>(STORAGE_KEYS.blogs, DEFAULT_BLOG_POSTS);
     const filtered = list.filter((i) => i.id !== id);
     setLocalItem(STORAGE_KEYS.blogs, filtered);
-  } else if (collection === 'careers') {
-    const list = getLocalItem<Career[]>(STORAGE_KEYS.careers, DEFAULT_CAREERS);
-    const filtered = list.filter((i) => i.id !== id);
-    setLocalItem(STORAGE_KEYS.careers, filtered);
   } else if (collection === 'faqs') {
     const list = getLocalItem<FaqItem[]>(STORAGE_KEYS.faqs, DEFAULT_FAQS);
     const filtered = list.filter((i) => i.id !== id);

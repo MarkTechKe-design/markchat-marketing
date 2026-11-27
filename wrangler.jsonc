@@ -8,6 +8,7 @@
   },
   "observability": {
     "enabled": true,
+    "redact_query_string": true,
   },
   "d1_databases": [
     {
@@ -16,12 +17,14 @@
       "database_id": "8797f32a-bdd1-4614-aa14-558c28fdd04f",
     },
   ],
+  "r2_buckets": [{ "binding": "MARKCHAT_CAREERS_BUCKET", "bucket_name": "markchat-careers-cvs" }],
   "vars": {
     "RESEND_FROM_EMAIL": "leads@markchat.co.ke",
   },
   "previews": {
     "observability": {
       "enabled": true,
+      "redact_query_string": true,
       "logs": {
         "enabled": true,
         "invocation_logs": true,
@@ -34,6 +37,9 @@
         "database_name": "markchat-preview-db",
         "database_id": "1989e316-eb00-481f-81e1-7daba3687eb4",
       },
+    ],
+    "r2_buckets": [
+      { "binding": "MARKCHAT_CAREERS_BUCKET", "bucket_name": "markchat-careers-cvs-preview" },
     ],
     "vars": {
       "RESEND_FROM_EMAIL": "leads@markchat.co.ke",

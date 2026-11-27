@@ -1,3 +1,11 @@
+import { onRequestPost as apply } from '../functions/api/careers/apply';
+import { onRequestGet as listApplications } from '../functions/api/careers/applications';
+import { onRequestPatch as updateApplication } from '../functions/api/careers/application';
+import { onRequestGet as downloadCv } from '../functions/api/careers/cv';
+import {
+  onRequestGet as getCareersHero,
+  onRequestPut as putCareersHero,
+} from '../functions/api/careers/hero';
 import type { EdgeEnv } from './lib/server/edge-security';
 import { onRequestPost as handleLeadPost } from '../functions/api/leads';
 import {
@@ -33,6 +41,28 @@ export default {
       if (request.method === 'GET') return handleMarkcopilotGet(context);
       if (request.method === 'POST') return handleMarkcopilotPost(context);
       return methodNotAllowed('GET, POST');
+    }
+
+    if (pathname === '/api/careers/apply') {
+      return request.method === 'POST' ? apply(context) : methodNotAllowed('POST');
+    }
+    if (pathname === '/api/careers/hero') {
+      if (request.method === 'GET') return getCareersHero(context);
+      if (request.method === 'PUT') return putCareersHero(context);
+      return methodNotAllowed('GET, PUT');
+    }
+    if (pathname === '/api/careers/applications') {
+      return request.method === 'GET' ? listApplications(context) : methodNotAllowed('GET');
+    }
+    const application = pathname.match(/^\/api\/careers\/applications\/([^/]+)$/);
+    if (application) {
+      return request.method === 'PATCH'
+        ? updateApplication(context, application[1])
+        : methodNotAllowed('PATCH');
+    }
+    const cv = pathname.match(/^\/api\/careers\/cv\/([^/]+)$/);
+    if (cv) {
+      return request.method === 'GET' ? downloadCv(context, cv[1]) : methodNotAllowed('GET');
     }
 
     if (pathname === '/api/leads') {

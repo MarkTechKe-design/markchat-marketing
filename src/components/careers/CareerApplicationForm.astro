@@ -1,0 +1,467 @@
+---
+import { Icon } from 'astro-icon/components';
+
+interface Props {
+  careerId: string;
+  careerTitle: string;
+}
+
+const { careerId, careerTitle } = Astro.props;
+const isTalent = careerId === 'general';
+const id = isTalent ? 'general-talent-form' : 'job-apply-form';
+const labelClass = 'block text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1.5';
+const fieldClass =
+  'w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-base sm:text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-950 dark:text-white focus-visible:outline-2 focus-visible:outline-blue-600 aria-invalid:border-red-600';
+const errorClass = 'mt-1 text-sm font-medium text-red-700 dark:text-red-300';
+const contactFields = [
+  {
+    name: 'fullName',
+    label: 'Full name',
+    type: 'text',
+    autocomplete: 'name',
+    maximum: 100,
+    required: true,
+  },
+  {
+    name: 'email',
+    label: 'Email address',
+    type: 'email',
+    autocomplete: 'email',
+    maximum: 254,
+    required: true,
+  },
+  {
+    name: 'phone',
+    label: 'Phone number',
+    type: 'tel',
+    autocomplete: 'tel',
+    maximum: 32,
+    required: true,
+  },
+  {
+    name: 'location',
+    label: 'Location',
+    type: 'text',
+    autocomplete: 'address-level2',
+    maximum: 120,
+    required: false,
+  },
+] as const;
+const links = [
+  { name: 'linkedinUrl', label: 'LinkedIn' },
+  { name: 'githubUrl', label: 'GitHub' },
+  { name: 'portfolioUrl', label: 'Portfolio' },
+];
+const specializations = [
+  'Backend / Systems Engineering',
+  'Frontend / Full-Stack Engineering',
+  'Merchant Success & Onboarding',
+  'Commercial Partnerships & Sales',
+  'Developer Relations & Technical Writing',
+  'Product Design & UI/UX',
+  'Other',
+];
+---
+
+<form
+  id={id}
+  data-career-application-form
+  action="/api/careers/apply"
+  method="post"
+  enctype="multipart/form-data"
+  class="space-y-6"
+>
+  <input type="hidden" name="careerId" value={careerId} />
+  <input type="hidden" name="careerTitle" value={careerTitle} />
+  <input type="hidden" name="startedAt" value="" />
+  <div hidden>
+    <label>
+      Leave this field empty
+      <input type="text" name="website" tabindex="-1" autocomplete="off" />
+    </label>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    {
+      contactFields.map(({ name, label, type, autocomplete, maximum, required }) => (
+        <div class="min-w-0">
+          <label for={`${id}-${name}`} class={labelClass}>
+            {label} {!required && <span class="font-normal text-text-muted">(optional)</span>}
+          </label>
+          <input
+            id={`${id}-${name}`}
+            name={name}
+            type={type}
+            autocomplete={autocomplete}
+            maxlength={maximum}
+            required={required}
+            aria-describedby={`${id}-${name}-error${name === 'phone' ? ` ${id}-phone-help` : ''}`}
+            class={fieldClass}
+          />
+          {name === 'phone' && (
+            <p id={`${id}-phone-help`} class="mt-1 text-xs text-text-muted">
+              For example, +254 712 345 678 or 0712 345 678.
+            </p>
+          )}
+          <p id={`${id}-${name}-error`} data-field-error={name} class={errorClass} hidden />
+        </div>
+      ))
+    }
+  </div>
+
+  {
+    isTalent ? (
+      <div>
+        <label for={`${id}-specialization`} class={labelClass}>
+          Area of specialization
+        </label>
+        <select
+          id={`${id}-specialization`}
+          name="specialization"
+          required
+          aria-describedby={`${id}-specialization-error`}
+          class={fieldClass}
+        >
+          <option value="">Choose an area</option>
+          {specializations.map((specialization) => (
+            <option>{specialization}</option>
+          ))}
+        </select>
+        <p
+          id={`${id}-specialization-error`}
+          data-field-error="specialization"
+          class={errorClass}
+          hidden
+        />
+      </div>
+    ) : (
+      <input type="hidden" name="specialization" value="" />
+    )
+  }
+
+  <div>
+    <label for={`${id}-cv`} class={labelClass}>CV</label>
+    <div
+      data-cv-drop-zone
+      class="flex flex-col items-start gap-4 rounded-xl border border-dashed border-slate-400 bg-slate-50 p-4 dark:border-slate-600 dark:bg-slate-950 sm:flex-row sm:items-center"
+    >
+      <span class="rounded-lg bg-blue-100 p-2.5 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+        <Icon name="lucide:upload" class="size-5" aria-hidden="true" />
+      </span>
+      <div class="w-full min-w-0">
+        <p id={`${id}-cv-help`} class="mb-2 text-sm text-slate-600 dark:text-slate-300">
+          Drag and drop your CV or choose a file. PDF, DOC or DOCX up to 5 MB.
+        </p>
+        <input
+          id={`${id}-cv`}
+          type="file"
+          name="cv"
+          accept=".pdf,.doc,.docx"
+          required
+          aria-describedby={`${id}-cv-help ${id}-cv-error`}
+          class="w-full min-w-0 text-sm text-slate-700 dark:text-slate-200 file:mr-2 file:cursor-pointer file:rounded-lg file:border-0 file:bg-blue-100 file:px-3 file:py-2 file:font-semibold file:text-blue-900 dark:file:bg-blue-950 dark:file:text-blue-100"
+        />
+      </div>
+    </div>
+    <div data-cv-selection class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1" hidden>
+      <p
+        data-cv-description
+        class="min-w-0 text-sm break-all text-slate-700 dark:text-slate-200"
+        role="status"
+      >
+      </p>
+      <button
+        type="button"
+        data-cv-remove
+        class="shrink-0 cursor-pointer text-sm font-semibold text-blue-800 underline underline-offset-2 dark:text-blue-300"
+      >
+        Remove CV
+      </button>
+    </div>
+    <p id={`${id}-cv-error`} data-field-error="cv" class={errorClass} role="alert" hidden></p>
+  </div>
+
+  <fieldset class="min-w-0">
+    <legend class={labelClass}
+      >Professional links <span class="font-normal text-text-muted">(optional)</span></legend
+    >
+    <div class="grid gap-4 sm:grid-cols-3">
+      {
+        links.map(({ name, label }) => (
+          <div class="min-w-0">
+            <label
+              for={`${id}-${name}`}
+              class="block text-sm text-slate-700 dark:text-slate-200 mb-1.5"
+            >
+              {label}
+            </label>
+            <input
+              id={`${id}-${name}`}
+              name={name}
+              type="url"
+              maxlength="2048"
+              placeholder="https://"
+              aria-describedby={`${id}-${name}-error`}
+              class={fieldClass}
+            />
+            <p id={`${id}-${name}-error`} data-field-error={name} class={errorClass} hidden />
+          </div>
+        ))
+      }
+    </div>
+  </fieldset>
+
+  <div>
+    <label for={`${id}-coverLetter`} class={labelClass}>
+      Cover letter <span class="font-normal text-text-muted">(optional)</span>
+    </label>
+    <textarea
+      id={`${id}-coverLetter`}
+      name="coverLetter"
+      rows="4"
+      maxlength="4000"
+      class={fieldClass}></textarea>
+  </div>
+
+  <div>
+    <div class="flex items-start gap-2.5">
+      <input
+        type="checkbox"
+        id={`${id}-consent`}
+        name="consent"
+        value="true"
+        required
+        aria-describedby={`${id}-consent-error`}
+        class="mt-1 size-4 shrink-0 accent-blue-700"
+      />
+      <p class="text-sm text-slate-700 dark:text-slate-200">
+        <label for={`${id}-consent`}>
+          I consent to MarkChat processing my information for {
+            isTalent ? 'future recruitment consideration' : 'this application'
+          } under the Kenya Data Protection Act, 2019.
+        </label>
+        <a
+          class="font-semibold text-blue-800 underline underline-offset-2 dark:text-blue-300"
+          href="/privacy"
+          target="_blank"
+          rel="noopener">Privacy Policy</a
+        >
+      </p>
+    </div>
+    <p id={`${id}-consent-error`} data-field-error="consent" class={errorClass} hidden></p>
+  </div>
+
+  <noscript
+    ><p class="text-sm text-text-muted">Enable JavaScript to submit your application.</p></noscript
+  >
+  <p
+    data-application-error
+    role="alert"
+    tabindex="-1"
+    class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200"
+    hidden
+  >
+  </p>
+  <button
+    type="submit"
+    disabled
+    class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#1D4ED8] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-wait disabled:opacity-70 sm:w-auto"
+  >
+    <Icon name="lucide:send" class="size-4" aria-hidden="true" />
+    <span data-submit-label>{isTalent ? 'Submit to Talent Pool' : 'Submit Application'}</span>
+  </button>
+</form>
+<div
+  data-application-success
+  role="status"
+  tabindex="-1"
+  class="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100"
+  hidden
+>
+  <p class="font-bold">Application received</p>
+  <p class="mt-1">Thank you for applying to MarkChat.</p>
+</div>
+
+<script>
+  import { submitCareerApplication } from '@/lib/cms-api';
+  import {
+    careerCvError,
+    careerPhoneNumber,
+    isCareerLink,
+    saveCareerForm,
+  } from '@/lib/careers-form';
+
+  function setupCareerApplicationForms() {
+    document.querySelectorAll<HTMLFormElement>('[data-career-application-form]').forEach((form) => {
+      if (form.dataset.bound) return;
+      const cvInput = form.querySelector<HTMLInputElement>('[name="cv"]');
+      const dropZone = form.querySelector<HTMLElement>('[data-cv-drop-zone]');
+      const selection = form.querySelector<HTMLElement>('[data-cv-selection]');
+      const description = form.querySelector<HTMLElement>('[data-cv-description]');
+      const remove = form.querySelector<HTMLButtonElement>('[data-cv-remove]');
+      const submit = form.querySelector<HTMLButtonElement>('[type="submit"]');
+      const submitLabel = form.querySelector<HTMLElement>('[data-submit-label]');
+      const error = form.querySelector<HTMLElement>('[data-application-error]');
+      const success = form.nextElementSibling as HTMLElement | null;
+      const startedAt = form.querySelector<HTMLInputElement>('[name="startedAt"]');
+      if (
+        !cvInput ||
+        !dropZone ||
+        !selection ||
+        !description ||
+        !remove ||
+        !submit ||
+        !submitLabel ||
+        !error ||
+        !success ||
+        !startedAt
+      )
+        return;
+
+      form.dataset.bound = 'true';
+      form.noValidate = true;
+      startedAt.value = String(Date.now());
+      submit.disabled = false;
+      const idleLabel = submitLabel.textContent;
+      let selectedFile: File | null = cvInput.files?.[0] ?? null;
+      let attempted = false;
+
+      type Field = HTMLInputElement | HTMLSelectElement;
+      const fields = Array.from(
+        form.querySelectorAll<Field>('input:not([type="hidden"]):not([name="website"]), select')
+      );
+      const fieldErrors = new Map(
+        Array.from(form.querySelectorAll<HTMLElement>('[data-field-error]'), (item) => [
+          item.dataset.fieldError,
+          item,
+        ])
+      );
+
+      function setFieldError(field: Field, message: string) {
+        const feedback = fieldErrors.get(field.name);
+        if (feedback) {
+          feedback.textContent = message;
+          feedback.hidden = !message;
+        }
+        if (message) field.setAttribute('aria-invalid', 'true');
+        else field.removeAttribute('aria-invalid');
+      }
+
+      function validateField(field: Field): string {
+        if (field.name === 'cv') return careerCvError(selectedFile);
+        const value = field.value.trim();
+        if (field.name === 'consent' && field instanceof HTMLInputElement && !field.checked) {
+          return 'Please confirm your consent before submitting.';
+        }
+        if (field.validity.valueMissing || (field.required && !value))
+          return 'Please complete this field.';
+        if (field.name === 'email' && field.validity.typeMismatch)
+          return 'Enter a valid email address.';
+        if (field.name === 'phone' && !careerPhoneNumber(value)) {
+          return 'Enter an international number with +, or a Kenyan number beginning with 07 or 01.';
+        }
+        if (field instanceof HTMLInputElement && field.type === 'url' && !isCareerLink(value)) {
+          return 'Enter a valid HTTPS link.';
+        }
+        return '';
+      }
+
+      function renderFile() {
+        if (!selection || !description) return;
+        const message = careerCvError(selectedFile);
+        selection.hidden = !selectedFile;
+        if (selectedFile) {
+          const unit = selectedFile.size >= 1024 * 1024 ? 'MB' : 'KB';
+          const amount = selectedFile.size / (unit === 'MB' ? 1024 * 1024 : 1024);
+          const type = selectedFile.name.split('.').pop()?.toUpperCase();
+          description.textContent = `${selectedFile.name} · ${type} · ${amount.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${unit}`;
+        } else {
+          description.textContent = '';
+        }
+        if (cvInput) setFieldError(cvInput, selectedFile || attempted ? message : '');
+      }
+
+      const updateField = (event: Event) => {
+        const field = event.target;
+        if (
+          !(field instanceof HTMLInputElement || field instanceof HTMLSelectElement) ||
+          field === cvInput
+        )
+          return;
+        if (attempted || field.hasAttribute('aria-invalid'))
+          setFieldError(field, validateField(field));
+      };
+      form.addEventListener('input', updateField);
+      form.addEventListener('change', updateField);
+
+      cvInput.addEventListener('change', () => {
+        selectedFile = cvInput.files?.[0] ?? null;
+        renderFile();
+      });
+      remove.addEventListener('click', () => {
+        cvInput.value = '';
+        selectedFile = null;
+        renderFile();
+        cvInput.focus();
+      });
+      dropZone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        dropZone.classList.add('ring-2', 'ring-blue-600');
+      });
+      dropZone.addEventListener('dragleave', () =>
+        dropZone.classList.remove('ring-2', 'ring-blue-600')
+      );
+      dropZone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dropZone.classList.remove('ring-2', 'ring-blue-600');
+        cvInput.value = '';
+        selectedFile = event.dataTransfer?.files[0] ?? null;
+        renderFile();
+        if (!selectedFile) setFieldError(cvInput, 'Drop a PDF, DOC or DOCX file.');
+      });
+      renderFile();
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (submit.disabled) return;
+        attempted = true;
+        error.hidden = true;
+        let invalid: Field | undefined;
+        for (const field of fields) {
+          const message = validateField(field);
+          setFieldError(field, message);
+          if (message) invalid ??= field;
+        }
+        if (invalid) {
+          invalid.focus();
+          return;
+        }
+        if (!selectedFile) return;
+
+        const data = new FormData(form);
+        data.set('cv', selectedFile);
+        data.set('phone', careerPhoneNumber(String(data.get('phone'))));
+        submit.disabled = true;
+        submitLabel.textContent = 'Submitting…';
+        form.setAttribute('aria-busy', 'true');
+        const result = await saveCareerForm(data, submitCareerApplication);
+        form.removeAttribute('aria-busy');
+        if (result.success) {
+          form.hidden = true;
+          success.hidden = false;
+          success.focus();
+          return;
+        }
+
+        error.textContent = result.message;
+        error.hidden = false;
+        error.focus();
+        submit.disabled = false;
+        submitLabel.textContent = idleLabel;
+      });
+    });
+  }
+
+  setupCareerApplicationForms();
+  document.addEventListener('astro:page-load', setupCareerApplicationForms);
+</script>
