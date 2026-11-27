@@ -20,6 +20,14 @@
     "RESEND_FROM_EMAIL": "leads@markchat.co.ke",
   },
   "previews": {
+    "observability": {
+      "enabled": true,
+      "logs": {
+        "enabled": true,
+        "invocation_logs": true,
+        "persist": true,
+      },
+    },
     "d1_databases": [
       {
         "binding": "MARKCHAT_RATE_DB",

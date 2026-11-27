@@ -97,9 +97,15 @@ async function notifyAdmin(
   lead: ReturnType<typeof leadEnvelope>
 ): Promise<boolean> {
   if (!context.env.RESEND_API_KEY || !context.env.RESEND_FROM_EMAIL) {
+    // Log only fixed diagnostic codes, never customer data, keys or request bodies.
+    if (!context.env.RESEND_API_KEY) console.warn('LEADS_NOTIFY_RESEND_KEY_MISSING');
+    if (!context.env.RESEND_FROM_EMAIL) console.warn('LEADS_NOTIFY_SENDER_MISSING');
     // An authenticated HTTPS webhook may integrate with a server-side SMTP relay.
     const webhook = trustedHttpsBase(context.env.ADMIN_NOTIFICATION_WEBHOOK_URL);
-    if (!webhook || !context.env.ADMIN_NOTIFICATION_WEBHOOK_TOKEN) return false;
+    if (!webhook || !context.env.ADMIN_NOTIFICATION_WEBHOOK_TOKEN) {
+      console.warn('LEADS_NOTIFY_NO_FALLBACK_CONFIGURED');
+      return false;
+    }
     try {
       const result = await fetch(webhook.toString(), {
         method: 'POST',
@@ -119,13 +125,19 @@ async function notifyAdmin(
         signal: AbortSignal.timeout(4500),
         redirect: 'error',
       });
-      return result.status === 200 || result.status === 201 || result.status === 202;
+      const accepted = result.status === 200 || result.status === 201 || result.status === 202;
+      if (!accepted) console.warn('LEADS_NOTIFY_WEBHOOK_HTTP_REJECTED', result.status);
+      return accepted;
     } catch {
+      console.warn('LEADS_NOTIFY_WEBHOOK_REQUEST_FAILED');
       return false;
     }
   }
   // Require a domain-verified sender address set via Cloudflare server-only secrets.
-  if (!/^[^\s@\r\n]+@[^\s@\r\n]+\.[a-z]{2,}$/i.test(context.env.RESEND_FROM_EMAIL)) return false;
+  if (!/^[^\s@\r\n]+@[^\s@\r\n]+\.[a-z]{2,}$/i.test(context.env.RESEND_FROM_EMAIL)) {
+    console.warn('LEADS_NOTIFY_INVALID_SENDER');
+    return false;
+  }
   const lines = [
     'New MarkChat™ inquiry',
     'Name: ' + lead.fullName,
@@ -154,8 +166,11 @@ async function notifyAdmin(
       signal: AbortSignal.timeout(4500),
       redirect: 'error',
     });
-    return response.status === 200 || response.status === 201;
+    const accepted = response.status === 200 || response.status === 201;
+    if (!accepted) console.warn('LEADS_NOTIFY_RESEND_HTTP_REJECTED', response.status);
+    return accepted;
   } catch {
+    console.warn('LEADS_NOTIFY_RESEND_REQUEST_FAILED');
     return false;
   }
 }

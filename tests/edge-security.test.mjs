@@ -174,6 +174,48 @@ test('Resend notification and D1 notification flag follow a confirmed save', asy
   }
 });
 
+test('notification failures log safe operational codes without leaking customer details', async () => {
+  const previousFetch = globalThis.fetch;
+  const previousWarn = console.warn;
+  const warnings = [];
+  try {
+    console.warn = (...args) => warnings.push(args);
+    const env = {
+      MARKCHAT_RATE_DB: fakeD1(),
+      RATE_HASH_SECRET,
+      RESEND_API_KEY: 'test-only',
+      RESEND_FROM_EMAIL: 'leads@example.co.ke',
+    };
+
+    globalThis.fetch = async () => Response.json({ error: 'rejected' }, { status: 403 });
+    const rejected = await submitLead({ request: request('/api/leads', validLead()), env });
+    assert.equal(rejected.status, 201);
+    assert.equal((await rejected.json()).notificationSent, false);
+    assert.deepEqual(warnings.at(-1), ['LEADS_NOTIFY_RESEND_HTTP_REJECTED', 403]);
+
+    warnings.length = 0;
+    globalThis.fetch = async () => { throw new Error('test-only network failure'); };
+    const unreachable = await submitLead({ request: request('/api/leads', validLead()), env });
+    assert.equal(unreachable.status, 201);
+    assert.equal((await unreachable.json()).notificationSent, false);
+    assert.deepEqual(warnings.at(-1), ['LEADS_NOTIFY_RESEND_REQUEST_FAILED']);
+
+    warnings.length = 0;
+    const noSender = await submitLead({
+      request: request('/api/leads', validLead()),
+      env: { ...env, RESEND_FROM_EMAIL: undefined },
+    });
+    assert.equal(noSender.status, 201);
+    assert.ok(warnings.some(([code]) => code === 'LEADS_NOTIFY_SENDER_MISSING'));
+    assert.ok(warnings.some(([code]) => code === 'LEADS_NOTIFY_NO_FALLBACK_CONFIGURED'));
+    const allLogged = JSON.stringify(warnings);
+    assert.doesNotMatch(allLogged, /customer@example|test-only|Sample Customer/);
+  } finally {
+    globalThis.fetch = previousFetch;
+    console.warn = previousWarn;
+  }
+});
+
 test('deterministic Product Guide never fabricates prices or claims fund custody', () => {
   const unknown = productGuide('Compare KES pricing plans', {
     plans: [],
