@@ -149,7 +149,8 @@ export async function onRequestPost(context: EdgeContext): Promise<Response> {
 
   const lead = leadEnvelope(input);
   const persisted = await persistLead(context, lead);
-  if (!persisted) {
+  const notified = await notifyAdmin(context, lead);
+  if (!persisted && !notified) {
     return httpJson(
       {
         success: false,
@@ -158,7 +159,6 @@ export async function onRequestPost(context: EdgeContext): Promise<Response> {
       502
     );
   }
-  const notified = await notifyAdmin(context, lead);
   return httpJson(
     {
       success: true,
