@@ -48,6 +48,7 @@ test('edge lead validation rejects malformed content, injections and bots', () =
   assert.equal(kenyaPhone('254712345678'), '+254712345678');
   assert.equal(kenyaPhone('12345'), null);
   assert.equal(validEmail('a@example.co.ke\r\nBCC:evil@example.com'), null);
+  assert.equal(validEmail('a%0A@example.co.ke'), null);
   assert.equal(safeSourcePage('//evil.test'), null);
   assert.equal(parseLead({ ...validLead(), consent: false }), null);
   assert.equal(parseLead({ ...validLead(), website: 'spam' }), null);
@@ -55,6 +56,8 @@ test('edge lead validation rejects malformed content, injections and bots', () =
   assert.equal(parseLead({ ...validLead(), email: 'bad\r\nCc: injected' }), null);
   assert.equal(parseLead({ ...validLead(), transcriptSummary: 'x'.repeat(2000) }), null);
   assert.ok(parseLead(validLead()));
+  assert.equal(parseLead({ ...validLead(), monthlyVolume: '1,000 messages' })?.monthlyVolume,
+    '1,000 messages');
 });
 
 test('reply mailto URL encodes context and never admits header newlines', () => {

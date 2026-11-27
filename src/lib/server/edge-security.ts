@@ -36,6 +36,7 @@ export interface LeadInput {
   phone: string;
   businessName: string;
   interest: string;
+  monthlyVolume: string;
   transcriptSummary: string;
   sourcePage: string;
   startedAt: number;
@@ -76,7 +77,7 @@ export function parseLead(value: unknown, now = Date.now()): LeadInput | null {
   const raw = value as Record<string, unknown>;
   const allowed = new Set([
     'name', 'email', 'phone', 'businessName', 'interest',
-    'transcriptSummary', 'sourcePage', 'startedAt', 'consent', 'website',
+    'transcriptSummary', 'sourcePage', 'startedAt', 'consent', 'website', 'monthlyVolume',
   ]);
   if (Object.keys(raw).some((key) => !allowed.has(key))) return null;
   const name = safeText(raw.name, 100, true);
@@ -84,16 +85,17 @@ export function parseLead(value: unknown, now = Date.now()): LeadInput | null {
   const phone = kenyaPhone(raw.phone);
   const businessName = safeText(raw.businessName, 100);
   const interest = safeText(raw.interest, 100, true);
+  const monthlyVolume = safeText(raw.monthlyVolume, 100);
   const transcriptSummary = safeText(raw.transcriptSummary, 1600);
   const sourcePage = safeSourcePage(raw.sourcePage);
   const website = safeText(raw.website, 100);
   const startedAt = raw.startedAt;
-  if (!name || !email || !phone || businessName === null || !interest ||
+  if (!name || !email || !phone || businessName === null || !interest || monthlyVolume === null ||
     transcriptSummary === null || !sourcePage || website === null ||
     website !== '' || raw.consent !== true ||
     typeof startedAt !== 'number' || !Number.isInteger(startedAt) ||
     startedAt > now - 1200 || startedAt < now - 86_400_000) return null;
-  return { name, email, phone, businessName, interest, transcriptSummary, sourcePage, startedAt, consent: true, website };
+  return { name, email, phone, businessName, interest, monthlyVolume, transcriptSummary, sourcePage, startedAt, consent: true, website };
 }
 export function adminReplyMailto(lead: Pick<LeadInput, 'name' | 'email' | 'businessName' | 'interest' | 'sourcePage'>): string {
   const email = validEmail(lead.email);

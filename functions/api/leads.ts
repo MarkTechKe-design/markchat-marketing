@@ -21,7 +21,7 @@ function leadEnvelope(input: NonNullable<ReturnType<typeof parseLead>>) {
     email: input.email,
     phone: input.phone,
     company: input.businessName,
-    monthlyVolume: input.interest,
+    monthlyVolume: input.monthlyVolume || 'Not specified',
     source: 'Markcopilot Widget ' + input.sourcePage,
     message: input.transcriptSummary,
     // Additive metadata. Existing CMS servers may ignore unknown fields.
