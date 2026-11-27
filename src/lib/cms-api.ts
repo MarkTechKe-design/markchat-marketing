@@ -393,6 +393,7 @@ export interface LeadPayload {
   adminReplyMailto?: string;
   consent?: boolean;
   startedAt?: number;
+  website?: string;
 }
 
 import {
@@ -3312,7 +3313,7 @@ export async function submitLead(
     sourcePage: payload.sourcePage ?? window.location.pathname,
     startedAt: payload.startedAt,
     consent: payload.consent === true,
-    website: '',
+    website: payload.website ?? '',
   };
   try {
     const response = await fetch('/api/leads', {
