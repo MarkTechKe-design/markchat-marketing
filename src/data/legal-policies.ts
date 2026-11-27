@@ -207,7 +207,7 @@ export const DEFAULT_LEGAL_POLICIES: LegalPolicy[] = [
       <h2>4. M-Pesa Daraja Integration & Financial Disclaimer</h2>
       <p>MarkChat provides software connectors to the Safaricom Daraja API allowing merchants to initiate STK push PIN prompts and receive C2B callback confirmations:</p>
       <ul>
-        <li><strong>No Custody of Funds:</strong> MarkChat does not operate as a bank, financial deposit institution, or money-transmitter. Customer payments flow directly from Safaricom M-Pesa into your designated merchant Till Number, Paybill, or bank checking account. At no point does MarkChat hold or escrow merchant funds.</li>
+        <li><strong>No Custody of Funds:</strong> MarkChat does not operate as a bank, financial deposit institution, or money-transmitter. Customer payments flow directly from Safaricom M-Pesa into your designated merchant Till Number, Paybill, or bank checking account. Payments handled by Paystack settle to the merchant's own Paystack account under the provider's terms. At no point does MarkChat hold or escrow merchant funds.</li>
         <li><strong>Carrier Uptime:</strong> M-Pesa transaction processing is dependent upon Safaricom PLC infrastructure. MarkChat is not responsible for delayed STK prompts, unreceived SMS notifications, or network downtime originating from telecom carrier outages.</li>
         <li><strong>Fraud Prevention:</strong> Merchants remain responsible for verifying physical fulfillment against confirmed M-Pesa receipt codes. MarkChat provides automated reconciliation tools to detect forged payment screenshots, but merchants must exercise standard commercial due diligence.</li>
       </ul>

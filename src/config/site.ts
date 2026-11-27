@@ -21,8 +21,8 @@ export const ogImage = '/images/og-image.png';
 
 export const social: SocialLinks = {
   twitter: 'https://twitter.com/markchatke',
-  github: 'https://github.com/markchat',
-  discord: 'https://whatsapp.com/channel/markchat',
+  github: 'https://github.com/MarkTechKe-design',
+  discord: '' // No verified Discord account; do not mislabel a WhatsApp URL,
 };
 
 export const legal: LegalConfig = {
