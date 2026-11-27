@@ -16,15 +16,19 @@
       "database_id": "8797f32a-bdd1-4614-aa14-558c28fdd04f",
     },
   ],
-  "env": {
-    "preview": {
-      "d1_databases": [
-        {
-          "binding": "MARKCHAT_RATE_DB",
-          "database_name": "markchat-rate-db",
-          "database_id": "8797f32a-bdd1-4614-aa14-558c28fdd04f",
-        },
-      ],
+  "vars": {
+    "RESEND_FROM_EMAIL": "MarkChat Leads <leads@markchat.co.ke>",
+  },
+  "previews": {
+    "d1_databases": [
+      {
+        "binding": "MARKCHAT_RATE_DB",
+        "database_name": "markchat-rate-db",
+        "database_id": "8797f32a-bdd1-4614-aa14-558c28fdd04f",
+      },
+    ],
+    "vars": {
+      "RESEND_FROM_EMAIL": "MarkChat Leads <leads@markchat.co.ke>",
     },
   },
 }
