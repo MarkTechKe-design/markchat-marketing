@@ -2,11 +2,15 @@
  * Shared Cloudflare Pages Functions contracts. Never import this module
  * into a client Astro script with a secret binding.
  */
-export interface RateLimiter {
-  limit(input: { key: string }): Promise<{ success: boolean }>;
+export interface D1RateDatabase {
+  prepare(sql: string): {
+    bind(...args: (string | number)[]): {
+      first<T>(): Promise<T | null>;
+    };
+  };
 }
 export interface EdgeEnv {
-  MARKCHAT_RATE_LIMITER?: RateLimiter;
+  MARKCHAT_RATE_DB?: D1RateDatabase;
   CMS_API_BASE_URL?: string;
   CMS_SERVICE_TOKEN?: string;
   CONTROL_PLANE_API_URL?: string;
@@ -133,15 +137,27 @@ export async function readJson(request: Request, maxBytes = 12_000): Promise<unk
   return JSON.parse(body);
 }
 export async function enforceRate(context: EdgeContext, scope: 'chat' | 'lead'): Promise<Response | null> {
-  // Fail closed without a server-side rate-limiting binding.
-  const limiter = context.env.MARKCHAT_RATE_LIMITER;
-  if (!limiter) return httpJson({ success: false, error: 'Service temporarily unavailable.' }, 503);
+  // Cloudflare Pages supports a D1 binding. An atomic upsert prevents
+  // in-memory per-isolate bypasses. Fail closed until the D1 table is provisioned.
+  const db = context.env.MARKCHAT_RATE_DB;
+  if (!db) return httpJson({ success: false, error: 'Service temporarily unavailable.' }, 503);
   const ip = context.request.headers.get('CF-Connecting-IP');
   if (!ip || ip.length > 64) return httpJson({ success: false, error: 'Unable to validate request.' }, 403);
+  const fingerprint = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ip));
+  const key = Array.from(new Uint8Array(fingerprint), (v) => v.toString(16).padStart(2, '0')).join('');
+  const windowStart = Math.floor(Date.now() / 60000);
+  const max = scope === 'chat' ? 20 : 6;
   try {
-    const result = await limiter.limit({ key: scope + ':' + ip });
-    if (!result.success) {
-      return httpJson({ success: false, error: 'Too many requests. Please try again shortly.' }, 429, {
+    const result = await db.prepare(
+      `INSERT INTO markchat_rate_limit (scope, ip_hash, window_start, attempts)
+       VALUES (?, ?, ?, 1)
+       ON CONFLICT(scope, ip_hash) DO UPDATE SET
+         attempts = CASE WHEN window_start < excluded.window_start THEN 1 ELSE attempts + 1 END,
+         window_start = CASE WHEN window_start < excluded.window_start THEN excluded.window_start ELSE window_start END
+       RETURNING attempts`
+    ).bind(scope, key, windowStart).first<{ attempts: number }>();
+    if (!result || result.attempts > max) {
+      return httpJson({ success: false, error: 'Too many requests. Try again shortly.' }, 429, {
         'Retry-After': '60',
       });
     }
