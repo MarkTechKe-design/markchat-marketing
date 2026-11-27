@@ -456,7 +456,7 @@ const DEFAULT_PRICING_MATRIX: PricingMatrixResponse = {
         'The complete omnichannel sales engine for expanding retailers, clinics, and e-commerce brands.',
       highlighted: true,
       badge: 'Most Popular',
-      ctaLabel: 'Start 72-Hour Trial',
+      ctaLabel: 'Get Started',
       ctaHref: '/register?plan=growth&interval=monthly',
       features: [
         'Up to 10 Team Agent seats',
@@ -495,7 +495,7 @@ const DEFAULT_PRICING_MATRIX: PricingMatrixResponse = {
       annualMonthlyPrice: null,
       currency: 'KES',
       description:
-        'Custom infrastructure, dedicated integrations, and SLA guarantees for large retail chains and financial institutions.',
+        'Custom infrastructure, dedicated integrations and support terms agreed for each enterprise deployment.',
       highlighted: false,
       badge: 'Custom Scale',
       ctaLabel: 'Contact Sales',
@@ -505,7 +505,7 @@ const DEFAULT_PRICING_MATRIX: PricingMatrixResponse = {
         'Unlimited Inboxes & channels',
         'Dedicated Daraja Paybill / Till routing',
         'Custom ERP, CRM & webhook integrations',
-        'Custom domain whitelabeling & SLA guarantee',
+        'Custom domain branding and agreed support terms',
         '24/7 Dedicated Account Manager',
       ],
     },
@@ -678,7 +678,7 @@ MarkChat provides two flexible ways to run Bulk SMS:
     slug: 'introducing-markcopilot-ai-assistant',
     title: 'Introducing Markcopilot: The Dual-Mode AI Assistant Speaking Sheng, Swahili & English',
     excerpt:
-      'Discover how Markcopilot handles repetitive customer inquiries around the clock while accelerating human agent response times by 4x.',
+      'Explore AI-assisted reply drafts for customer inquiries, subject to human review and configured capabilities.',
     content: `
 Customer support in Kenya requires cultural nuance. Customers routinely mix English, Swahili, and Sheng in a single WhatsApp sentence: "Niaje, nataka kujua if ile size 42 bado iko in stock na mna-deliver Westlands?"
 
@@ -1282,7 +1282,7 @@ const DEFAULT_INTEGRATIONS: MarketingIntegration[] = [
     businessBenefits: [
       '24/7 Night & Weekend Sales: capture after-hours orders while your human sales team is asleep',
       'Fluent Kenyan Sheng & Swahili Comprehension: zero robotic or awkward translation misunderstandings',
-      '4x Faster Agent Response Times: agents approve pre-drafted contextual replies in a single click',
+      'AI-Assisted Reply Drafts: agents review contextual suggestions before sending',
       'Smart Escalation: seamlessly transfers high-value buyers or complaints to human agents with summarized notes',
     ],
     setupRequirements:

@@ -53,7 +53,7 @@ export function safeText(value: unknown, max: number, required = false): string 
 }
 export function validEmail(value: unknown): string | null {
   const email = safeText(value, 254, true);
-  if (!email || !EMAIL_PATTERN.test(email)) return null;
+  if (!email || email.includes('%') || !EMAIL_PATTERN.test(email)) return null;
   return email.toLowerCase();
 }
 export function kenyaPhone(value: unknown): string | null {

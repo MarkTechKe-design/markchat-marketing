@@ -120,7 +120,7 @@ export const productPages: MarketingPageItem[] = [
       'Stop juggling four separate phones and sharing personal WhatsApp Web QR codes. MarkChat’s shared inbox gives your entire support and sales team unified access with role-based permissions, SLA response timers, and internal notes.',
     keyStats: [
       { value: 'Workflow', label: 'Conversations Centralized' },
-      { value: '< 60s', label: 'Average First Response' },
+      { value: 'Tracked', label: 'First Response Time' },
       { value: '0', label: 'Lost Customer Messages' },
     ],
     howToConnect: [
@@ -796,7 +796,7 @@ export const featuresPages: MarketingPageItem[] = [
     overview:
       'Don’t wait for customers to message you. Proactively engage buyers across SMS, WhatsApp, and social media with timely transactional notifications and personalized promotions.',
     keyStats: [
-      { value: '3x', label: 'Repeat Purchase Rate' },
+      { value: 'Targeted', label: 'Customer Follow-Up' },
       { value: 'Targeted', label: 'Cart Follow-Up' },
       { value: 'Workflow', label: 'Automated Delivery Tracking' },
     ],
@@ -858,7 +858,7 @@ export const featuresPages: MarketingPageItem[] = [
       'Most Kenyan website visitors leave without buying because checkout forms are too long or they have doubts about stock availability. MarkChat initiates proactive conversations and closes orders right inside chat.',
     keyStats: [
       { value: '+35%', label: 'Website Sales Conversion' },
-      { value: '10s', label: 'In-Chat Checkout Speed' },
+      { value: 'In-Chat', label: 'Checkout Guidance' },
       { value: 'Zero', label: 'Form Abandonment' },
     ],
     howToConnect: [
@@ -1108,7 +1108,7 @@ export const solutionsPages: MarketingPageItem[] = [
       'Customer support teams in Kenya face high message volumes across WhatsApp, SMS, and Instagram. MarkChat brings all channels into one workspace, cutting response times from hours to seconds.',
     keyStats: [
       { value: 'Shared', label: 'Conversation Context' },
-      { value: '94%', label: 'Customer Satisfaction' },
+      { value: 'Measured', label: 'Customer Feedback' },
       { value: '< 60s', label: 'First Response Time' },
     ],
     howToConnect: [
@@ -1169,7 +1169,7 @@ export const solutionsPages: MarketingPageItem[] = [
       'In Kenya, sales happen in conversations, not static checkout carts. MarkChat equips sales reps to qualify buyers, showcase inventory, trigger M-Pesa PIN prompts, and verify payments in seconds.',
     keyStats: [
       { value: 'Guided', label: 'Sales Follow-Up' },
-      { value: '10s', label: 'In-Chat Checkout' },
+      { value: 'Configured', label: 'M-Pesa Checkout' },
       { value: 'Provider', label: 'Payment Verification' },
     ],
     howToConnect: [
@@ -1231,7 +1231,7 @@ export const solutionsPages: MarketingPageItem[] = [
     keyStats: [
       { value: '98%', label: 'Average Open Rate' },
       { value: '65%+', label: 'Campaign Click-Through' },
-      { value: '3x', label: 'Campaign ROI' },
+      { value: 'Tracked', label: 'Campaign Responses' },
     ],
     howToConnect: [
       {
@@ -1535,7 +1535,7 @@ export const solutionsPages: MarketingPageItem[] = [
       'Over 70% of Kenyan online shoppers abandon carts before checkout due to payment hesitations. MarkChat connects your online storefront to WhatsApp, recovering lost sales and verifying mobile money instantly.',
     keyStats: [
       { value: '+65%', label: 'Cart Recovery Rate' },
-      { value: 'Sub-10s', label: 'Payment Verification' },
+      { value: 'Provider', label: 'Payment Verification' },
       { value: 'Shopify', label: 'Direct Catalog Sync' },
     ],
     howToConnect: [
@@ -1779,7 +1779,7 @@ export const solutionsPages: MarketingPageItem[] = [
       'Kenyan chemists receive hundreds of WhatsApp photos of handwritten doctor prescriptions every day. MarkChat streamlines prescription verification, price quotes, rider dispatch, and contactless payment.',
     keyStats: [
       { value: '1-Click', label: 'Prescription Photo Review' },
-      { value: '< 15min', label: 'Nairobi Rider Dispatch' },
+      { value: 'Coordinated', label: 'Rider Dispatch' },
       { value: 'Workflow', label: 'Verified M-Pesa Payments' },
     ],
     howToConnect: [
