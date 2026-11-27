@@ -564,10 +564,14 @@ const { action = '', method = 'POST', netlify = false, formName = 'contact' } = 
           const result = await submitLead({
             fullName,
             email,
-            phone: phone || '+254 700 000 000',
-            company: company || 'Not Specified',
+            phone,
+            company,
             monthlyVolume: enterpriseScope.volume,
             source: `Contact Form (/contact): ${typeLabel}`,
+            interest: typeLabel,
+            sourcePage: '/contact',
+            startedAt: renderTimestamp,
+            consent: formData.get('kdpaConsent') === 'on',
             message: scopedMessage,
           });
 

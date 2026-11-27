@@ -386,6 +386,13 @@ export interface LeadPayload {
   company?: string;
   source?: string;
   message?: string;
+  interest?: string;
+  businessName?: string;
+  transcriptSummary?: string;
+  sourcePage?: string;
+  adminReplyMailto?: string;
+  consent?: boolean;
+  startedAt?: number;
 }
 
 import {
@@ -3289,37 +3296,49 @@ export async function adminFetchMarkcopilotCapabilities(): Promise<MarkcopilotCa
 export async function submitLead(
   payload: LeadPayload
 ): Promise<{ success: boolean; id: string; message: string }> {
-  const newLead: LeadItem = {
-    id: `lead-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-    createdAt: new Date().toISOString(),
-    status: 'new',
-    ...payload,
-  };
-
-  try {
-    const res = await apiFetch(`${BRIDGE_API_URL}/api/public/leads`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newLead),
-    });
-    if (res.ok) {
-      return {
-        success: true,
-        id: newLead.id,
-        message: 'Thank you! A MarkChat specialist will reach out shortly.',
-      };
-    }
-  } catch {
-    // Fallback
+  // Public submissions always cross the same-origin Cloudflare Pages Function;
+  // never send CMS service credentials or admin tokens from the browser.
+  if (typeof window === 'undefined') {
+    return { success: false, id: '', message: 'Use the public lead endpoint.' };
   }
-
-  // A localStorage write is not a delivered lead. Fail visibly instead of
-  // reporting success when the CMS bridge is unavailable.
-  return {
-    success: false,
-    id: '',
-    message: 'Unable to submit your request. Please contact the MarkChat team directly.',
+  const submitted = {
+    name: payload.fullName,
+    email: payload.email,
+    phone: payload.phone,
+    businessName: payload.businessName ?? payload.company ?? '',
+    interest: payload.interest ?? payload.source ?? 'General inquiry',
+    transcriptSummary: (payload.transcriptSummary ?? payload.message ?? '')
+      .replace(/[\r\n\x00-\x1F\x7F]/g, ' ').slice(0, 1600),
+    sourcePage: payload.sourcePage ?? window.location.pathname,
+    startedAt: payload.startedAt,
+    consent: payload.consent === true,
+    website: '',
   };
+  try {
+    const response = await fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(submitted),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (response.status !== 200 && response.status !== 201) throw new Error('Not saved');
+    const data = (await response.json()) as { success?: unknown; id?: unknown; message?: unknown };
+    if (data.success !== true || typeof data.id !== 'string' || !data.id) {
+      throw new Error('Unconfirmed save');
+    }
+    return {
+      success: true,
+      id: data.id,
+      message: typeof data.message === 'string' ? data.message : 'Inquiry saved.',
+    };
+  } catch {
+    return {
+      success: false,
+      id: '',
+      message: 'Unable to save your inquiry. Please email hello@markchat.co.ke.',
+    };
+  }
 }
 
 /**

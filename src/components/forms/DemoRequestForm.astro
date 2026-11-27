@@ -109,6 +109,23 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
   </div>
 
   <div>
+    <label for="demo-phone" class="block text-sm font-medium text-text mb-2">
+      Kenyan phone <span class="text-red-500">*</span>
+    </label>
+    <input
+      id="demo-phone"
+      name="phone"
+      type="tel"
+      required
+      autocomplete="tel"
+      maxlength="24"
+      placeholder="+2547..."
+      class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+    />
+    <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-phone"></p>
+  </div>
+
+  <div>
     <label for="demo-company" class="block text-sm font-medium text-text mb-2">
       Company <span class="text-red-500">*</span>
     </label>
@@ -188,6 +205,13 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
     </div>
   </div>
 
+  <label class="mb-4 flex items-start gap-2 text-sm text-text-muted">
+    <input id="demo-consent" type="checkbox" required class="mt-1" />
+    <span>I agree to be contacted about this demo request. See our
+      <a href="/privacy" class="underline">Privacy Policy</a>.
+    </span>
+  </label>
+
   <button
     type="submit"
     id="demo-submit-button"
@@ -262,6 +286,12 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
       if (!value.trim()) return 'Email is required';
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(value)) return 'Please enter a valid email address';
+      return null;
+    },
+    'demo-phone': (value) => {
+      if (!/^\\+?254[17]\\d{8}$|^0[17]\\d{8}$/.test(value.replace(/[\\s-]/g, ''))) {
+        return 'Enter a valid Kenyan mobile number';
+      }
       return null;
     },
     'demo-company': (value) => {
@@ -339,8 +369,8 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
     formSuccess?.classList.add('hidden');
     formError?.classList.add('hidden');
 
-    // Validate form
-    if (!validateForm()) {
+    // Validate form and explicit contact permission.
+    if (!validateForm() || !(document.getElementById('demo-consent') as HTMLInputElement)?.checked) {
       const firstError = form.querySelector('.border-red-500') as HTMLElement;
       firstError?.focus();
       return;
@@ -363,7 +393,7 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
           const firstName = (formData.get('firstName') as string) || '';
           const lastName = (formData.get('lastName') as string) || '';
           const email = (formData.get('email') as string) || '';
-          const phone = (formData.get('phone') as string) || '+254 700 000 000';
+          const phone = (formData.get('phone') as string) || '';
           const company = (formData.get('company') as string) || '';
           const enterpriseScope = parseEnterpriseScope(formData);
           const volume = enterpriseScope.volume;
@@ -373,6 +403,11 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
             email,
             phone,
             company,
+            businessName: company,
+            interest: 'Product demonstration',
+            sourcePage: '/demo',
+            startedAt: Math.floor(performance.timeOrigin),
+            consent: (document.getElementById('demo-consent') as HTMLInputElement).checked,
             monthlyVolume: volume,
             source: 'Demo Request Page (/demo)',
             message: [message, formatEnterpriseScope(enterpriseScope)].filter(Boolean).join('\n\n'),
