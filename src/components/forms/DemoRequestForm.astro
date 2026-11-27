@@ -207,7 +207,8 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
 
   <label class="mb-4 flex items-start gap-2 text-sm text-text-muted">
     <input id="demo-consent" type="checkbox" required class="mt-1" />
-    <span>I agree to be contacted about this demo request. See our
+    <span
+      >I agree to be contacted about this demo request. See our
       <a href="/privacy" class="underline">Privacy Policy</a>.
     </span>
   </label>
@@ -370,7 +371,10 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
     formError?.classList.add('hidden');
 
     // Validate form and explicit contact permission.
-    if (!validateForm() || !(document.getElementById('demo-consent') as HTMLInputElement)?.checked) {
+    if (
+      !validateForm() ||
+      !(document.getElementById('demo-consent') as HTMLInputElement)?.checked
+    ) {
       const firstError = form.querySelector('.border-red-500') as HTMLElement;
       firstError?.focus();
       return;

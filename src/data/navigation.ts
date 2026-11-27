@@ -257,7 +257,8 @@ export const solutionsMegaMenu: MegaMenuConfig = {
             {
               label: 'Growth',
               href: '/solutions/growth',
-              description: 'Collaborative agents, performance monitoring and eligible C2B workflows',
+              description:
+                'Collaborative agents, performance monitoring and eligible C2B workflows',
               icon: 'lucide:bar-chart-2',
             },
             {

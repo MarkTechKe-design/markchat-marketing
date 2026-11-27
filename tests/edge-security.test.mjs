@@ -8,9 +8,7 @@ import {
   safeSourcePage,
   validEmail,
 } from '../src/lib/server/edge-security.ts';
-import {
-  productGuide,
-} from '../src/lib/server/marketing-truth.ts';
+import { productGuide } from '../src/lib/server/marketing-truth.ts';
 import { onRequestPost as submitLead } from '../functions/api/leads.ts';
 import { onRequestPost as askAssistant } from '../functions/api/markcopilot.ts';
 
@@ -56,8 +54,10 @@ test('edge lead validation rejects malformed content, injections and bots', () =
   assert.equal(parseLead({ ...validLead(), email: 'bad\r\nCc: injected' }), null);
   assert.equal(parseLead({ ...validLead(), transcriptSummary: 'x'.repeat(2000) }), null);
   assert.ok(parseLead(validLead()));
-  assert.equal(parseLead({ ...validLead(), monthlyVolume: '1,000 messages' })?.monthlyVolume,
-    '1,000 messages');
+  assert.equal(
+    parseLead({ ...validLead(), monthlyVolume: '1,000 messages' })?.monthlyVolume,
+    '1,000 messages'
+  );
 });
 
 test('reply mailto URL encodes context and never admits header newlines', () => {
@@ -71,11 +71,19 @@ test('reply mailto URL encodes context and never admits header newlines', () => 
 test('public edge endpoints reject cross-site and unavailable rate-limit services', async () => {
   const crossOrigin = request('/api/leads', validLead(), { Origin: 'https://attacker.test' });
   assert.equal((await submitLead({ request: crossOrigin, env: {} })).status, 403);
-  assert.equal((await submitLead({ request: request('/api/leads', validLead()), env: {} })).status, 503);
-  assert.equal((await askAssistant({
-    request: request('/api/markcopilot', { question: 'What is M-Pesa?' }),
-    env: { MARKCHAT_RATE_DB: fakeD1(100), RATE_HASH_SECRET },
-  })).status, 429);
+  assert.equal(
+    (await submitLead({ request: request('/api/leads', validLead()), env: {} })).status,
+    503
+  );
+  assert.equal(
+    (
+      await askAssistant({
+        request: request('/api/markcopilot', { question: 'What is M-Pesa?' }),
+        env: { MARKCHAT_RATE_DB: fakeD1(100), RATE_HASH_SECRET },
+      })
+    ).status,
+    429
+  );
 });
 
 test('lead success is conditional on explicit persistence confirmation', async () => {
@@ -86,7 +94,11 @@ test('lead success is conditional on explicit persistence confirmation', async (
       received = JSON.parse(options.body);
       return Response.json({ success: false }, { status: 201 });
     };
-    const env = { MARKCHAT_RATE_DB: fakeD1(), RATE_HASH_SECRET, CMS_API_BASE_URL: 'https://cms.example.co.ke' };
+    const env = {
+      MARKCHAT_RATE_DB: fakeD1(),
+      RATE_HASH_SECRET,
+      CMS_API_BASE_URL: 'https://cms.example.co.ke',
+    };
     const failed = await submitLead({ request: request('/api/leads', validLead()), env });
     assert.equal(failed.status, 502);
     assert.equal((await failed.json()).success, false);
@@ -98,7 +110,10 @@ test('lead success is conditional on explicit persistence confirmation', async (
     assert.equal(success.status, 201);
     assert.equal(json.success, true);
     assert.equal(json.notificationSent, false);
-    assert.ok(!('adminReplyMailto' in json), 'Do not disclose admin reply payload in public response');
+    assert.ok(
+      !('adminReplyMailto' in json),
+      'Do not disclose admin reply payload in public response'
+    );
   } finally {
     globalThis.fetch = previousFetch;
   }
@@ -106,13 +121,16 @@ test('lead success is conditional on explicit persistence confirmation', async (
 
 test('deterministic Product Guide never fabricates prices or claims fund custody', () => {
   const unknown = productGuide('Compare KES pricing plans', {
-    plans: [], features: [], authoritative: false,
+    plans: [],
+    features: [],
+    authoritative: false,
   });
   assert.match(unknown, /not available/i);
   assert.doesNotMatch(unknown, /KES 1,500|3,500|5,000/i);
   const published = productGuide('Compare KES pricing plans', {
     plans: [{ name: 'Example Plan', priceKes: 1999, features: [] }],
-    features: [], authoritative: true,
+    features: [],
+    authoritative: true,
   });
   assert.match(published, /KES 1,999/);
   assert.doesNotMatch(published, /escrow/i);
@@ -122,7 +140,10 @@ test('widget never interpolates user or AI messages into innerHTML or bundles se
   const widget = readFileSync('src/components/common/MarkcopilotWidget.astro', 'utf8');
   const lead = readFileSync('functions/api/leads.ts', 'utf8');
   const ai = readFileSync('functions/api/markcopilot.ts', 'utf8');
-  assert.doesNotMatch(widget, /innerHTML|GEMINI_API_KEY|OPENAI_API_KEY|RESEND_API_KEY|CMS_SERVICE_TOKEN/);
+  assert.doesNotMatch(
+    widget,
+    /innerHTML|GEMINI_API_KEY|OPENAI_API_KEY|RESEND_API_KEY|CMS_SERVICE_TOKEN/
+  );
   assert.match(widget, /\.textContent/);
   assert.match(widget, /Escape/);
   assert.match(widget, /75dvh/);

@@ -32,7 +32,10 @@ function leadEnvelope(input: NonNullable<ReturnType<typeof parseLead>>) {
     adminReplyMailto: adminReply,
   };
 }
-async function persistLead(context: EdgeContext, lead: ReturnType<typeof leadEnvelope>): Promise<boolean> {
+async function persistLead(
+  context: EdgeContext,
+  lead: ReturnType<typeof leadEnvelope>
+): Promise<boolean> {
   const base = trustedHttpsBase(context.env.CMS_API_BASE_URL);
   if (!base) return false;
   const url = new URL('/api/public/leads', base);
@@ -43,7 +46,9 @@ async function persistLead(context: EdgeContext, lead: ReturnType<typeof leadEnv
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        ...(context.env.CMS_SERVICE_TOKEN ? { Authorization: 'Bearer ' + context.env.CMS_SERVICE_TOKEN } : {}),
+        ...(context.env.CMS_SERVICE_TOKEN
+          ? { Authorization: 'Bearer ' + context.env.CMS_SERVICE_TOKEN }
+          : {}),
         'Idempotency-Key': lead.id,
       },
       body: JSON.stringify(lead),
@@ -53,12 +58,17 @@ async function persistLead(context: EdgeContext, lead: ReturnType<typeof leadEnv
     });
     if (response.status !== 200 && response.status !== 201) return false;
     const json: unknown = await response.json();
-    return Boolean(json && typeof json === 'object' && (json as { success?: unknown }).success === true);
+    return Boolean(
+      json && typeof json === 'object' && (json as { success?: unknown }).success === true
+    );
   } catch {
     return false;
   }
 }
-async function notifyAdmin(context: EdgeContext, lead: ReturnType<typeof leadEnvelope>): Promise<boolean> {
+async function notifyAdmin(
+  context: EdgeContext,
+  lead: ReturnType<typeof leadEnvelope>
+): Promise<boolean> {
   if (!context.env.RESEND_API_KEY || !context.env.RESEND_FROM_EMAIL) {
     // An authenticated HTTPS webhook may integrate with a server-side SMTP relay.
     const webhook = trustedHttpsBase(context.env.ADMIN_NOTIFICATION_WEBHOOK_URL);
@@ -140,16 +150,22 @@ export async function onRequestPost(context: EdgeContext): Promise<Response> {
   const lead = leadEnvelope(input);
   const persisted = await persistLead(context, lead);
   if (!persisted) {
-    return httpJson({
-      success: false,
-      error: 'Unable to save your inquiry. Email hello@markchat.co.ke instead.',
-    }, 502);
+    return httpJson(
+      {
+        success: false,
+        error: 'Unable to save your inquiry. Email hello@markchat.co.ke instead.',
+      },
+      502
+    );
   }
   const notified = await notifyAdmin(context, lead);
-  return httpJson({
-    success: true,
-    message: 'Thank you. Your inquiry was saved and our team can follow up.',
-    notificationSent: notified,
-    id: lead.id,
-  }, 201);
+  return httpJson(
+    {
+      success: true,
+      message: 'Thank you. Your inquiry was saved and our team can follow up.',
+      notificationSent: notified,
+      id: lead.id,
+    },
+    201
+  );
 }

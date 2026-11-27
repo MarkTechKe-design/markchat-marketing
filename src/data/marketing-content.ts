@@ -101,7 +101,8 @@ export const productPages: MarketingPageItem[] = [
     ],
     cta: {
       title: 'Deploy Markcopilot on your customer channels',
-      description: 'Ask our team about current access, product demonstrations, and configured plan options.',
+      description:
+        'Ask our team about current access, product demonstrations, and configured plan options.',
       primaryLabel: 'Explore Markcopilot',
       primaryHref: '/register',
       secondaryLabel: 'Book 1-on-1 Demo',
@@ -2003,7 +2004,8 @@ export const solutionsPages: MarketingPageItem[] = [
     ],
     cta: {
       title: 'Build trusted buyer-seller commerce',
-      description: 'Connect marketplace conversations with eligible provider-verified payment workflows.',
+      description:
+        'Connect marketplace conversations with eligible provider-verified payment workflows.',
       primaryLabel: 'Connect Your Marketplace',
       primaryHref: '/register',
       secondaryLabel: 'Read API Docs',
