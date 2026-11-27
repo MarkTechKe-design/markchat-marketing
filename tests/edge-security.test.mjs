@@ -194,7 +194,9 @@ test('notification failures log safe operational codes without leaking customer 
     assert.deepEqual(warnings.at(-1), ['LEADS_NOTIFY_RESEND_HTTP_REJECTED', 403]);
 
     warnings.length = 0;
-    globalThis.fetch = async () => { throw new Error('test-only network failure'); };
+    globalThis.fetch = async () => {
+      throw new Error('test-only network failure');
+    };
     const unreachable = await submitLead({ request: request('/api/leads', validLead()), env });
     assert.equal(unreachable.status, 201);
     assert.equal((await unreachable.json()).notificationSent, false);
