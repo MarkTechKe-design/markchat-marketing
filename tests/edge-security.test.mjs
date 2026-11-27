@@ -119,6 +119,70 @@ test('lead success is conditional on explicit persistence confirmation', async (
   }
 });
 
+test('Gemini receives vetted public facts when CMS and Control Plane are unavailable', async () => {
+  const previousFetch = globalThis.fetch;
+  let called;
+  try {
+    globalThis.fetch = async (url, options) => {
+      called = { url: String(url), headers: options.headers, body: JSON.parse(options.body) };
+      return Response.json({
+        candidates: [
+          {
+            content: {
+              parts: [{ text: 'MarkChat offers team inbox tools for customer support.' }],
+            },
+          },
+        ],
+      });
+    };
+    const response = await askAssistant({
+      request: request('/api/markcopilot', { question: 'What does MarkChat do?' }),
+      env: {
+        MARKCHAT_RATE_DB: fakeD1(),
+        RATE_HASH_SECRET,
+        GEMINI_API_KEY: 'test-only-gemini-key',
+      },
+    });
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.mode, 'live');
+    assert.match(called.url, /gemini-2\.5-flash:generateContent$/);
+    assert.equal(called.headers['x-goog-api-key'], 'test-only-gemini-key');
+    const instruction = called.body.systemInstruction.parts[0].text;
+    assert.match(instruction, /publicProductBasics/);
+    assert.match(instruction, /No subscription prices may be quoted without published plan data/);
+    assert.ok(!JSON.stringify(body).includes('test-only-gemini-key'));
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
+test('assistant never sends contact details or credentials to external AI', async () => {
+  const previousFetch = globalThis.fetch;
+  let requests = 0;
+  try {
+    globalThis.fetch = async () => {
+      requests++;
+      throw new Error('External AI should not receive this request');
+    };
+    const response = await askAssistant({
+      request: request('/api/markcopilot', { question: 'Email me at buyer@example.com' }),
+      env: {
+        MARKCHAT_RATE_DB: fakeD1(),
+        RATE_HASH_SECRET,
+        GEMINI_API_KEY: 'test-only-gemini-key',
+      },
+    });
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.mode, 'guide');
+    assert.match(body.answer, /do not share personal details/i);
+    assert.equal(requests, 0);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
 test('deterministic Product Guide never fabricates prices or claims fund custody', () => {
   const unknown = productGuide('Compare KES pricing plans', {
     plans: [],
