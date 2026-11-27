@@ -53,27 +53,32 @@ IP values are HMAC-SHA256 hashed with the server-only RATE_HASH_SECRET before st
 6 lead attempts and 20 assistant requests per origin IP. Add WAF / Turnstile if
 further protection is needed.
 
-## CMS and notification contract
+## D1 lead persistence and notifications
 
-`POST /api/leads` requires:
-- Valid same-origin request and JSON content type
-- Full name, validated email, Kenyan phone number, business name (optional), interest
-- Consent, blank honeypot and elapsed submission time
-- Successful D1 rate-limit transaction
-- CMS `POST /api/public/leads` response status **200 or 201 with `success: true`**
+The selected storage mode is Cloudflare D1, using the same existing database binding
+`MARKCHAT_RATE_DB` and a separate `markchat_leads` table. Apply
+`sql/markchat-leads.sql` once to the same D1 database and confirm the table exists.
+D1 must return `success: true` with exactly one changed row from the parameterized
+INSERT before the API can acknowledge an inquiry. Email success can never substitute
+for database persistence; on an insert failure, the endpoint responds HTTP 502.
 
-The server sends the original CMS lead fields (`id`, `fullName`, `email`,
-`phone`, `company`, `monthlyVolume`, `source`, `message`) plus additive
-`businessName`, `interest`, `transcriptSummary`, `sourcePage`, and
-`adminReplyMailto` fields. The underlying CMS server must be verified to accept
-and durably retain these fields and make them available to its authorized Admin
-Leads dashboard. This repository **cannot verify external CMS persistence** or
-modify the external CMS schema without crossing repository boundaries.
+A successful insert optionally triggers Resend (or an authenticated mail webhook)
+to `hello@markchat.co.ke`. If email succeeds, the record's
+`notification_sent` value is set to 1. A notification failure does not erase
+the already-saved lead, and the response reports `notificationSent: false`.
 
-After a confirmed save, if Resend or an authorized SMTP webhook is configured, the server sends a notification
-to `hello@markchat.co.ke`, `Reply-To` set to the validated client email. Email
-failure does not undo a confirmed CMS save. The public response only reports
-`notificationSent` and never exposes server secrets.
+**The existing Admin Leads UI still contains demo seed rows and does not
+automatically read D1.** Until a securely authenticated, read-only Admin Leads
+API is implemented, admins need restricted D1 operator access and notification
+emails. Never create a public GET /api/leads endpoint.
+
+Customer names, email addresses and telephone numbers are personal data. Review
+data retention, access policy, backups, geography (the existing database is in
+WEUR), and privacy notices before collecting production inquiries.
+
+`CMS_API_BASE_URL` is no longer needed for the lead POST path with D1
+authoritative storage. It can still be used by the published feature catalog;
+`CONTROL_PLANE_API_URL` can supply published pricing.
 
 ## Published catalog and fallback
 

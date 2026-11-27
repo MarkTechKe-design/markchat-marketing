@@ -32,46 +32,80 @@ function leadEnvelope(input: NonNullable<ReturnType<typeof parseLead>>) {
     adminReplyMailto: adminReply,
   };
 }
+/** A durable lead exists only after D1 confirms an INSERT of one row. */
 async function persistLead(
   context: EdgeContext,
   lead: ReturnType<typeof leadEnvelope>
 ): Promise<boolean> {
-  const base = trustedHttpsBase(context.env.CMS_API_BASE_URL);
-  if (!base) return false;
-  const url = new URL('/api/public/leads', base);
-  // Do not embed server credentials in the lead or return them to the browser.
+  const db = context.env.MARKCHAT_RATE_DB;
+  if (!db) {
+    console.warn('LEADS_D1_BINDING_MISSING');
+    return false;
+  }
+
   try {
-    const response = await fetch(url.toString(), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        ...(context.env.CMS_SERVICE_TOKEN
-          ? { Authorization: 'Bearer ' + context.env.CMS_SERVICE_TOKEN }
-          : {}),
-        'Idempotency-Key': lead.id,
-      },
-      body: JSON.stringify(lead),
-      signal: AbortSignal.timeout(5000),
-      redirect: 'error',
-    });
-    if (response.status !== 200 && response.status !== 201) return false;
-    const json: unknown = await response.json();
-    return Boolean(
-      json && typeof json === 'object' && (json as { success?: unknown }).success === true
-    );
+    const result = await db
+      .prepare(
+        `INSERT INTO markchat_leads (
+        id, created_at, status, full_name, email, phone, business_name,
+        interest, monthly_volume, transcript_summary, source_page, admin_reply_mailto
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .bind(
+        lead.id,
+        lead.createdAt,
+        lead.status,
+        lead.fullName,
+        lead.email,
+        lead.phone,
+        lead.businessName,
+        lead.interest,
+        lead.monthlyVolume,
+        lead.transcriptSummary,
+        lead.sourcePage,
+        lead.adminReplyMailto
+      )
+      .run();
+    const confirmed = result.success === true && result.meta?.changes === 1;
+    if (!confirmed) console.warn('LEADS_D1_INSERT_NOT_CONFIRMED');
+    return confirmed;
   } catch {
+    // Do not log SQL bound values, customer data or provider secrets.
+    console.warn('LEADS_D1_INSERT_FAILED');
     return false;
   }
 }
+
+async function flagNotificationDelivered(context: EdgeContext, id: string): Promise<void> {
+  const db = context.env.MARKCHAT_RATE_DB;
+  if (!db) return;
+  try {
+    const result = await db
+      .prepare('UPDATE markchat_leads SET notification_sent = 1 WHERE id = ?')
+      .bind(id)
+      .run();
+    if (result.success !== true || result.meta?.changes !== 1) {
+      console.warn('LEADS_D1_NOTIFICATION_FLAG_UNCONFIRMED');
+    }
+  } catch {
+    console.warn('LEADS_D1_NOTIFICATION_FLAG_FAILED');
+  }
+}
+
 async function notifyAdmin(
   context: EdgeContext,
   lead: ReturnType<typeof leadEnvelope>
 ): Promise<boolean> {
   if (!context.env.RESEND_API_KEY || !context.env.RESEND_FROM_EMAIL) {
+    // Log only fixed diagnostic codes, never customer data, keys or request bodies.
+    if (!context.env.RESEND_API_KEY) console.warn('LEADS_NOTIFY_RESEND_KEY_MISSING');
+    if (!context.env.RESEND_FROM_EMAIL) console.warn('LEADS_NOTIFY_SENDER_MISSING');
     // An authenticated HTTPS webhook may integrate with a server-side SMTP relay.
     const webhook = trustedHttpsBase(context.env.ADMIN_NOTIFICATION_WEBHOOK_URL);
-    if (!webhook || !context.env.ADMIN_NOTIFICATION_WEBHOOK_TOKEN) return false;
+    if (!webhook || !context.env.ADMIN_NOTIFICATION_WEBHOOK_TOKEN) {
+      console.warn('LEADS_NOTIFY_NO_FALLBACK_CONFIGURED');
+      return false;
+    }
     try {
       const result = await fetch(webhook.toString(), {
         method: 'POST',
@@ -91,13 +125,19 @@ async function notifyAdmin(
         signal: AbortSignal.timeout(4500),
         redirect: 'error',
       });
-      return result.status === 200 || result.status === 201 || result.status === 202;
+      const accepted = result.status === 200 || result.status === 201 || result.status === 202;
+      if (!accepted) console.warn('LEADS_NOTIFY_WEBHOOK_HTTP_REJECTED', result.status);
+      return accepted;
     } catch {
+      console.warn('LEADS_NOTIFY_WEBHOOK_REQUEST_FAILED');
       return false;
     }
   }
   // Require a domain-verified sender address set via Cloudflare server-only secrets.
-  if (!/^[^\s@\r\n]+@[^\s@\r\n]+\.[a-z]{2,}$/i.test(context.env.RESEND_FROM_EMAIL)) return false;
+  if (!/^[^\s@\r\n]+@[^\s@\r\n]+\.[a-z]{2,}$/i.test(context.env.RESEND_FROM_EMAIL)) {
+    console.warn('LEADS_NOTIFY_INVALID_SENDER');
+    return false;
+  }
   const lines = [
     'New MarkChat™ inquiry',
     'Name: ' + lead.fullName,
@@ -126,8 +166,11 @@ async function notifyAdmin(
       signal: AbortSignal.timeout(4500),
       redirect: 'error',
     });
-    return response.status === 200 || response.status === 201;
+    const accepted = response.status === 200 || response.status === 201;
+    if (!accepted) console.warn('LEADS_NOTIFY_RESEND_HTTP_REJECTED', response.status);
+    return accepted;
   } catch {
+    console.warn('LEADS_NOTIFY_RESEND_REQUEST_FAILED');
     return false;
   }
 }
@@ -146,8 +189,9 @@ export async function onRequestPost(context: EdgeContext): Promise<Response> {
 
   const lead = leadEnvelope(input);
   const persisted = await persistLead(context, lead);
-  const notified = await notifyAdmin(context, lead);
-  if (!persisted && !notified) {
+  // Email is not durable lead storage: never notify or acknowledge until D1
+  // confirms the record was actually inserted.
+  if (!persisted) {
     return httpJson(
       {
         success: false,
@@ -156,6 +200,8 @@ export async function onRequestPost(context: EdgeContext): Promise<Response> {
       502
     );
   }
+  const notified = await notifyAdmin(context, lead);
+  if (notified) await flagNotificationDelivered(context, lead.id);
   return httpJson(
     {
       success: true,

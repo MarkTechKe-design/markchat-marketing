@@ -20,11 +20,19 @@
     "RESEND_FROM_EMAIL": "leads@markchat.co.ke",
   },
   "previews": {
+    "observability": {
+      "enabled": true,
+      "logs": {
+        "enabled": true,
+        "invocation_logs": true,
+        "persist": true,
+      },
+    },
     "d1_databases": [
       {
         "binding": "MARKCHAT_RATE_DB",
-        "database_name": "markchat-rate-db",
-        "database_id": "8797f32a-bdd1-4614-aa14-558c28fdd04f",
+        "database_name": "markchat-preview-db",
+        "database_id": "1989e316-eb00-481f-81e1-7daba3687eb4",
       },
     ],
     "vars": {
