@@ -33,7 +33,10 @@ function leadEnvelope(input: NonNullable<ReturnType<typeof parseLead>>) {
   };
 }
 /** A durable lead exists only after D1 confirms an INSERT of one row. */
-async function persistLead(context: EdgeContext, lead: ReturnType<typeof leadEnvelope>): Promise<boolean> {
+async function persistLead(
+  context: EdgeContext,
+  lead: ReturnType<typeof leadEnvelope>
+): Promise<boolean> {
   const db = context.env.MARKCHAT_RATE_DB;
   if (!db) {
     console.warn('LEADS_D1_BINDING_MISSING');
@@ -41,25 +44,28 @@ async function persistLead(context: EdgeContext, lead: ReturnType<typeof leadEnv
   }
 
   try {
-    const result = await db.prepare(
-      `INSERT INTO markchat_leads (
+    const result = await db
+      .prepare(
+        `INSERT INTO markchat_leads (
         id, created_at, status, full_name, email, phone, business_name,
         interest, monthly_volume, transcript_summary, source_page, admin_reply_mailto
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).bind(
-      lead.id,
-      lead.createdAt,
-      lead.status,
-      lead.fullName,
-      lead.email,
-      lead.phone,
-      lead.businessName,
-      lead.interest,
-      lead.monthlyVolume,
-      lead.transcriptSummary,
-      lead.sourcePage,
-      lead.adminReplyMailto,
-    ).run();
+      )
+      .bind(
+        lead.id,
+        lead.createdAt,
+        lead.status,
+        lead.fullName,
+        lead.email,
+        lead.phone,
+        lead.businessName,
+        lead.interest,
+        lead.monthlyVolume,
+        lead.transcriptSummary,
+        lead.sourcePage,
+        lead.adminReplyMailto
+      )
+      .run();
     const confirmed = result.success === true && result.meta?.changes === 1;
     if (!confirmed) console.warn('LEADS_D1_INSERT_NOT_CONFIRMED');
     return confirmed;
@@ -74,9 +80,10 @@ async function flagNotificationDelivered(context: EdgeContext, id: string): Prom
   const db = context.env.MARKCHAT_RATE_DB;
   if (!db) return;
   try {
-    const result = await db.prepare(
-      'UPDATE markchat_leads SET notification_sent = 1 WHERE id = ?'
-    ).bind(id).run();
+    const result = await db
+      .prepare('UPDATE markchat_leads SET notification_sent = 1 WHERE id = ?')
+      .bind(id)
+      .run();
     if (result.success !== true || result.meta?.changes !== 1) {
       console.warn('LEADS_D1_NOTIFICATION_FLAG_UNCONFIRMED');
     }

@@ -106,7 +106,9 @@ test('public edge endpoints reject cross-site and unavailable rate-limit service
 test('D1 must confirm one lead INSERT before returning success', async () => {
   const previousFetch = globalThis.fetch;
   try {
-    globalThis.fetch = async () => { throw new Error('Email must not be sent without config'); };
+    globalThis.fetch = async () => {
+      throw new Error('Email must not be sent without config');
+    };
     const db = fakeD1();
     const success = await submitLead({
       request: request('/api/leads', validLead()),
