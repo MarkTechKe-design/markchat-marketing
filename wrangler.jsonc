@@ -1,0 +1,30 @@
+{
+  "name": "markchat-marketing",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-11-27",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+  },
+  "observability": {
+    "enabled": true,
+  },
+  "d1_databases": [
+    {
+      "binding": "MARKCHAT_RATE_DB",
+      "database_name": "markchat-rate-db",
+      "database_id": "8797f32a-bdd1-4614-aa14-558c28fdd04f",
+    },
+  ],
+  "env": {
+    "preview": {
+      "d1_databases": [
+        {
+          "binding": "MARKCHAT_RATE_DB",
+          "database_name": "markchat-rate-db",
+          "database_id": "8797f32a-bdd1-4614-aa14-558c28fdd04f",
+        },
+      ],
+    },
+  },
+}
