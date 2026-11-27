@@ -15,9 +15,9 @@
   "author": "MarkChat Technologies Ltd <hello@markchat.co.ke>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/erlandv/virex.git"
+    "url": "https://github.com/MarkTechKe-design/markchat-marketing.git"
   },
-  "homepage": "https://virex.erland.me",
+  "homepage": "https://markchat.co.ke",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",

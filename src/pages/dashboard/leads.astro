@@ -213,6 +213,11 @@ const initialLeads = [
       </div>
 
       <div slot="footer" class="flex justify-between items-center w-full">
+        <a
+          id="modal-lead-email-btn"
+          href="mailto:hello@markchat.co.ke"
+          class="btn btn-secondary text-xs">Reply via Email</a
+        >
         <a id="modal-lead-whatsapp-btn" href="#" target="_blank" class="btn btn-primary text-xs">
           <Icon name="simple-icons:whatsapp" class="w-3.5 h-3.5 mr-1.5 inline" />
           Chat on WhatsApp
@@ -333,6 +338,43 @@ const initialLeads = [
           lead.source || 'Website';
         (document.getElementById('modal-lead-message') as HTMLElement).textContent =
           lead.message || 'No additional message provided.';
+
+        // Stored URLs are untrusted; rebuild the mailto link from validated fields.
+        const reply = document.getElementById('modal-lead-email-btn') as HTMLAnchorElement | null;
+        const replyEmail = typeof lead.email === 'string' ? lead.email.trim() : '';
+        const replySafe = /^[^\\s@\\r\\n]+@[^\\s@\\r\\n]+\\.[a-z]{2,}$/i.test(replyEmail);
+        if (reply) {
+          if (replySafe) {
+            const name =
+              typeof lead.fullName === 'string'
+                ? lead.fullName.replace(/[\\r\\n]/g, ' ').slice(0, 100)
+                : 'there';
+            const context =
+              typeof lead.interest === 'string' && lead.interest
+                ? lead.interest.replace(/[\r\n]/g, ' ').slice(0, 80)
+                : typeof lead.message === 'string'
+                  ? lead.message.replace(/[\r\n]/g, ' ').slice(0, 80)
+                  : 'your inquiry';
+            const subject = 'Re: MarkChat inquiry - ' + context.slice(0, 70);
+            const body =
+              'Hi ' +
+              name +
+              ',\n\nThank you for contacting MarkChat™ about ' +
+              context +
+              '.\n\nKind regards,\nMarkChat Team';
+            reply.href =
+              'mailto:' +
+              replyEmail +
+              '?subject=' +
+              encodeURIComponent(subject) +
+              '&body=' +
+              encodeURIComponent(body);
+            reply.removeAttribute('aria-disabled');
+          } else {
+            reply.removeAttribute('href');
+            reply.setAttribute('aria-disabled', 'true');
+          }
+        }
 
         const cleanPhone = (lead.phone || '').replace(/[^0-9]/g, '');
         const waLink = document.getElementById('modal-lead-whatsapp-btn') as HTMLAnchorElement;

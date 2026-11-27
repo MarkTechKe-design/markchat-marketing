@@ -58,7 +58,7 @@ export const productPages: MarketingPageItem[] = [
     overview:
       'Customer support across Kenya requires real cultural comprehension. Markcopilot operates in dual mode: 24/7 autonomous replies for after-hours shoppers, and 1-click contextual suggestions for human agents handling complex inquiries.',
     keyStats: [
-      { value: '4x', label: 'Faster Agent Reply Speed' },
+      { value: 'Shared', label: 'Agent Reply Workspace' },
       { value: '24/7', label: 'Autonomous Night Coverage' },
       { value: '88%', label: 'Routine Inquiry Resolution' },
     ],
@@ -101,8 +101,9 @@ export const productPages: MarketingPageItem[] = [
     ],
     cta: {
       title: 'Deploy Markcopilot on your customer channels',
-      description: 'Start your 72-hour full-featured trial. No payment required to start.',
-      primaryLabel: 'Try Markcopilot Free',
+      description:
+        'Ask our team about current access, product demonstrations, and configured plan options.',
+      primaryLabel: 'Explore Markcopilot',
       primaryHref: '/register',
       secondaryLabel: 'Book 1-on-1 Demo',
       secondaryHref: '/demo',
@@ -119,8 +120,8 @@ export const productPages: MarketingPageItem[] = [
     overview:
       'Stop juggling four separate phones and sharing personal WhatsApp Web QR codes. MarkChat’s shared inbox gives your entire support and sales team unified access with role-based permissions, SLA response timers, and internal notes.',
     keyStats: [
-      { value: '100%', label: 'Conversations Centralized' },
-      { value: '< 60s', label: 'Average First Response' },
+      { value: 'Workflow', label: 'Conversations Centralized' },
+      { value: 'Tracked', label: 'First Response Time' },
       { value: '0', label: 'Lost Customer Messages' },
     ],
     howToConnect: [
@@ -163,7 +164,7 @@ export const productPages: MarketingPageItem[] = [
     cta: {
       title: 'Give your support team a superpowers inbox',
       description: 'Centralize your customer conversations in under 3 minutes.',
-      primaryLabel: 'Start Free Trial',
+      primaryLabel: 'Get Started',
       primaryHref: '/register',
       secondaryLabel: 'Explore Live Demo',
       secondaryHref: '/demo',
@@ -242,7 +243,7 @@ export const productPages: MarketingPageItem[] = [
       'Unlike generic Western CRMs, MarkChat’s CRM is tailor-made for Kenyan business realities. It ties phone numbers directly to verified Safaricom TransIDs, delivery notes, and conversation sentiment.',
     keyStats: [
       { value: '360°', label: 'Customer Visibility' },
-      { value: '100%', label: 'TransID Verification' },
+      { value: 'Workflow', label: 'TransID Verification' },
       { value: 'Custom', label: 'Kenyan County Fields' },
     ],
     howToConnect: [
@@ -302,7 +303,7 @@ export const productPages: MarketingPageItem[] = [
     overview:
       'For banks, fintechs, government parastatals, and enterprises with strict data residency mandates under the Kenya Data Protection Act, MarkChat can be deployed completely on-premise.',
     keyStats: [
-      { value: '100%', label: 'Data Sovereignty' },
+      { value: 'Workflow', label: 'Data Sovereignty' },
       { value: '0', label: 'Third-Party Data Sharing' },
       { value: 'Private', label: 'VPC Data Isolation' },
     ],
@@ -614,7 +615,7 @@ export const featuresPages: MarketingPageItem[] = [
       'Scaling customer support shouldn’t mean chaos. MarkChat provides fine-grained team tools: assign tickets, leave internal notes, mention coworkers, and prevent agents from talking over each other.',
     keyStats: [
       { value: 'Unlimited', label: 'Support Team Members' },
-      { value: '100%', label: 'Collision Prevention' },
+      { value: 'Workflow', label: 'Collision Prevention' },
       { value: 'Granular', label: 'Role-Based Access' },
     ],
     howToConnect: [
@@ -735,7 +736,7 @@ export const featuresPages: MarketingPageItem[] = [
     overview:
       'Modern customer service is no longer confined to email tickets. MarkChat transforms messaging channels into structured support tickets with priority levels, assignment workflows, and resolution metrics.',
     keyStats: [
-      { value: '99.4%', label: 'SLA Adherence' },
+      { value: 'Configurable', label: 'Support Workflows' },
       { value: '4.9/5', label: 'Average CSAT Score' },
       { value: '< 2min', label: 'Average Resolution' },
     ],
@@ -779,7 +780,7 @@ export const featuresPages: MarketingPageItem[] = [
     cta: {
       title: 'Upgrade your customer service desk',
       description: 'Resolve customer problems faster and boost brand loyalty.',
-      primaryLabel: 'Start Free Trial',
+      primaryLabel: 'Get Started',
       primaryHref: '/register',
       secondaryLabel: 'Book Product Demo',
       secondaryHref: '/demo',
@@ -796,9 +797,9 @@ export const featuresPages: MarketingPageItem[] = [
     overview:
       'Don’t wait for customers to message you. Proactively engage buyers across SMS, WhatsApp, and social media with timely transactional notifications and personalized promotions.',
     keyStats: [
-      { value: '3x', label: 'Repeat Purchase Rate' },
-      { value: '65%', label: 'Cart Recovery Conversion' },
-      { value: '100%', label: 'Automated Delivery Tracking' },
+      { value: 'Targeted', label: 'Customer Follow-Up' },
+      { value: 'Targeted', label: 'Cart Follow-Up' },
+      { value: 'Workflow', label: 'Automated Delivery Tracking' },
     ],
     howToConnect: [
       {
@@ -858,7 +859,7 @@ export const featuresPages: MarketingPageItem[] = [
       'Most Kenyan website visitors leave without buying because checkout forms are too long or they have doubts about stock availability. MarkChat initiates proactive conversations and closes orders right inside chat.',
     keyStats: [
       { value: '+35%', label: 'Website Sales Conversion' },
-      { value: '10s', label: 'In-Chat Checkout Speed' },
+      { value: 'In-Chat', label: 'Checkout Guidance' },
       { value: 'Zero', label: 'Form Abandonment' },
     ],
     howToConnect: [
@@ -956,7 +957,7 @@ export const featuresPages: MarketingPageItem[] = [
       {
         title: 'Dedicated Direct Telco SS7 Routes',
         description:
-          'Carrier connections to Safaricom, Airtel, and Telkom Kenya guarantee message delivery even during peak holiday traffic.',
+          'Delivery depends on approved carrier routes, sender registration, network conditions, and recipient availability.',
       },
     ],
     cta: {
@@ -1042,7 +1043,7 @@ export const featuresPages: MarketingPageItem[] = [
     keyStats: [
       { value: '0', label: 'Mishandled Inquiries' },
       { value: '< 15s', label: 'Skill-Based Matching' },
-      { value: '100%', label: 'Balanced Agent Workloads' },
+      { value: 'Workflow', label: 'Balanced Agent Workloads' },
     ],
     howToConnect: [
       {
@@ -1100,15 +1101,15 @@ export const solutionsPages: MarketingPageItem[] = [
     slug: 'support',
     title: 'MarkChat for Customer Support Teams',
     subtitle:
-      'Empower your support team to resolve inquiries 4x faster with unified omnichannel timelines and Swahili AI.',
+      'Help your team resolve inquiries with shared conversation context and optional AI-assisted replies.',
     badge: 'Teams',
     category: 'Solutions',
     icon: 'lucide:headphones',
     overview:
       'Customer support teams in Kenya face high message volumes across WhatsApp, SMS, and Instagram. MarkChat brings all channels into one workspace, cutting response times from hours to seconds.',
     keyStats: [
-      { value: '4x', label: 'Faster Resolution Speed' },
-      { value: '94%', label: 'Customer Satisfaction' },
+      { value: 'Shared', label: 'Conversation Context' },
+      { value: 'Measured', label: 'Customer Feedback' },
       { value: '< 60s', label: 'First Response Time' },
     ],
     howToConnect: [
@@ -1168,9 +1169,9 @@ export const solutionsPages: MarketingPageItem[] = [
     overview:
       'In Kenya, sales happen in conversations, not static checkout carts. MarkChat equips sales reps to qualify buyers, showcase inventory, trigger M-Pesa PIN prompts, and verify payments in seconds.',
     keyStats: [
-      { value: '+40%', label: 'Sales Close Rate' },
-      { value: '10s', label: 'In-Chat Checkout' },
-      { value: '100%', label: 'Fraud Elimination' },
+      { value: 'Guided', label: 'Sales Follow-Up' },
+      { value: 'Configured', label: 'M-Pesa Checkout' },
+      { value: 'Provider', label: 'Payment Verification' },
     ],
     howToConnect: [
       {
@@ -1231,7 +1232,7 @@ export const solutionsPages: MarketingPageItem[] = [
     keyStats: [
       { value: '98%', label: 'Average Open Rate' },
       { value: '65%+', label: 'Campaign Click-Through' },
-      { value: '3x', label: 'Campaign ROI' },
+      { value: 'Tracked', label: 'Campaign Responses' },
     ],
     howToConnect: [
       {
@@ -1352,8 +1353,8 @@ export const solutionsPages: MarketingPageItem[] = [
       'When your business grows beyond 200 daily customer conversations, personal phones and shared logins become liabilities. MarkChat Pro equips growing businesses with team collaboration tools, SLA routing, and automated accounting.',
     keyStats: [
       { value: '10+', label: 'Collaborative Agents' },
-      { value: '99.4%', label: 'SLA Response Rate' },
-      { value: '100%', label: 'Automated Ledger Sync' },
+      { value: 'Configurable', label: 'Response Tracking' },
+      { value: 'Workflow', label: 'Automated Ledger Sync' },
     ],
     howToConnect: [
       {
@@ -1473,8 +1474,8 @@ export const solutionsPages: MarketingPageItem[] = [
     overview:
       'Kenyan clinics and hospitals experience high patient no-show rates. MarkChat sends automated appointment reminders via WhatsApp and SMS, reducing missed visits and streamlining consultation bookings.',
     keyStats: [
-      { value: '-42%', label: 'Appointment No-Shows' },
-      { value: '100%', label: 'Confidential & Secure' },
+      { value: 'Scheduled', label: 'Appointment Reminders' },
+      { value: 'Workflow', label: 'Confidential & Secure' },
       { value: '24/7', label: 'Patient Triage Bot' },
     ],
     howToConnect: [
@@ -1517,7 +1518,7 @@ export const solutionsPages: MarketingPageItem[] = [
     cta: {
       title: 'Modernize patient communication at your clinic',
       description: 'Reduce no-shows and deliver exceptional patient care.',
-      primaryLabel: 'Start Healthcare Trial',
+      primaryLabel: 'Explore Healthcare',
       primaryHref: '/register',
       secondaryLabel: 'Book Clinic Walkthrough',
       secondaryHref: '/demo',
@@ -1535,7 +1536,7 @@ export const solutionsPages: MarketingPageItem[] = [
       'Over 70% of Kenyan online shoppers abandon carts before checkout due to payment hesitations. MarkChat connects your online storefront to WhatsApp, recovering lost sales and verifying mobile money instantly.',
     keyStats: [
       { value: '+65%', label: 'Cart Recovery Rate' },
-      { value: 'Sub-10s', label: 'Payment Verification' },
+      { value: 'Provider', label: 'Payment Verification' },
       { value: 'Shopify', label: 'Direct Catalog Sync' },
     ],
     howToConnect: [
@@ -1595,7 +1596,7 @@ export const solutionsPages: MarketingPageItem[] = [
     overview:
       'Kenyan software companies and tech startups need fast, responsive communication to convert trial users into paid annual contracts. MarkChat unites web chat, email, and WhatsApp into a high-speed developer support hub.',
     keyStats: [
-      { value: '3x', label: 'Trial to Paid Conversion' },
+      { value: 'Guided', label: 'Customer Onboarding' },
       { value: 'Linear', label: '1-Click Bug Sync' },
       { value: '< 30s', label: 'First Response Time' },
     ],
@@ -1639,7 +1640,7 @@ export const solutionsPages: MarketingPageItem[] = [
     cta: {
       title: 'Accelerate SaaS revenue and user retention',
       description: 'Support your software users with a modern developer-first stack.',
-      primaryLabel: 'Start SaaS Free Trial',
+      primaryLabel: 'Explore SaaS Solutions',
       primaryHref: '/register',
       secondaryLabel: 'Explore Developer Tools',
       secondaryHref: '/docs',
@@ -1657,7 +1658,7 @@ export const solutionsPages: MarketingPageItem[] = [
       'Kenyan schools and universities spend endless hours printing circulars and answering manual phone queries about fee balances. MarkChat automates parent communications via Bulk SMS and official WhatsApp portals.',
     keyStats: [
       { value: '10,000+', label: 'Fee Circulars in Minutes' },
-      { value: '100%', label: 'Parent Delivery Rate' },
+      { value: 'Workflow', label: 'Parent Delivery Rate' },
       { value: 'Zero', label: 'Printing Paper Costs' },
     ],
     howToConnect: [
@@ -1718,7 +1719,7 @@ export const solutionsPages: MarketingPageItem[] = [
       'Hundreds of thousands of Kenyan entrepreneurs trade on personal Pochi la Biashara lines and Instagram pages. MarkChat eliminates the need for formal developer APIs, using a simple Android sync app to automate receipts.',
     keyStats: [
       { value: '0', label: 'Corporate Paybill Required' },
-      { value: '100%', label: 'Works with Pochi Lines' },
+      { value: 'Workflow', label: 'Works with Pochi Lines' },
       { value: '2 min', label: 'Phone App Installation' },
     ],
     howToConnect: [
@@ -1779,8 +1780,8 @@ export const solutionsPages: MarketingPageItem[] = [
       'Kenyan chemists receive hundreds of WhatsApp photos of handwritten doctor prescriptions every day. MarkChat streamlines prescription verification, price quotes, rider dispatch, and contactless payment.',
     keyStats: [
       { value: '1-Click', label: 'Prescription Photo Review' },
-      { value: '< 15min', label: 'Nairobi Rider Dispatch' },
-      { value: '100%', label: 'Verified M-Pesa Payments' },
+      { value: 'Coordinated', label: 'Rider Dispatch' },
+      { value: 'Workflow', label: 'Verified M-Pesa Payments' },
     ],
     howToConnect: [
       {
@@ -1822,7 +1823,7 @@ export const solutionsPages: MarketingPageItem[] = [
     cta: {
       title: 'Modernize prescription orders at your pharmacy',
       description: 'Deliver medications faster with seamless mobile money.',
-      primaryLabel: 'Start Pharmacy Trial',
+      primaryLabel: 'Explore Pharmacy',
       primaryHref: '/register',
       secondaryLabel: 'Book Chemist Walkthrough',
       secondaryHref: '/demo',
@@ -1953,16 +1954,16 @@ export const solutionsPages: MarketingPageItem[] = [
     slug: 'marketplaces',
     title: 'MarkChat for Marketplaces & Classifieds',
     subtitle:
-      'Protect buyer-seller conversations, provide verified escrow alerts, and automate M-Pesa transaction mediation.',
+      'Organize buyer-seller conversations and review payment-provider confirmations without taking custody of funds.',
     badge: 'Platforms',
     category: 'Solutions',
     icon: 'lucide:layout-grid',
     overview:
-      'Online classifieds and multi-vendor marketplaces in East Africa struggle with fraud and off-platform leakage. MarkChat provides secure in-platform chat with masked phone numbers, escrow payment triggers, and dispute mediation.',
+      'Marketplaces can organize inquiries and payment-provider verification alongside their existing commerce and dispute-management services. MarkChat does not hold or escrow funds.',
     keyStats: [
       { value: 'Zero', label: 'Off-Platform Fraud' },
       { value: 'Masked', label: 'Buyer Phone Privacy' },
-      { value: 'Instant', label: 'M-Pesa Escrow Receipts' },
+      { value: 'Provider', label: 'Payment Verification' },
     ],
     howToConnect: [
       {
@@ -1973,9 +1974,9 @@ export const solutionsPages: MarketingPageItem[] = [
       },
       {
         step: 2,
-        title: 'Configure Escrow Payment Rules',
+        title: 'Configure Provider Payment Callbacks',
         description:
-          'Hold M-Pesa payments securely in escrow until buyer confirms receipt of inspected goods.',
+          'Use merchant-owned Till/Paybill or payment-provider accounts and review verified callback results. MarkChat never holds funds.',
       },
       {
         step: 3,
@@ -1993,7 +1994,7 @@ export const solutionsPages: MarketingPageItem[] = [
       {
         title: 'Monetize Marketplace Transactions',
         description:
-          'Capture platform commission seamlessly during the in-chat M-Pesa escrow checkout process.',
+          'Confirm any marketplace commissions through your own authorized payment provider and commercial agreement.',
       },
       {
         title: 'Automated Seller Identity Verification',
@@ -2003,7 +2004,8 @@ export const solutionsPages: MarketingPageItem[] = [
     ],
     cta: {
       title: 'Build trusted buyer-seller commerce',
-      description: 'Integrate secure marketplace conversations and escrow payments.',
+      description:
+        'Connect marketplace conversations with eligible provider-verified payment workflows.',
       primaryLabel: 'Connect Your Marketplace',
       primaryHref: '/register',
       secondaryLabel: 'Read API Docs',
@@ -2022,7 +2024,7 @@ export const solutionsPages: MarketingPageItem[] = [
       'County governments and public parastatals in Kenya must communicate efficiently with millions of citizens. MarkChat delivers cost-effective citizen self-service, parking payment alerts, and public participation surveys.',
     keyStats: [
       { value: '47', label: 'Kenyan Counties Supported' },
-      { value: '100%', label: 'e-Citizen Integration Ready' },
+      { value: 'Workflow', label: 'e-Citizen Integration Ready' },
       { value: 'Sub-Kes 0.3', label: 'Citizen SMS Cost' },
     ],
     howToConnect: [
@@ -2083,8 +2085,8 @@ export const solutionsPages: MarketingPageItem[] = [
       'High-end salons in Kilimani, Westlands, and Mombasa lose significant revenue to no-shows and chaotic telephone scheduling. MarkChat automates stylist bookings, collects deposit fees via M-Pesa, and sends timely reminders.',
     keyStats: [
       { value: '-60%', label: 'No-Show Rate' },
-      { value: '+45%', label: 'Client Re-Booking Rate' },
-      { value: '100%', label: 'Deposit Protection' },
+      { value: 'Organized', label: 'Client Follow-Ups' },
+      { value: 'Workflow', label: 'Deposit Protection' },
     ],
     howToConnect: [
       {
@@ -2126,7 +2128,7 @@ export const solutionsPages: MarketingPageItem[] = [
     cta: {
       title: 'Upgrade your salon or spa booking experience',
       description: 'Fill your appointment calendar and eliminate no-shows.',
-      primaryLabel: 'Start Salon Trial',
+      primaryLabel: 'Explore Salon Tools',
       primaryHref: '/register',
       secondaryLabel: 'Explore Live Demo',
       secondaryHref: '/demo',
@@ -2144,7 +2146,7 @@ export const solutionsPages: MarketingPageItem[] = [
       'Logistics companies and courier delivery services in Kenya require fast, reliable dispatch coordination. MarkChat automates customer shipping alerts, sends live driver details, and confirms delivery handoffs.',
     keyStats: [
       { value: '15s', label: 'Boda Dispatch Alert' },
-      { value: '100%', label: 'Delivery Proof Logging' },
+      { value: 'Workflow', label: 'Delivery Proof Logging' },
       { value: 'Instant', label: 'Customer Tracking Links' },
     ],
     howToConnect: [
@@ -2248,7 +2250,7 @@ export const solutionsPages: MarketingPageItem[] = [
     cta: {
       title: 'Transform guest booking at your lodge or agency',
       description: 'Close safari bookings and deliver five-star hospitality.',
-      primaryLabel: 'Start Hospitality Trial',
+      primaryLabel: 'Explore Hospitality',
       primaryHref: '/register',
       secondaryLabel: 'Book Travel Consultation',
       secondaryHref: '/demo',
@@ -2272,7 +2274,7 @@ export const resourcesPages: MarketingPageItem[] = [
       'We ship updates weekly to keep MarkChat running at peak performance. Track improvements to our Meta WhatsApp Cloud connection, Safaricom Daraja C2B APIs, and Markcopilot AI models.',
     keyStats: [
       { value: 'Weekly', label: 'Release Cadence' },
-      { value: '100%', label: 'Zero-Downtime Deploys' },
+      { value: 'Workflow', label: 'Zero-Downtime Deploys' },
       { value: 'Open', label: 'Public Roadmap' },
     ],
     howToConnect: [
@@ -2512,7 +2514,7 @@ export const resourcesPages: MarketingPageItem[] = [
       'Save time writing copy from scratch. Browse our library of pre-approved Meta WhatsApp templates and Bulk SMS copy tailored for abandoned cart recovery, flash sales, appointment reminders, and receipts.',
     keyStats: [
       { value: '50+', label: 'Proven Templates' },
-      { value: '100%', label: 'Meta Policy Compliant' },
+      { value: 'Workflow', label: 'Meta Policy Compliant' },
       { value: 'English & Swahili', label: 'Bilingual Copy' },
     ],
     howToConnect: [
@@ -2635,7 +2637,7 @@ export const resourcesPages: MarketingPageItem[] = [
     keyStats: [
       { value: 'AES-256', label: 'Encryption at Rest' },
       { value: 'TLS 1.3', label: 'Encryption in Transit' },
-      { value: '100%', label: 'Kenya DPA 2019 Compliant' },
+      { value: 'Workflow', label: 'Kenya DPA 2019 Compliant' },
     ],
     howToConnect: [
       {

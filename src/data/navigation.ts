@@ -116,7 +116,7 @@ export const productMegaMenu: MegaMenuConfig = {
               label: 'Website Live Chat',
               href: '/features/website-live-chat',
               description:
-                'Embed a blazing-fast 15KB chat widget to capture anonymous website visitors.',
+                'Embed a website live-chat widget to engage visitors and support customer inquiries.',
               icon: 'lucide:message-square',
             },
             {
@@ -142,7 +142,7 @@ export const productMegaMenu: MegaMenuConfig = {
               label: 'Integrations',
               href: '/integrations',
               description:
-                '18+ native connectors including Safaricom Daraja, Shopify, and Pochi la Biashara.',
+                'Explore supported, setup-required, and planned integrations for Kenyan businesses.',
               icon: 'lucide:blocks',
             },
           ],
@@ -257,7 +257,8 @@ export const solutionsMegaMenu: MegaMenuConfig = {
             {
               label: 'Growth',
               href: '/solutions/growth',
-              description: 'Unlimited team agents, SLA tracking & C2B sync',
+              description:
+                'Collaborative agents, performance monitoring and eligible C2B workflows',
               icon: 'lucide:bar-chart-2',
             },
             {
@@ -340,7 +341,7 @@ export const solutionsMegaMenu: MegaMenuConfig = {
             {
               label: 'Marketplaces',
               href: '/solutions/marketplaces',
-              description: 'Buyer-seller chats, dispute logs & M-Pesa escrow',
+              description: 'Buyer-seller conversations and provider-verified payments',
               icon: 'lucide:layout-grid',
             },
             {
@@ -375,7 +376,7 @@ export const solutionsMegaMenu: MegaMenuConfig = {
   spotlight: {
     title: 'Built for Kenyan Commerce',
     description:
-      'From Westlands boutiques to countrywide SACCOs, MarkChat powers 4x faster conversational sales.',
+      'Support Kenyan commerce teams with connected conversations and verified payment workflows.',
     badge: 'Customer Stories',
     href: '/demo',
     ctaLabel: 'Book tailored industry demo →',

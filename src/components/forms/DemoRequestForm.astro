@@ -41,7 +41,7 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
 
 <form
   id="demo-request-form"
-  action={action}
+  action="/api/leads"
   method={method}
   class="space-y-5"
   data-netlify={netlify ? 'true' : undefined}
@@ -106,6 +106,23 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
       placeholder="john@company.com"
     />
     <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-email"></p>
+  </div>
+
+  <div>
+    <label for="demo-phone" class="block text-sm font-medium text-text mb-2">
+      Kenyan phone <span class="text-red-500">*</span>
+    </label>
+    <input
+      id="demo-phone"
+      name="phone"
+      type="tel"
+      required
+      autocomplete="tel"
+      maxlength="24"
+      placeholder="+2547..."
+      class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+    />
+    <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-phone"></p>
   </div>
 
   <div>
@@ -188,6 +205,14 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
     </div>
   </div>
 
+  <label class="mb-4 flex items-start gap-2 text-sm text-text-muted">
+    <input id="demo-consent" type="checkbox" required class="mt-1" />
+    <span
+      >I agree to be contacted about this demo request. See our
+      <a href="/privacy" class="underline">Privacy Policy</a>.
+    </span>
+  </label>
+
   <button
     type="submit"
     id="demo-submit-button"
@@ -262,6 +287,12 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
       if (!value.trim()) return 'Email is required';
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(value)) return 'Please enter a valid email address';
+      return null;
+    },
+    'demo-phone': (value) => {
+      if (!/^\\+?254[17]\\d{8}$|^0[17]\\d{8}$/.test(value.replace(/[\\s-]/g, ''))) {
+        return 'Enter a valid Kenyan mobile number';
+      }
       return null;
     },
     'demo-company': (value) => {
@@ -339,8 +370,11 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
     formSuccess?.classList.add('hidden');
     formError?.classList.add('hidden');
 
-    // Validate form
-    if (!validateForm()) {
+    // Validate form and explicit contact permission.
+    if (
+      !validateForm() ||
+      !(document.getElementById('demo-consent') as HTMLInputElement)?.checked
+    ) {
       const firstError = form.querySelector('.border-red-500') as HTMLElement;
       firstError?.focus();
       return;
@@ -353,54 +387,33 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
     buttonLoading?.classList.remove('hidden');
 
     const formData = new FormData(form);
-    const action = form.dataset.configuredAction || '';
 
     try {
-      // If no action URL, persist lead via CMS API
-      if (!action) {
-        try {
-          const { submitLead } = await import('@/lib/cms-api');
-          const firstName = (formData.get('firstName') as string) || '';
-          const lastName = (formData.get('lastName') as string) || '';
-          const email = (formData.get('email') as string) || '';
-          const phone = (formData.get('phone') as string) || '+254 700 000 000';
-          const company = (formData.get('company') as string) || '';
-          const enterpriseScope = parseEnterpriseScope(formData);
-          const volume = enterpriseScope.volume;
-          const message = (formData.get('message') as string) || '';
-          const leadResult = await submitLead({
-            fullName: `${firstName} ${lastName}`.trim(),
-            email,
-            phone,
-            company,
-            monthlyVolume: volume,
-            source: 'Demo Request Page (/demo)',
-            message: [message, formatEnterpriseScope(enterpriseScope)].filter(Boolean).join('\n\n'),
-          });
-          if (!leadResult.success) throw new Error('Lead submission not accepted');
-        } catch (err) {
-          console.warn('submitLead error:', err);
-          showErrorState();
-          return;
-        }
-        showSuccess();
-        return;
-      }
-
-      // Submit to actual endpoint
-      const response = await fetch(action, {
-        method: form.method || 'POST',
-        body: formData,
-        headers: {
-          Accept: 'application/json',
-        },
+      const { submitLead } = await import('@/lib/cms-api');
+      const firstName = String(formData.get('firstName') || '');
+      const lastName = String(formData.get('lastName') || '');
+      const email = String(formData.get('email') || '');
+      const phone = String(formData.get('phone') || '');
+      const company = String(formData.get('company') || '');
+      const enterpriseScope = parseEnterpriseScope(formData);
+      const message = String(formData.get('message') || '');
+      const result = await submitLead({
+        fullName: `${firstName} ${lastName}`.trim(),
+        email,
+        phone,
+        company,
+        businessName: company,
+        interest: 'Product demonstration',
+        sourcePage: '/demo',
+        startedAt: Math.floor(performance.timeOrigin),
+        consent: (document.getElementById('demo-consent') as HTMLInputElement).checked,
+        website: String(formData.get('_gotcha') || ''),
+        monthlyVolume: enterpriseScope.volume,
+        source: 'Demo Request Page (/demo)',
+        message: [message, formatEnterpriseScope(enterpriseScope)].filter(Boolean).join('\\n\\n'),
       });
-
-      if (response.ok) {
-        showSuccess();
-      } else {
-        showErrorState();
-      }
+      if (!result.success) throw new Error('Lead submission not accepted');
+      showSuccess();
     } catch {
       showErrorState();
     }
