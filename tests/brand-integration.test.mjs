@@ -6,18 +6,16 @@ const read = (path) => fs.readFileSync(path, 'utf8');
 const base = read('src/layouts/BaseLayout.astro');
 const auth = read('src/layouts/AuthLayout.astro');
 const dashboard = read('src/components/dashboard/Sidebar.astro');
+const dashboardLayout = read('src/layouts/DashboardLayout.astro');
 const header = read('src/components/layout/Header.astro');
 const footer = read('src/components/layout/Footer.astro');
 const config = read('src/config/site.ts');
 
-test('Official MarkChat icon manifest and fallback PNG/ICO are connected to all BaseLayout pages', () => {
-  for (const asset of [
-    '/favicon.ico',
-    '/favicon-32x32.png',
-    '/apple-touch-icon.png',
-    '/site.webmanifest',
-  ])
+test('Official MarkChat fallback PNG/ICO icons are connected to BaseLayout and web manifest is scoped to DashboardLayout', () => {
+  for (const asset of ['/favicon.ico', '/favicon-32x32.png', '/apple-touch-icon.png'])
     assert.ok(base.includes(asset), asset);
+  assert.ok(base.includes('includeManifest && <link rel="manifest" href="/site.webmanifest"'));
+  assert.ok(dashboardLayout.includes('includeManifest={true}'));
   assert.doesNotMatch(base, /href="\/favicon.svg"/);
 });
 

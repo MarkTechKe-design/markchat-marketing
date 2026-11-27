@@ -1,8 +1,8 @@
 {
-  "name": "MarkChat",
-  "short_name": "MarkChat",
+  "name": "MarkChat CMS Admin",
+  "short_name": "MarkChat Admin",
   "description": "Connect. Support. Grow.",
-  "start_url": "/",
+  "start_url": "/dashboard/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0057e6",
@@ -31,5 +31,6 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "scope": "/dashboard/"
 }

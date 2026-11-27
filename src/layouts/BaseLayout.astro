@@ -15,6 +15,7 @@ interface Props {
   canonicalUrl?: string;
   noindex?: boolean;
   robots?: string;
+  includeManifest?: boolean;
 }
 
 const {
@@ -29,6 +30,7 @@ const {
   canonicalUrl,
   noindex,
   robots,
+  includeManifest = false,
 } = Astro.props;
 ---
 
@@ -40,7 +42,7 @@ const {
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=20261126" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=20261126" sizes="any" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=20261126" />
-    <link rel="manifest" href="/site.webmanifest" />
+    {includeManifest && <link rel="manifest" href="/site.webmanifest" />}
     <meta name="theme-color" content="#0057e6" />
     <SEO
       title={title}
