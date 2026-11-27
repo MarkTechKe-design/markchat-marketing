@@ -128,7 +128,9 @@ test('Gemini receives vetted public facts when CMS and Control Plane are unavail
       return Response.json({
         candidates: [
           {
-            content: { parts: [{ text: 'MarkChat offers team inbox tools for customer support.' }] },
+            content: {
+              parts: [{ text: 'MarkChat offers team inbox tools for customer support.' }],
+            },
           },
         ],
       });
