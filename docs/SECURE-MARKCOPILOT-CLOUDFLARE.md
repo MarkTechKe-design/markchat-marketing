@@ -36,6 +36,7 @@ Under **Workers & Pages → your Pages project → Settings → Variables and Se
 | `ADMIN_NOTIFICATION_WEBHOOK_URL` | Optional HTTPS server-side SMTP relay webhook, used when Resend is not configured |
 | `ADMIN_NOTIFICATION_WEBHOOK_TOKEN` | Server-only Bearer token authorizing the SMTP relay webhook |
 | `MARKCHAT_RATE_DB` | Cloudflare D1 database binding (required for both POST endpoints) |
+| `RATE_HASH_SECRET` | Random 32+ character server-only secret for HMAC-hashing IPs before D1 persistence |
 
 Configure secrets for **Production and Preview** separately, and redeploy after binding
 changes. Do not put these bindings in client bundle environment variables, `.env` commits,
@@ -48,7 +49,7 @@ lead-success message).
 Create a D1 database in Cloudflare, bind it to the Pages project with variable name
 `MARKCHAT_RATE_DB`, and run `sql/markchat-rate-limits.sql` against it (via the
 Cloudflare D1 console or Wrangler `d1 execute`). The schema uses an atomic UPSERT;
-IP values are SHA-256 hashed before storage. This is a per-minute abuse guard:
+IP values are HMAC-SHA256 hashed with the server-only RATE_HASH_SECRET before storage. This is a per-minute abuse guard:
 6 lead attempts and 20 assistant requests per origin IP. Add WAF / Turnstile if
 further protection is needed.
 

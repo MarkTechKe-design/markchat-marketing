@@ -11,6 +11,7 @@ export interface D1RateDatabase {
 }
 export interface EdgeEnv {
   MARKCHAT_RATE_DB?: D1RateDatabase;
+  RATE_HASH_SECRET?: string;
   CMS_API_BASE_URL?: string;
   CMS_SERVICE_TOKEN?: string;
   CONTROL_PLANE_API_URL?: string;
@@ -134,18 +135,45 @@ export async function readJson(request: Request, maxBytes = 12_000): Promise<unk
   if (!/^application\/json(?:;|$)/i.test(type)) throw new Error('Unsupported content type');
   const length = Number(request.headers.get('Content-Length') || '0');
   if (length > maxBytes) throw new Error('Too large');
-  const body = await request.text();
-  if (new TextEncoder().encode(body).length > maxBytes) throw new Error('Too large');
-  return JSON.parse(body);
+  // Stream with an upper bound; a lying Content-Length cannot force unbounded memory use.
+  if (!request.body) throw new Error('Missing body');
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let bytes = 0;
+  try {
+    while (true) {
+      const part = await reader.read();
+      if (part.done) break;
+      bytes += part.value.byteLength;
+      if (bytes > maxBytes) {
+        await reader.cancel();
+        throw new Error('Too large');
+      }
+      chunks.push(part.value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const body = new Uint8Array(bytes);
+  let offset = 0;
+  for (const chunk of chunks) { body.set(chunk, offset); offset += chunk.byteLength; }
+  return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(body));
 }
 export async function enforceRate(context: EdgeContext, scope: 'chat' | 'lead'): Promise<Response | null> {
   // Cloudflare Pages supports a D1 binding. An atomic upsert prevents
   // in-memory per-isolate bypasses. Fail closed until the D1 table is provisioned.
   const db = context.env.MARKCHAT_RATE_DB;
-  if (!db) return httpJson({ success: false, error: 'Service temporarily unavailable.' }, 503);
+  if (!db || !context.env.RATE_HASH_SECRET || context.env.RATE_HASH_SECRET.length < 32) {
+    return httpJson({ success: false, error: 'Service temporarily unavailable.' }, 503);
+  }
   const ip = context.request.headers.get('CF-Connecting-IP');
   if (!ip || ip.length > 64) return httpJson({ success: false, error: 'Unable to validate request.' }, 403);
-  const fingerprint = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ip));
+  // HMAC prevents an offline dictionary attack on a stored hashed IPv4 address.
+  const secretKey = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(context.env.RATE_HASH_SECRET),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+  );
+  const fingerprint = await crypto.subtle.sign('HMAC', secretKey, new TextEncoder().encode(ip));
   const key = Array.from(new Uint8Array(fingerprint), (v) => v.toString(16).padStart(2, '0')).join('');
   const windowStart = Math.floor(Date.now() / 60000);
   const max = scope === 'chat' ? 20 : 6;

@@ -38,6 +38,7 @@ const request = (route, value, headers = {}) =>
     },
     body: JSON.stringify(value),
   });
+const RATE_HASH_SECRET = 'test-only-random-key-32-chars-long-0001';
 const fakeD1 = (attempts = 1) => ({
   prepare: () => ({ bind: () => ({ first: async () => ({ attempts }) }) }),
 });
@@ -70,7 +71,7 @@ test('public edge endpoints reject cross-site and unavailable rate-limit service
   assert.equal((await submitLead({ request: request('/api/leads', validLead()), env: {} })).status, 503);
   assert.equal((await askAssistant({
     request: request('/api/markcopilot', { question: 'What is M-Pesa?' }),
-    env: { MARKCHAT_RATE_DB: fakeD1(100) },
+    env: { MARKCHAT_RATE_DB: fakeD1(100), RATE_HASH_SECRET },
   })).status, 429);
 });
 
@@ -82,7 +83,7 @@ test('lead success is conditional on explicit persistence confirmation', async (
       received = JSON.parse(options.body);
       return Response.json({ success: false }, { status: 201 });
     };
-    const env = { MARKCHAT_RATE_DB: fakeD1(), CMS_API_BASE_URL: 'https://cms.example.co.ke' };
+    const env = { MARKCHAT_RATE_DB: fakeD1(), RATE_HASH_SECRET, CMS_API_BASE_URL: 'https://cms.example.co.ke' };
     const failed = await submitLead({ request: request('/api/leads', validLead()), env });
     assert.equal(failed.status, 502);
     assert.equal((await failed.json()).success, false);

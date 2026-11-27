@@ -13,6 +13,6 @@
       "@dashboard-ui/*": ["src/components/dashboard-ui/*"]
     }
   },
-  "include": ["src/**/*", "astro.config.mjs", ".astro/types.d.ts"],
+  "include": ["src/**/*", "functions/**/*", "astro.config.mjs", ".astro/types.d.ts"],
   "exclude": ["node_modules", "dist"]
 }
