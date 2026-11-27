@@ -96,7 +96,6 @@ async function askConfiguredAi(
       ...init,
       signal: AbortSignal.timeout(6000),
       redirect: 'error',
-      cache: 'no-store',
     });
     if (!res.ok) return null;
     const payload: unknown = await res.json();

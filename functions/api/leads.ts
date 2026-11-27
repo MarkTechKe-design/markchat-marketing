@@ -54,7 +54,6 @@ async function persistLead(
       body: JSON.stringify(lead),
       signal: AbortSignal.timeout(5000),
       redirect: 'error',
-      cache: 'no-store',
     });
     if (response.status !== 200 && response.status !== 201) return false;
     const json: unknown = await response.json();
@@ -91,7 +90,6 @@ async function notifyAdmin(
         }),
         signal: AbortSignal.timeout(4500),
         redirect: 'error',
-        cache: 'no-store',
       });
       return result.status === 200 || result.status === 201 || result.status === 202;
     } catch {
@@ -126,7 +124,6 @@ async function notifyAdmin(
         text: lines.join('\n'),
       }),
       signal: AbortSignal.timeout(4500),
-      cache: 'no-store',
       redirect: 'error',
     });
     return response.status === 200 || response.status === 201;
