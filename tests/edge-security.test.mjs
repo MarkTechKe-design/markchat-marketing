@@ -126,9 +126,11 @@ test('Gemini receives vetted public facts when CMS and Control Plane are unavail
     globalThis.fetch = async (url, options) => {
       called = { url: String(url), headers: options.headers, body: JSON.parse(options.body) };
       return Response.json({
-        candidates: [{
-          content: { parts: [{ text: 'MarkChat offers team inbox tools for customer support.' }] },
-        }],
+        candidates: [
+          {
+            content: { parts: [{ text: 'MarkChat offers team inbox tools for customer support.' }] },
+          },
+        ],
       });
     };
     const response = await askAssistant({

@@ -53,7 +53,11 @@ async function askConfiguredAi(
   }));
   // The audited baseline can answer general product questions even when the
   // optional CMS/Control Plane catalog is not yet connected.
-  const knowledge = JSON.stringify({ publicProductBasics, plans: pricing, features: truth.features });
+  const knowledge = JSON.stringify({
+    publicProductBasics,
+    plans: pricing,
+    features: truth.features,
+  });
   const instruction = systemPolicy + '\nPUBLISHED INFORMATION:\n' + knowledge;
   const geminiOnly = Boolean(env.GEMINI_API_KEY) && !env.AI_API_KEY && !env.OPENAI_API_KEY;
   const model = safeText(
