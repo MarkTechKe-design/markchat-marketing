@@ -343,10 +343,17 @@ const initialLeads = [
           if (replySafe) {
             const name = typeof lead.fullName === 'string'
               ? lead.fullName.replace(/[\\r\\n]/g, ' ').slice(0, 100) : 'there';
+            const context = typeof lead.interest === 'string' && lead.interest
+              ? lead.interest.replace(/[\r\n]/g, ' ').slice(0, 80)
+              : typeof lead.message === 'string'
+                ? lead.message.replace(/[\r\n]/g, ' ').slice(0, 80)
+                : 'your inquiry';
+            const subject = 'Re: MarkChat inquiry - ' + context.slice(0, 70);
             const body = 'Hi ' + name +
-              ',\\n\\nThank you for contacting MarkChat™.\\n\\nKind regards,\\nMarkChat Team';
+              ',\n\nThank you for contacting MarkChat™ about ' + context +
+              '.\n\nKind regards,\nMarkChat Team';
             reply.href = 'mailto:' + replyEmail
-              + '?subject=' + encodeURIComponent('Re: MarkChat inquiry')
+              + '?subject=' + encodeURIComponent(subject)
               + '&body=' + encodeURIComponent(body);
             reply.removeAttribute('aria-disabled');
           } else {
