@@ -44,8 +44,7 @@ export interface LeadInput {
   website: string;
 }
 const EMAIL_PATTERN = /^[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+$/i;
-const CONTROL_CHARS = /[\u0000-\u001F\u007F]/;
-const REPLY_TARGET = 'hello@markchat.co.ke';
+const CONTROL_CHARS = new RegExp(String.raw`[\x00-\x1F\x7F]`);
 export function safeText(value: unknown, max: number, required = false): string | null {
   if (typeof value !== 'string') return required ? null : '';
   const clean = value.trim();

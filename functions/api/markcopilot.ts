@@ -41,7 +41,7 @@ async function askConfiguredAi(
   const model = safeText(env.AI_MODEL || (geminiOnly ? 'gemini-2.5-flash' : 'gpt-4o-mini'), 70, true);
   if (!model || !/^[a-zA-Z0-9._-]+$/.test(model)) return null;
   let url: URL;
-  let init: RequestInit;
+  let init: NonNullable<Parameters<typeof fetch>[1]>;
   if (geminiOnly) {
     // Google native generateContent; key stays in a server-side request header.
     url = new URL(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`);

@@ -331,7 +331,7 @@ import { Icon } from 'astro-icon/components';
       const values = new FormData(leadForm);
       const transcriptSummary = history
         .slice(-6).map((item) => item.role + ': ' + item.text).join(' ')
-        .replace(/[\r\n\x00-\x1F\x7F]/g, ' ').slice(0, 1600);
+        .replace(new RegExp(String.raw`[\x00-\x1F\x7F]`, 'g'), ' ').slice(0, 1600);
       const data = {
         name: String(values.get('name') || ''),
         email: String(values.get('email') || ''),
