@@ -370,11 +370,24 @@ import { Icon } from 'astro-icon/components';
         if (leadSubmit) leadSubmit.disabled = false;
       }
     });
-    // CSS dynamic viewport units keep the composer visible on mobile keyboard resize.
-    window.visualViewport?.addEventListener('resize', () => {
-      const focused = document.activeElement;
-      if (focused === messageInput && list) list.scrollTop = list.scrollHeight;
-    });
+    // Mobile virtual keyboards sometimes shrink only the visual viewport.
+    // Keep the composer above the keyboard without moving the desktop panel.
+    function syncMobileKeyboard() {
+      const viewport = window.visualViewport;
+      if (!viewport || !window.matchMedia('(max-width: 639px)').matches) {
+        panel?.style.removeProperty('bottom');
+        panel?.style.removeProperty('max-height');
+        return;
+      }
+      const covered = Math.max(0, window.innerHeight - viewport.offsetTop - viewport.height);
+      panel!.style.bottom = `calc(5rem + env(safe-area-inset-bottom) + ${Math.round(covered)}px)`;
+      panel!.style.maxHeight = Math.round(viewport.height * 0.75) + 'px';
+      if (document.activeElement === messageInput && list) list.scrollTop = list.scrollHeight;
+    }
+    syncMobileKeyboard();
+    window.visualViewport?.addEventListener('resize', syncMobileKeyboard);
+    window.visualViewport?.addEventListener('scroll', syncMobileKeyboard);
+    window.addEventListener('resize', syncMobileKeyboard);
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeMarkChatAssistant, { once: true });

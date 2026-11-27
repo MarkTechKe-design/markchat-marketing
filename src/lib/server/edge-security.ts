@@ -16,6 +16,8 @@ export interface EdgeEnv {
   CONTROL_PLANE_API_URL?: string;
   RESEND_API_KEY?: string;
   RESEND_FROM_EMAIL?: string;
+  ADMIN_NOTIFICATION_WEBHOOK_URL?: string;
+  ADMIN_NOTIFICATION_WEBHOOK_TOKEN?: string;
   AI_API_KEY?: string;
   OPENAI_API_KEY?: string;
   GEMINI_API_KEY?: string;

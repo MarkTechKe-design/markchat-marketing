@@ -59,7 +59,35 @@ async function persistLead(context: EdgeContext, lead: ReturnType<typeof leadEnv
   }
 }
 async function notifyAdmin(context: EdgeContext, lead: ReturnType<typeof leadEnvelope>): Promise<boolean> {
-  if (!context.env.RESEND_API_KEY || !context.env.RESEND_FROM_EMAIL) return false;
+  if (!context.env.RESEND_API_KEY || !context.env.RESEND_FROM_EMAIL) {
+    // An authenticated HTTPS webhook may integrate with a server-side SMTP relay.
+    const webhook = trustedHttpsBase(context.env.ADMIN_NOTIFICATION_WEBHOOK_URL);
+    if (!webhook || !context.env.ADMIN_NOTIFICATION_WEBHOOK_TOKEN) return false;
+    try {
+      const result = await fetch(webhook.toString(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + context.env.ADMIN_NOTIFICATION_WEBHOOK_TOKEN,
+        },
+        body: JSON.stringify({
+          to: 'hello@markchat.co.ke',
+          replyTo: lead.email,
+          name: lead.fullName,
+          interest: lead.interest,
+          businessName: lead.businessName,
+          transcriptSummary: lead.transcriptSummary,
+          adminReplyMailto: lead.adminReplyMailto,
+        }),
+        signal: AbortSignal.timeout(4500),
+        redirect: 'error',
+        cache: 'no-store',
+      });
+      return result.status === 200 || result.status === 201 || result.status === 202;
+    } catch {
+      return false;
+    }
+  }
   // Require a domain-verified sender address set via Cloudflare server-only secrets.
   if (!/^[^\s@\r\n]+@[^\s@\r\n]+\.[a-z]{2,}$/i.test(context.env.RESEND_FROM_EMAIL)) return false;
   const lines = [

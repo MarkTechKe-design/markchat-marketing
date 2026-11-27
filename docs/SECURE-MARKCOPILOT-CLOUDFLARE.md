@@ -33,6 +33,8 @@ Under **Workers & Pages → your Pages project → Settings → Variables and Se
 | `AI_MODEL` | Optional model identifier; default is `gpt-4o-mini` or `gemini-2.5-flash` |
 | `RESEND_API_KEY` | Optional server-only Resend API credential |
 | `RESEND_FROM_EMAIL` | A sender address verified in Resend, e.g. `notifications@markchat.co.ke` |
+| `ADMIN_NOTIFICATION_WEBHOOK_URL` | Optional HTTPS server-side SMTP relay webhook, used when Resend is not configured |
+| `ADMIN_NOTIFICATION_WEBHOOK_TOKEN` | Server-only Bearer token authorizing the SMTP relay webhook |
 | `MARKCHAT_RATE_DB` | Cloudflare D1 database binding (required for both POST endpoints) |
 
 Configure secrets for **Production and Preview** separately, and redeploy after binding
@@ -67,7 +69,7 @@ and durably retain these fields and make them available to its authorized Admin
 Leads dashboard. This repository **cannot verify external CMS persistence** or
 modify the external CMS schema without crossing repository boundaries.
 
-After a confirmed save, if Resend is configured, the server sends a notification
+After a confirmed save, if Resend or an authorized SMTP webhook is configured, the server sends a notification
 to `hello@markchat.co.ke`, `Reply-To` set to the validated client email. Email
 failure does not undo a confirmed CMS save. The public response only reports
 `notificationSent` and never exposes server secrets.
