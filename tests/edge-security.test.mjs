@@ -37,9 +37,26 @@ const request = (route, value, headers = {}) =>
     body: JSON.stringify(value),
   });
 const RATE_HASH_SECRET = 'test-only-random-key-32-chars-long-0001';
-const fakeD1 = (attempts = 1) => ({
-  prepare: () => ({ bind: () => ({ first: async () => ({ attempts }) }) }),
-});
+const fakeD1 = (attempts = 1, insertSuccess = true) => {
+  const db = {
+    writes: [],
+    prepare(sql) {
+      return {
+        bind(...params) {
+          return {
+            first: async () => ({ attempts }),
+            run: async () => {
+              db.writes.push({ sql, params });
+              const success = sql.includes('INSERT INTO markchat_leads') ? insertSuccess : true;
+              return { success, meta: { changes: success ? 1 : 0 } };
+            },
+          };
+        },
+      };
+    },
+  };
+  return db;
+};
 
 test('edge lead validation rejects malformed content, injections and bots', () => {
   assert.equal(kenyaPhone('0712 345 678'), '+254712345678');
@@ -86,34 +103,70 @@ test('public edge endpoints reject cross-site and unavailable rate-limit service
   );
 });
 
-test('lead success is conditional on explicit persistence confirmation', async () => {
+test('D1 must confirm one lead INSERT before returning success', async () => {
   const previousFetch = globalThis.fetch;
-  let received;
   try {
-    globalThis.fetch = async (_url, options) => {
-      received = JSON.parse(options.body);
-      return Response.json({ success: false }, { status: 201 });
-    };
-    const env = {
-      MARKCHAT_RATE_DB: fakeD1(),
-      RATE_HASH_SECRET,
-      CMS_API_BASE_URL: 'https://cms.example.co.ke',
-    };
-    const failed = await submitLead({ request: request('/api/leads', validLead()), env });
-    assert.equal(failed.status, 502);
-    assert.equal((await failed.json()).success, false);
-    assert.match(received.adminReplyMailto, /^mailto:/);
-
-    globalThis.fetch = async () => Response.json({ success: true }, { status: 201 });
-    const success = await submitLead({ request: request('/api/leads', validLead()), env });
-    const json = await success.json();
+    globalThis.fetch = async () => { throw new Error('Email must not be sent without config'); };
+    const db = fakeD1();
+    const success = await submitLead({
+      request: request('/api/leads', validLead()),
+      env: { MARKCHAT_RATE_DB: db, RATE_HASH_SECRET },
+    });
+    const body = await success.json();
     assert.equal(success.status, 201);
-    assert.equal(json.success, true);
-    assert.equal(json.notificationSent, false);
-    assert.ok(
-      !('adminReplyMailto' in json),
-      'Do not disclose admin reply payload in public response'
-    );
+    assert.equal(body.success, true);
+    assert.equal(body.notificationSent, false);
+    assert.equal(db.writes.length, 1);
+    assert.match(db.writes[0].sql, /INSERT INTO markchat_leads/);
+    assert.equal(db.writes[0].params.length, 12);
+    assert.equal(db.writes[0].params[3], 'Sample Customer');
+    assert.ok(!('adminReplyMailto' in body));
+
+    const failedDb = fakeD1(1, false);
+    const missing = await submitLead({
+      request: request('/api/leads', validLead()),
+      env: {
+        MARKCHAT_RATE_DB: failedDb,
+        RATE_HASH_SECRET,
+        RESEND_API_KEY: 'test-only',
+        RESEND_FROM_EMAIL: 'leads@example.co.ke',
+      },
+    });
+    assert.equal(missing.status, 502);
+    assert.equal((await missing.json()).success, false);
+    assert.equal(failedDb.writes.length, 1, 'Resend must never run after failed INSERT');
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
+test('Resend notification and D1 notification flag follow a confirmed save', async () => {
+  const previousFetch = globalThis.fetch;
+  const sent = [];
+  try {
+    globalThis.fetch = async (url, opts) => {
+      sent.push({ url: String(url), body: JSON.parse(opts.body) });
+      return Response.json({ id: 'test-resend-id' }, { status: 200 });
+    };
+    const db = fakeD1();
+    const res = await submitLead({
+      request: request('/api/leads', validLead()),
+      env: {
+        MARKCHAT_RATE_DB: db,
+        RATE_HASH_SECRET,
+        RESEND_API_KEY: 'test-only',
+        RESEND_FROM_EMAIL: 'leads@example.co.ke',
+      },
+    });
+    const payload = await res.json();
+    assert.equal(res.status, 201);
+    assert.equal(payload.success, true);
+    assert.equal(payload.notificationSent, true);
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0].url, 'https://api.resend.com/emails');
+    assert.equal(sent[0].body.reply_to, 'customer@example.co.ke');
+    assert.equal(db.writes.length, 2);
+    assert.match(db.writes[1].sql, /^UPDATE markchat_leads SET notification_sent/);
   } finally {
     globalThis.fetch = previousFetch;
   }
@@ -148,6 +201,6 @@ test('widget never interpolates user or AI messages into innerHTML or bundles se
   assert.match(widget, /Escape/);
   assert.match(widget, /75dvh/);
   assert.match(widget, /Product Guide/);
-  assert.match(lead, /success === true/);
+  assert.match(lead, /result\.success === true/);
   assert.match(ai, /productGuide/);
 });

@@ -6,6 +6,10 @@ export interface D1RateDatabase {
   prepare(sql: string): {
     bind(...args: (string | number)[]): {
       first<T>(): Promise<T | null>;
+      run(): Promise<{
+        success: boolean;
+        meta?: { changes?: number };
+      }>;
     };
   };
 }
