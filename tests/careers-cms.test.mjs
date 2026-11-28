@@ -158,7 +158,11 @@ test('Careers CMS — Public build defaults to closed recruitment with no demo j
   assert.match(html, /No Open Positions at the Moment/i);
   assert.match(html, /General applications are currently closed/i);
   assert.doesNotMatch(html, /data-job-card=/);
-  assert.doesNotMatch(html, /id="general-talent-form"|data-career-application-form/i);
+  // The secure form may be prerendered but must remain hidden until a live
+  // backend health check explicitly enables Talent Pool admissions.
+  assert.match(html, /id="talent-application-open"/);
+  assert.match(html, /data-career-application-form/);
+  assert.doesNotMatch(html, /id="general-talent-form"/);
   assert.doesNotMatch(html, /Secure application portal in preparation/i);
   assert.doesNotMatch(html, /Talent Pool applications will reopen soon/i);
 
