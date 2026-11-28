@@ -1,0 +1,91 @@
+---
+import { Icon } from 'astro-icon/components';
+
+const stages = [
+  {
+    icon: 'lucide:message-square-text',
+    title: 'Context captured',
+    detail: 'An enquiry is visible to the team',
+  },
+  {
+    icon: 'lucide:users-round',
+    title: 'Ownership assigned',
+    detail: 'The next person knows their task',
+  },
+  {
+    icon: 'lucide:badge-check',
+    title: 'Next step verified',
+    detail: 'Evidence informs follow-up',
+  },
+];
+---
+
+<figure
+  aria-label="Illustrative MarkChat team communication workflow"
+  class="relative min-w-0 overflow-hidden rounded-2xl border border-slate-700 bg-[#101827] p-4 text-white shadow-xl shadow-slate-900/15 sm:p-6 lg:p-7"
+  data-about-operations-visual
+>
+  <div class="flex items-center justify-between gap-3 border-b border-white/10 pb-5">
+    <div class="flex min-w-0 items-center gap-3">
+      <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-600/25 text-blue-200">
+        <Icon name="lucide:messages-square" class="size-5" aria-hidden="true" />
+      </div>
+      <div class="min-w-0">
+        <p class="text-xs font-bold tracking-wide text-white">One shared context</p>
+        <p class="mt-0.5 text-xs text-slate-400">Team communication · Concept view</p>
+      </div>
+    </div>
+    <div class="hidden items-center gap-1.5 sm:flex" aria-hidden="true">
+      <span class="size-2 rounded-full bg-slate-500"></span>
+      <span class="size-2 rounded-full bg-slate-500"></span>
+      <span class="size-2 rounded-full bg-blue-400"></span>
+    </div>
+  </div>
+
+  <div class="mt-5 grid min-w-0 gap-4">
+    <div class="min-w-0 rounded-xl border border-slate-700 bg-[#172338] p-4 sm:p-5">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span class="text-xs font-semibold uppercase tracking-wider text-blue-200">
+          Sample customer enquiry
+        </span>
+        <span class="rounded-md bg-white/10 px-2 py-1 text-[11px] font-medium text-slate-300">
+          Illustrative
+        </span>
+      </div>
+      <p class="mt-4 max-w-sm text-lg font-semibold leading-snug tracking-tight text-white sm:text-xl">
+        “Can you help me confirm the status of my order?”
+      </p>
+      <div class="mt-5 grid grid-cols-2 gap-3 border-t border-slate-700 pt-4">
+        <div class="min-w-0">
+          <p class="text-[11px] uppercase tracking-wide text-slate-400">Context</p>
+          <p class="mt-1 text-xs font-semibold text-slate-100 sm:text-sm">Existing conversation</p>
+        </div>
+        <div class="min-w-0 border-l border-slate-700 pl-3">
+          <p class="text-[11px] uppercase tracking-wide text-slate-400">Next step</p>
+          <p class="mt-1 text-xs font-semibold text-slate-100 sm:text-sm">Verify before replying</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid min-w-0 gap-2">
+      {
+        stages.map((stage, index) => (
+          <div class="flex min-w-0 items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-3 sm:px-4">
+            <div class="flex size-9 shrink-0 items-center justify-center rounded-lg border border-blue-400/25 bg-blue-500/15 text-blue-200">
+              <Icon name={stage.icon} class="size-4" aria-hidden="true" />
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-semibold text-white">{stage.title}</p>
+              <p class="mt-0.5 text-xs text-slate-400">{stage.detail}</p>
+            </div>
+            <span class="shrink-0 font-mono text-xs text-slate-500">0{index + 1}</span>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+
+  <figcaption class="mt-5 border-t border-white/10 pt-4 text-xs leading-relaxed text-slate-400">
+    Illustrative workflow only — not a live account, product screenshot or verified performance claim.
+  </figcaption>
+</figure>

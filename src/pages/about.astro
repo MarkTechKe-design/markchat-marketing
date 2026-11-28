@@ -1,9 +1,16 @@
 ---
-import MCResponsiveHeroMedia from '@/components/design-system/MCResponsiveHeroMedia.astro';
+/**
+ * MarkChat — Nairobi-rooted About page.
+ * Editorial layout, product-truthful language, and CMS hero media preservation.
+ * Never imply simulated UI is a live customer conversation.
+ */
 import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import MCResponsiveHeroMedia from '@/components/design-system/MCResponsiveHeroMedia.astro';
+import AboutOperationsVisual from '@/components/about/AboutOperationsVisual.astro';
 import ComplianceRail from '@/components/enterprise/ComplianceRail.astro';
 import CTA from '@sections/marketing/CTA.astro';
 import { fetchHeroMediaSettings } from '@/lib/cms-api';
+import { normalizeHeroMedia } from '@/lib/hero-media';
 import { Icon } from 'astro-icon/components';
 import { siteConfig } from '@/config';
 
@@ -11,194 +18,303 @@ const pillars = [
   {
     icon: 'lucide:message-square-text',
     eyebrow: 'Business communication',
-    title: 'Conversations before dashboards',
+    title: 'Context before channels',
     detail:
-      'Real teams need customer context, clear ownership, a useful history and practical handoff rules—not another silo.',
+      'Good conversations need clear ownership, useful customer history and a human handoff when automation has reached its limit.',
   },
   {
     icon: 'lucide:receipt-text',
     eyebrow: 'Kenyan payments',
-    title: 'Verification before fulfilment',
+    title: 'Evidence before fulfilment',
     detail:
-      'Payment confirmation should be based on approved merchant integrations and reconciled references, not forwarded screenshots.',
+      'Merchant payment references need verification through approved integrations. A screenshot is not proof of settlement.',
   },
   {
     icon: 'lucide:shield-check',
     eyebrow: 'Data stewardship',
-    title: 'Trust requires controls',
+    title: 'Controls before convenience',
     detail:
-      'Principles include restricted access, auditability, consent awareness and responsible handling of merchant and customer information.',
+      'Consent, least-privilege access and understandable data handling belong in the workflow from the beginning.',
   },
   {
-    icon: 'lucide:layers',
-    eyebrow: 'Composable architecture',
-    title: 'Clear service boundaries',
+    icon: 'lucide:layers-3',
+    eyebrow: 'Architecture',
+    title: 'Clear boundaries by design',
     detail:
-      'Recurring Core workspace subscriptions remain separate from prepaid SMS messaging and telco requirements.',
+      'The Core workspace, prepaid messaging and third-party provider responsibilities should remain explicit and independently accountable.',
   },
 ];
 
 const approach = [
   {
     number: '01',
-    title: 'Understand Kenyan workflow',
+    title: 'Understand the real workflow',
     detail:
-      'Study the actual path from inquiry to payment, delivery, follow-up and customer support.',
+      'Trace the journey from the first customer question through ownership, payment, delivery and follow-up.',
   },
   {
     number: '02',
-    title: 'Configure each integration',
+    title: 'Scope the right integrations',
     detail:
-      'Validate merchant permissions, Meta or telco requirements, data flows and failure states.',
+      'Identify permissions, provider requirements, data flow and failure states before promising an automation.',
   },
   {
     number: '03',
-    title: 'Measure operational outcomes',
+    title: 'Validate before we claim',
     detail:
-      'Define response-time, reconciliation and channel-health metrics before making performance claims.',
+      'Test the critical path, document handoffs and use measurable operational evidence when describing outcomes.',
   },
 ];
-const editorialHero = await fetchHeroMediaSettings('about');
+
+const heroSettings = await fetchHeroMediaSettings('about');
+const normalizedHero = normalizeHeroMedia(
+  'about',
+  heroSettings,
+  import.meta.env.PUBLIC_CMS_MEDIA_HOST || ''
+);
+const hasEditorialHero = Boolean(
+  normalizedHero.heroBackgroundImageUrl || normalizedHero.heroBackgroundMobileImageUrl
+);
 ---
 
 <MarketingLayout
-  title={`About Us — ${siteConfig.name}`}
-  description="About MarkChat’s Nairobi-rooted business communication mission, engineering approach, merchant payment integrations and privacy principles."
+  title={'About Us — ' + siteConfig.name}
+  description="Meet MarkChat: Nairobi-rooted product thinking, human customer communication, responsible integration design and practical data stewardship."
 >
-  <section
-    class="relative pt-20 pb-20 sm:pt-28 sm:pb-28 bg-background border-b border-border overflow-hidden"
-  >
-    <div
-      class="absolute -top-56 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full hidden bg-primary/5 pointer-events-none"
-      aria-hidden="true"
+  <div class="min-h-screen bg-slate-50 text-slate-900 transition-colors duration-200 dark:bg-background dark:text-white">
+    <section
+      class="border-b border-border py-14 sm:py-20 lg:py-24"
+      aria-labelledby="about-heading"
     >
-    </div>
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="max-w-3xl">
-        <span
-          class="inline-flex text-xs font-bold tracking-wider uppercase bg-primary/10 text-primary px-3 py-1.5 rounded-lg border border-primary/15"
-          >Nairobi roots · African ambition</span
-        >
-        <h1
-          class="text-4xl sm:text-5xl lg:text-6xl text-text tracking-tight font-extrabold mt-7 leading-tight"
-        >
-          Business conversations deserve enterprise-grade clarity.
-        </h1>
-        <p class="text-lg text-text-muted leading-relaxed mt-7">
-          MarkChat is being built around the everyday realities of Kenyan commerce: WhatsApp
-          customer questions, team assignments, approved SMS communications and M-Pesa
-          reconciliation. The goal is straightforward—help teams see the next action, understand its
-          status and retain the right context.
-        </p>
-        <div class="flex flex-wrap gap-3 mt-9">
-          <a
-            href="/demo"
-            class="inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3.5 font-semibold text-white bg-primary hover:opacity-90"
-            >Talk with our team <Icon name="lucide:arrow-up-right" class="w-4 h-4" /></a
+      <div class="mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:gap-12 lg:px-8">
+        <div class="min-w-0 lg:col-span-6">
+          <p class="mb-5 text-sm font-semibold text-[#1D4ED8] dark:text-blue-300">
+            About MarkChat · Nairobi roots
+          </p>
+          <h1
+            id="about-heading"
+            class="max-w-2xl text-4xl font-extrabold leading-tight tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl"
           >
-          <a
-            href="/product"
-            class="inline-flex items-center justify-center rounded-lg px-6 py-3.5 font-semibold text-text border border-border hover:bg-surface"
-            >Explore product architecture</a
-          >
-        </div>
-      </div>
-    </div>
-    <div class="relative mx-auto mt-8 max-w-7xl px-4 sm:px-6 lg:px-8">
-      <MCResponsiveHeroMedia page="about" settings={editorialHero} />
-    </div>
-  </section>
-  <section
-    class="py-16 sm:py-24 bg-surface border-b border-border"
-    aria-labelledby="mission-heading"
-  >
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="grid lg:grid-cols-[0.82fr_1.18fr] gap-10 lg:gap-16">
-        <div>
-          <p class="text-xs uppercase tracking-widest font-bold text-primary">
-            Our engineering mission
-          </p><h2
-            id="mission-heading"
-            class="text-3xl sm:text-4xl font-bold tracking-tight text-text mt-3"
-          >
-            Local context. Disciplined systems thinking.
-          </h2><p class="text-text-muted mt-5 leading-relaxed">
-            We design for teams that depend on communication every working day. That means
-            acknowledging the limitations of third-party channels, building legible failure states,
-            and distinguishing shipped capabilities from planned integrations.
+            Business conversations deserve enterprise-grade clarity.
+          </h1>
+          <p class="mt-6 max-w-xl text-base leading-relaxed text-slate-600 dark:text-slate-300 sm:text-lg">
+            We're building MarkChat around the realities of Kenyan commerce: questions arriving on
+            different channels, teams handing work to one another, and payments that must be
+            verified before anyone takes the next step.
+          </p>
+          <p class="mt-4 max-w-xl text-base leading-relaxed text-slate-600 dark:text-slate-300">
+            Our purpose is to make the next action clearer, the customer context easier to retain,
+            and the limits of automation easier to understand.
+          </p>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a
+              href="/demo"
+              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#1D4ED8] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-800"
+            >
+              Talk with our team
+              <Icon name="lucide:arrow-up-right" class="size-4" aria-hidden="true" />
+            </a>
+            <a
+              href="/product"
+              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition-colors hover:border-blue-700 dark:border-slate-700 dark:bg-surface dark:text-white dark:hover:border-blue-400"
+            >
+              Explore the platform
+              <Icon name="lucide:arrow-right" class="size-4" aria-hidden="true" />
+            </a>
+          </div>
+          <p class="mt-7 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <Icon name="lucide:map-pin" class="size-4 shrink-0" aria-hidden="true" />
+            Built with Kenyan businesses in mind · Nairobi, Kenya
           </p>
         </div>
-        <div class="grid sm:grid-cols-2 gap-4">
+        <div class="min-w-0 lg:col-span-6">
+          {
+            hasEditorialHero ? (
+              <MCResponsiveHeroMedia
+                page="about"
+                settings={heroSettings}
+                class="overflow-hidden rounded-2xl border border-border"
+              />
+            ) : (
+              <AboutOperationsVisual />
+            )
+          }
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="border-b border-slate-800 bg-[#101827] py-8 text-white sm:py-10"
+      aria-label="Our operating principles"
+    >
+      <div class="mx-auto grid max-w-7xl gap-6 px-4 sm:grid-cols-3 sm:gap-8 sm:px-6 lg:px-8">
+        <div class="flex min-w-0 items-start gap-3">
+          <Icon name="lucide:users-round" class="mt-1 size-5 shrink-0 text-blue-300" aria-hidden="true" />
+          <div>
+            <h2 class="text-sm font-bold">Human where it matters</h2>
+            <p class="mt-1 text-sm leading-relaxed text-slate-300">
+              Automation should assist a real team, not replace accountability.
+            </p>
+          </div>
+        </div>
+        <div class="flex min-w-0 items-start gap-3">
+          <Icon name="lucide:shield-check" class="mt-1 size-5 shrink-0 text-blue-300" aria-hidden="true" />
+          <div>
+            <h2 class="text-sm font-bold">Accurate by design</h2>
+            <p class="mt-1 text-sm leading-relaxed text-slate-300">
+              Verify integrations and payment outcomes before making claims.
+            </p>
+          </div>
+        </div>
+        <div class="flex min-w-0 items-start gap-3">
+          <Icon name="lucide:network" class="mt-1 size-5 shrink-0 text-blue-300" aria-hidden="true" />
+          <div>
+            <h2 class="text-sm font-bold">Built for real operations</h2>
+            <p class="mt-1 text-sm leading-relaxed text-slate-300">
+              Workflows should make ownership, exceptions and follow-up visible.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section
+      id="our-mission"
+      class="border-b border-border py-16 sm:py-24"
+      aria-labelledby="mission-heading"
+    >
+      <div class="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:gap-14 lg:px-8">
+        <div class="min-w-0 lg:col-span-4">
+          <p class="text-sm font-semibold text-[#1D4ED8] dark:text-blue-300">
+            Our engineering mission
+          </p>
+          <h2
+            id="mission-heading"
+            class="mt-4 max-w-sm text-3xl font-bold leading-tight tracking-tight text-slate-900 dark:text-white sm:text-4xl"
+          >
+            Local context. Disciplined systems thinking.
+          </h2>
+          <p class="mt-5 max-w-md text-base leading-relaxed text-slate-600 dark:text-slate-300">
+            We build for the busy customer-facing teams behind Kenyan businesses, not for a
+            feature list on a slide. Every integration has dependencies, permissions and failure
+            states that deserve careful treatment.
+          </p>
+          <a
+            href="/features"
+            class="mt-6 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#1D4ED8] hover:underline dark:text-blue-300"
+          >
+            Explore how MarkChat works
+            <Icon name="lucide:arrow-up-right" class="size-4" aria-hidden="true" />
+          </a>
+        </div>
+        <div class="grid min-w-0 gap-4 sm:grid-cols-2 lg:col-span-8">
           {
             pillars.map((item) => (
-              <article class="p-6 bg-background border border-border rounded-xl">
-                <>
-                  <div class="inline-flex w-10 h-10 bg-primary/10 text-primary justify-center items-center rounded-lg">
-                    <Icon name={item.icon} class="w-5 h-5" />
-                  </div>
-                  <p class="text-xs text-primary uppercase tracking-wider font-semibold mt-6">
-                    {item.eyebrow}
-                  </p>
-                  <h3 class="text-lg font-bold text-text mt-2">{item.title}</h3>
-                  <p class="text-sm text-text-muted leading-relaxed mt-3">{item.detail}</p>
-                </>
+              <article class="min-w-0 rounded-2xl border border-border bg-white p-6 shadow-sm shadow-slate-900/5 dark:bg-surface dark:shadow-black/10 sm:p-7">
+                <div class="flex size-11 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 text-[#1D4ED8] dark:border-blue-900 dark:bg-blue-950/70 dark:text-blue-300">
+                  <Icon name={item.icon} class="size-5" aria-hidden="true" />
+                </div>
+                <p class="mt-6 text-xs font-bold uppercase tracking-wider text-[#1D4ED8] dark:text-blue-300">
+                  {item.eyebrow}
+                </p>
+                <h3 class="mt-2 text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                  {item.title}
+                </h3>
+                <p class="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  {item.detail}
+                </p>
               </article>
             ))
           }
         </div>
       </div>
-    </div>
-  </section>
-  <section
-    class="py-16 sm:py-24 bg-background border-b border-border"
-    aria-labelledby="approach-heading"
-  >
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <p class="text-xs uppercase tracking-wider font-bold text-primary">
-        How we approach deployments
-      </p><h2
-        id="approach-heading"
-        class="text-3xl sm:text-4xl font-bold tracking-tight text-text mt-3"
-      >
-        From discovery to a documented handoff.
-      </h2>
-      <div class="grid md:grid-cols-3 gap-4 mt-10">
-        {
-          approach.map((item) => (
-            <article class="p-7 rounded-xl border border-border bg-surface">
-              <>
-                <span class="font-mono text-sm text-primary font-bold">{item.number} / 03</span>
-                <h3 class="font-bold text-lg text-text mt-7">{item.title}</h3>
-                <p class="mt-3 text-sm text-text-muted leading-relaxed">{item.detail}</p>
-              </>
-            </article>
-          ))
-        }
-      </div>
-    </div>
-  </section>
-  <ComplianceRail heading="Kenyan obligations, built into the design conversation" />
-  <section class="py-16 sm:py-20 bg-surface border-b border-border">
-    <div
-      class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6"
+    </section>
+
+    <section
+      id="our-approach"
+      class="border-b border-border bg-white py-16 dark:bg-surface sm:py-24"
+      aria-labelledby="approach-heading"
     >
-      <div>
-        <p class="text-xs uppercase tracking-widest font-bold text-primary">
-          Enterprise inquiries
-        </p><h2 class="text-2xl sm:text-3xl font-bold text-text mt-2">
-          Need to discuss your own Paybill, Till, Sender ID or CRM?
-        </h2><p class="text-sm text-text-muted mt-3 max-w-2xl">
-          Share your requirements with the team. Integration and carrier approval are scoped and
-          verified case by case.
-        </p>
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="max-w-2xl">
+          <p class="text-sm font-semibold text-[#1D4ED8] dark:text-blue-300">
+            How we approach deployments
+          </p>
+          <h2
+            id="approach-heading"
+            class="mt-3 text-3xl font-bold leading-tight tracking-tight text-slate-900 dark:text-white sm:text-4xl"
+          >
+            From the first conversation to a documented handoff.
+          </h2>
+          <p class="mt-4 text-base leading-relaxed text-slate-600 dark:text-slate-300">
+            A careful rollout is a series of visible decisions, not a promise that every
+            integration works out of the box.
+          </p>
+        </div>
+        <ol class="mt-10 grid gap-4 md:grid-cols-3">
+          {
+            approach.map((item) => (
+              <li class="min-w-0 rounded-2xl border border-border bg-slate-50 p-6 dark:bg-background sm:p-7">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="font-mono text-3xl font-semibold tracking-tight text-[#1D4ED8] dark:text-blue-300">
+                    {item.number}
+                  </span>
+                  <Icon name="lucide:arrow-up-right" class="size-5 text-slate-400" aria-hidden="true" />
+                </div>
+                <h3 class="mt-8 text-lg font-bold text-slate-900 dark:text-white">
+                  {item.title}
+                </h3>
+                <p class="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  {item.detail}
+                </p>
+              </li>
+            ))
+          }
+        </ol>
       </div>
-      <a
-        href="/contact"
-        class="inline-flex items-center gap-2 justify-center shrink-0 bg-primary text-white rounded-lg py-3 px-6 text-sm font-semibold"
-        >Contact MarkChat <Icon name="lucide:arrow-up-right" class="w-4 h-4" /></a
-      >
-    </div>
-  </section>
+    </section>
+
+    <ComplianceRail heading="Kenyan obligations, built into the design conversation" />
+
+    <section class="border-b border-border py-16 sm:py-20" aria-labelledby="contact-heading">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="grid min-w-0 gap-7 rounded-3xl border border-border bg-white p-6 dark:bg-surface sm:p-10 lg:grid-cols-12 lg:items-center lg:gap-12">
+          <div class="min-w-0 lg:col-span-8">
+            <p class="text-sm font-semibold text-[#1D4ED8] dark:text-blue-300">
+              Let's talk about your workflow
+            </p>
+            <h2
+              id="contact-heading"
+              class="mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight text-slate-900 dark:text-white sm:text-3xl"
+            >
+              Working with a Paybill, Till, Sender ID or growing support team?
+            </h2>
+            <p class="mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-slate-300 sm:text-base">
+              Tell us what you're trying to make simpler. We scope provider permissions, customer
+              communication and implementation requirements with you, case by case.
+            </p>
+          </div>
+          <div class="flex min-w-0 flex-col gap-3 sm:flex-row lg:col-span-4 lg:flex-col">
+            <a
+              href="/contact"
+              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#1D4ED8] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-800"
+            >
+              Contact MarkChat
+              <Icon name="lucide:arrow-up-right" class="size-4" aria-hidden="true" />
+            </a>
+            <a
+              href="/careers"
+              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition-colors hover:border-blue-700 dark:border-slate-700 dark:bg-background dark:text-white dark:hover:border-blue-400"
+            >
+              Explore Careers
+              <Icon name="lucide:arrow-right" class="size-4" aria-hidden="true" />
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <CTA
     title="Build a clearer customer communication journey."
     description="Explore the Core subscription options or discuss an integration with our Nairobi team."
