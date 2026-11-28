@@ -7,18 +7,20 @@
  * - CMS-driven company benefits & culture values
  * - Filterable job listings directory with live vacancy count
  * - Polished empty state
- * - Speculative talent pool application portal
+ * - Talent pool status notice while CV uploads are disabled
  * - Full dark mode parity (dark:bg-background)
  */
 import MarketingLayout from '@/layouts/MarketingLayout.astro';
 import { Icon } from 'astro-icon/components';
 import { siteConfig } from '@/config';
 import { fetchCareers, fetchCareersContent } from '@/lib/cms-api';
+import CareersEditorialHero from '@/components/careers/CareersEditorialHero.astro';
+import CareerApplicationNotice from '@/components/careers/CareerApplicationNotice.astro';
 
 const [careers, content] = await Promise.all([fetchCareers(), fetchCareersContent()]);
 
 // Distinct departments and work arrangements for filtering
-const departments = ['All', ...new Set(careers.map((j) => j.department))];
+const departments = [...new Set(careers.map((j) => j.department))];
 const workArrangements = ['All', 'Hybrid', 'Remote', 'On-site'];
 
 // Department accent colors
@@ -63,38 +65,36 @@ const defaultDeptAccent = {
       {/* =============================================================== */}
       {/* 1. HERO SECTION                                                 */}
       {/* =============================================================== */}
-      <section class="max-w-3xl mb-16 sm:mb-20">
-        <div
-          class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/70 border border-blue-200/80 dark:border-blue-800/80 text-blue-700 dark:text-blue-300 text-xs font-bold tracking-wide uppercase mb-4 shadow-none"
-        >
-          <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
-          <span>We're Hiring in Nairobi &amp; Kenya</span>
-        </div>
-        <h1
-          class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight"
-        >
-          Build the Future of <span class="text-primary">Business Conversations</span>
-        </h1>
-        <p
-          class="mt-5 text-lg sm:text-xl text-slate-600 dark:text-slate-300 leading-relaxed font-normal"
-        >
-          {content.heroSubtitle}
-        </p>
-        <div class="mt-8 flex flex-wrap items-center gap-4">
-          <a
-            href={content.heroCtaHref}
-            class="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm shadow-none hover:bg-blue-700 transition-colors"
+      <section class="mb-20 grid items-center gap-10 sm:mb-24 lg:grid-cols-12 lg:gap-12">
+        <div class="min-w-0 lg:col-span-6">
+          <p class="mb-4 text-sm font-semibold text-[#1D4ED8] dark:text-blue-300">
+            Careers at MarkChat
+          </p>
+          <h1
+            class="text-4xl font-extrabold leading-tight tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl"
           >
-            <span>{content.heroCtaText}</span>
-            <span class="ml-2 font-bold">&darr;</span>
-          </a>
-          <a
-            href="#general-application"
-            class="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-white dark:bg-surface text-slate-700 dark:text-slate-200 font-semibold text-sm border border-border dark:border-border hover:border-border dark:hover:border-slate-700 transition-colors shadow-none"
-          >
-            <span>Join Talent Pool</span>
-          </a>
+            {content.heroHeadline}
+          </h1>
+          <p class="mt-5 max-w-xl text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+            {content.heroSubtitle}
+          </p>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a
+              href="#open-positions"
+              class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1D4ED8] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-800"
+            >
+              {content.heroCtaText}
+              <Icon name="lucide:arrow-down" class="size-4" aria-hidden="true" />
+            </a>
+            <a
+              href="#general-application"
+              class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-blue-700 dark:border-slate-700 dark:bg-surface dark:text-slate-100 dark:hover:border-blue-400"
+            >
+              Talent Pool Updates
+            </a>
+          </div>
         </div>
+        <CareersEditorialHero className="min-w-0 lg:col-span-6" />
       </section>
 
       {/* =============================================================== */}
@@ -113,7 +113,7 @@ const defaultDeptAccent = {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
           {
             content.benefits.map((benefit) => (
-              <div class="p-6 sm:p-8 rounded-xl bg-white dark:bg-surface border border-border dark:border-border shadow-none flex flex-col justify-between">
+              <div class="p-6 sm:p-8 rounded-2xl bg-white dark:bg-surface border border-border shadow-lg shadow-slate-900/5 dark:shadow-black/20 motion-safe:transform-gpu motion-safe:transition-transform motion-safe:duration-200 motion-safe:hover:-translate-y-1 flex flex-col justify-between">
                 <div>
                   <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-950/70 border border-blue-200/80 dark:border-blue-800/80 text-blue-600 dark:text-blue-400 mb-5">
                     <Icon name={benefit.icon} class="w-6 h-6" />
@@ -135,14 +135,9 @@ const defaultDeptAccent = {
       {/* 3. OPERATING PRINCIPLES & VALUES                                */}
       {/* =============================================================== */}
       <section
-        class="mb-20 sm:mb-24 p-8 sm:p-12 rounded-xl bg-white dark:bg-surface border border-border dark:border-border shadow-none"
+        class="mb-20 sm:mb-24 p-5 sm:p-10 rounded-2xl bg-white dark:bg-surface border border-border"
       >
         <div class="max-w-2xl mb-10">
-          <div
-            class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-3"
-          >
-            <span>Culture &amp; Mindset</span>
-          </div>
           <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
             {content.valuesTitle}
           </h2>
@@ -175,7 +170,7 @@ const defaultDeptAccent = {
       {/* =============================================================== */}
       {/* 4. OPEN POSITIONS DIRECTORY WITH REAL-TIME FILTERS              */}
       {/* =============================================================== */}
-      <section id="open-positions" class="mb-20 sm:mb-24 scroll-mt-24">
+      <section id="open-positions" class="mb-20 sm:mb-24 scroll-mt-28">
         <div
           class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 border-b border-border dark:border-border pb-6"
         >
@@ -190,47 +185,37 @@ const defaultDeptAccent = {
             </p>
           </div>
           <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">
-            <span id="vacancy-counter"
+            <span id="vacancy-counter" aria-live="polite"
               >Showing {careers.length} open {careers.length === 1 ? 'position' : 'positions'}</span
             >
           </div>
         </div>
 
-        {/* Filter Controls Row */}
-        <div
-          class="mb-8 flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center"
-        >
-          {/* Department Pills */}
+        <div class="mb-8 space-y-4">
           <div
-            class="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none"
-            role="tablist"
+            class="flex flex-wrap items-center gap-2"
+            role="group"
             aria-label="Filter by department"
           >
-            <span
-              class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-1"
-              >Dept:</span
-            >
             {
-              departments.map((dept, idx) => (
+              [
+                { label: 'All departments', value: '' },
+                ...departments.map((name) => ({ label: name, value: name })),
+              ].map(({ label, value }) => (
                 <button
                   type="button"
-                  data-filter-dept={dept}
-                  class:list={[
-                    'filter-dept-btn px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0',
-                    idx === 0
-                      ? 'bg-blue-600 text-white shadow-none'
-                      : 'bg-white dark:bg-surface text-slate-600 dark:text-slate-400 border border-border dark:border-border hover:border-border dark:hover:border-slate-700',
-                  ]}
+                  data-filter-dept={value}
+                  aria-pressed={value === '' ? 'true' : 'false'}
+                  class="min-w-0 cursor-pointer rounded-xl border border-border bg-white px-3 py-2 text-sm font-semibold text-slate-700 wrap-break-word transition-colors hover:border-blue-600 aria-pressed:border-[#1D4ED8] aria-pressed:bg-[#1D4ED8] aria-pressed:text-white dark:bg-surface dark:text-slate-200 dark:aria-pressed:bg-[#1D4ED8] dark:aria-pressed:text-white"
                 >
-                  {dept}
+                  {label}
                 </button>
               ))
             }
           </div>
 
-          {/* Arrangement Dropdown & Keyword Search */}
-          <div class="flex items-center gap-3">
-            <div class="relative min-w-[140px]">
+          <div class="grid gap-3 sm:grid-cols-[minmax(0,12rem)_minmax(0,18rem)]">
+            <div class="relative min-w-0">
               <label for="filter-arrangement" class="sr-only">Filter by Arrangement</label>
               <select
                 id="filter-arrangement"
@@ -246,10 +231,10 @@ const defaultDeptAccent = {
               </select>
             </div>
 
-            <div class="relative w-full sm:w-56">
+            <div class="relative min-w-0">
               <label for="career-search-input" class="sr-only">Search roles</label>
               <input
-                type="text"
+                type="search"
                 id="career-search-input"
                 placeholder="Search roles..."
                 class="w-full pl-8 pr-3 py-2 rounded-xl bg-white dark:bg-surface border border-border dark:border-border text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -276,7 +261,7 @@ const defaultDeptAccent = {
                   data-title={job.title.toLowerCase()}
                   data-department={job.department}
                   data-arrangement={arrangement}
-                  class="p-6 rounded-xl bg-white dark:bg-surface border border-border dark:border-border hover:border-blue-500/50 dark:hover:border-blue-500/50 shadow-none dark:hover: transition-all duration-200 group flex flex-col lg:flex-row lg:items-center justify-between gap-6"
+                  class="p-5 sm:p-6 rounded-2xl bg-white dark:bg-surface border border-border hover:border-blue-500/50 shadow-lg shadow-slate-900/5 dark:shadow-black/20 motion-safe:transform-gpu motion-safe:transition-transform motion-safe:duration-200 motion-safe:hover:-translate-y-1 group flex flex-col lg:flex-row lg:items-center justify-between gap-6"
                 >
                   <div class="flex-1 min-w-0">
                     {/* Badges Row */}
@@ -317,7 +302,7 @@ const defaultDeptAccent = {
                     </p>
 
                     {/* Metadata Footer */}
-                    <div class="flex flex-wrap items-center gap-4 text-xs text-slate-400 dark:text-slate-500">
+                    <div class="flex flex-wrap items-center gap-4 text-xs text-slate-600 dark:text-slate-400">
                       <span class="flex items-center gap-1">
                         <Icon name="lucide:map-pin" class="w-3.5 h-3.5 text-slate-400" />
                         <span>{job.location}</span>
@@ -351,7 +336,8 @@ const defaultDeptAccent = {
         {/* Empty State when filters yield 0 results */}
         <div
           id="vacancies-empty-state"
-          class="hidden text-center py-16 px-4 bg-white dark:bg-surface rounded-xl border border-border dark:border-border shadow-none"
+          hidden={careers.length > 0}
+          class="text-center py-16 px-4 bg-white dark:bg-surface rounded-2xl border border-border"
         >
           <div
             class="w-14 h-14 mx-auto mb-4 rounded-xl bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400"
@@ -362,8 +348,8 @@ const defaultDeptAccent = {
             No Open Roles Matching Criteria
           </h3>
           <p class="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-5">
-            We don't currently have vacancies matching this exact combination. Consider joining our
-            general talent pool.
+            No roles match these filters. Reset filters to explore current opportunities, or check
+            the Talent Pool updates below.
           </p>
           <button
             type="button"
@@ -376,177 +362,22 @@ const defaultDeptAccent = {
         </div>
       </section>
 
-      {/* =============================================================== */}
-      {/* 5. GENERAL APPLICATION / TALENT POOL SECTION                    */}
-      {/* =============================================================== */}
       <section
         id="general-application"
-        class="p-8 sm:p-12 rounded-xl bg-primary text-white shadow-none border border-slate-800"
+        class="grid min-w-0 scroll-mt-28 gap-6 rounded-3xl bg-[#1D4ED8] p-4 text-white sm:p-8 lg:grid-cols-12 lg:gap-8"
       >
-        <div class="max-w-2xl mb-8">
-          <div
-            class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold uppercase tracking-wider mb-3 border border-blue-500/30"
-          >
-            <Icon name="lucide:user-plus" class="w-3.5 h-3.5" />
-            <span>Talent Pool</span>
-          </div>
-          <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">
-            {content.generalAppTitle}
-          </h2>
-          <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
-            {content.generalAppSubtitle}
+        <div class="px-2 py-3 sm:px-0 lg:col-span-4">
+          <p class="mb-3 text-sm font-semibold text-blue-100">Talent Pool</p>
+          <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">{content.generalAppTitle}</h2>
+          <p class="mt-3 text-sm leading-relaxed text-blue-50 sm:text-base">
+            Secure CV uploads are temporarily unavailable while we complete document screening.
+            Check here for updates before sending an application.
           </p>
         </div>
-
-        <form id="general-talent-form" class="space-y-4 max-w-3xl">
-          <input type="hidden" name="careerId" value="general" />
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label for="talent-name" class="block text-xs font-semibold text-slate-300 mb-1.5">
-                Full Name *
-              </label>
-              <input
-                type="text"
-                id="talent-name"
-                required
-                placeholder="e.g. Achieng Odhiambo"
-                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label for="talent-email" class="block text-xs font-semibold text-slate-300 mb-1.5">
-                Email Address *
-              </label>
-              <input
-                type="email"
-                id="talent-email"
-                required
-                placeholder="name@domain.com"
-                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label for="talent-phone" class="block text-xs font-semibold text-slate-300 mb-1.5">
-                Phone Number (E.164) *
-              </label>
-              <input
-                type="tel"
-                id="talent-phone"
-                required
-                placeholder="+254 7XX XXX XXX"
-                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label for="talent-role" class="block text-xs font-semibold text-slate-300 mb-1.5">
-                Area of Specialization *
-              </label>
-              <select
-                id="talent-role"
-                required
-                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="Backend / Systems Engineering">Backend / Systems Engineering</option>
-                <option value="Frontend / Full-Stack Engineering"
-                  >Frontend / Full-Stack Engineering</option
-                >
-                <option value="Merchant Success & Onboarding"
-                  >Merchant Success &amp; Onboarding</option
-                >
-                <option value="Commercial Partnerships & Sales"
-                  >Commercial Partnerships &amp; Sales</option
-                >
-                <option value="Developer Relations & Technical Writing"
-                  >Developer Relations &amp; Technical Writing</option
-                >
-                <option value="Product Design & UI/UX">Product Design &amp; UI/UX</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label
-                for="talent-linkedin"
-                class="block text-xs font-semibold text-slate-300 mb-1.5"
-              >
-                LinkedIn / GitHub Profile
-              </label>
-              <input
-                type="url"
-                id="talent-linkedin"
-                placeholder="https://linkedin.com/in/... or https://github.com/..."
-                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label for="talent-resume" class="block text-xs font-semibold text-slate-300 mb-1.5">
-                Portfolio / CV Public Link
-              </label>
-              <input
-                type="url"
-                id="talent-resume"
-                placeholder="Google Drive, Dropbox, or personal site"
-                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label for="talent-note" class="block text-xs font-semibold text-slate-300 mb-1.5">
-              Brief Introduction &amp; Past Experience *
-            </label>
-            <textarea
-              id="talent-note"
-              rows="3"
-              required
-              placeholder="Tell us about relevant projects, APIs you’ve built, or merchant experience in Kenya..."
-              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            ></textarea>
-          </div>
-
-          {/* Privacy Consent Checkbox (KDPA 2019 Alignment) */}
-          <div class="pt-2">
-            <label class="flex items-start gap-2.5 text-xs text-slate-300 cursor-pointer">
-              <input
-                type="checkbox"
-                id="talent-consent"
-                required
-                class="mt-0.5 rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-blue-500"
-              />
-              <span>
-                I consent to MarkChat retaining my professional profile for future recruitment
-                consideration in accordance with the <a
-                  href="/privacy"
-                  target="_blank"
-                  class="text-blue-400 hover:underline">Privacy Policy</a
-                > and Kenya Data Protection Act, 2019.
-              </span>
-            </label>
-          </div>
-
-          <div class="pt-3">
-            <button
-              type="submit"
-              id="talent-submit-btn"
-              class="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-colors shadow-none cursor-pointer"
-            >
-              <span>Submit to Talent Pool</span>
-            </button>
-          </div>
-        </form>
-
         <div
-          id="talent-success-msg"
-          class="hidden p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs text-center mt-6"
+          class="min-w-0 rounded-2xl border border-blue-700/15 bg-white p-4 text-slate-900 shadow-lg shadow-blue-950/20 dark:border-slate-800 dark:bg-surface dark:text-white sm:p-6 lg:col-span-8"
         >
-          &check; Asante sana! Your submission has been securely received into our talent pool. Our
-          team reviews submissions weekly and will reach out if a matching position opens.
+          <CareerApplicationNotice kind="talent" />
         </div>
       </section>
     </div>
@@ -554,156 +385,64 @@ const defaultDeptAccent = {
 </MarketingLayout>
 
 <script>
-  import { submitCareerApplication } from '@/lib/cms-api';
+  function initCareerFilters() {
+    const positions = document.getElementById('open-positions');
+    if (!positions || positions.dataset.bound) return;
+    positions.dataset.bound = 'true';
 
-  function initCareersPage() {
-    // 1. Filtering logic
-    const deptButtons = document.querySelectorAll<HTMLButtonElement>('.filter-dept-btn');
-    const arrangementSelect = document.getElementById(
-      'filter-arrangement'
-    ) as HTMLSelectElement | null;
-    const searchInput = document.getElementById('career-search-input') as HTMLInputElement | null;
-    const jobCards = document.querySelectorAll<HTMLElement>('[data-job-card]');
-    const counterEl = document.getElementById('vacancy-counter');
-    const emptyStateEl = document.getElementById('vacancies-empty-state');
-    const resetBtn = document.getElementById('reset-vacancies-btn');
-    const gridEl = document.getElementById('vacancies-grid');
+    const departmentButtons = Array.from(
+      positions.querySelectorAll<HTMLButtonElement>('[data-filter-dept]')
+    );
+    const arrangement = positions.querySelector<HTMLSelectElement>('#filter-arrangement');
+    const search = positions.querySelector<HTMLInputElement>('#career-search-input');
+    const cards = positions.querySelectorAll<HTMLElement>('[data-job-card]');
+    const counter = positions.querySelector<HTMLElement>('#vacancy-counter');
+    const empty = positions.querySelector<HTMLElement>('#vacancies-empty-state');
+    const reset = positions.querySelector<HTMLButtonElement>('#reset-vacancies-btn');
+    let department = '';
 
-    let activeDept = 'All';
-    let activeArrangement = 'All';
-    let searchQuery = '';
-
-    function applyJobFilters() {
-      let visibleCount = 0;
-      const q = searchQuery.toLowerCase().trim();
-
-      jobCards.forEach((card) => {
-        const title = card.getAttribute('data-title') || '';
-        const dept = card.getAttribute('data-department') || '';
-        const arr = card.getAttribute('data-arrangement') || '';
-
-        const matchesDept = activeDept === 'All' || dept === activeDept;
-        const matchesArr = activeArrangement === 'All' || arr === activeArrangement;
-        const matchesSearch = !q || title.includes(q) || dept.toLowerCase().includes(q);
-
-        if (matchesDept && matchesArr && matchesSearch) {
-          card.classList.remove('hidden');
-          visibleCount++;
-        } else {
-          card.classList.add('hidden');
-        }
-      });
-
-      if (counterEl) {
-        counterEl.textContent = `Showing ${visibleCount} open ${visibleCount === 1 ? 'position' : 'positions'}`;
+    function filterRoles() {
+      const query = search?.value.toLowerCase().trim() ?? '';
+      const selectedArrangement = arrangement?.value ?? 'All';
+      let count = 0;
+      for (const card of cards) {
+        const matches =
+          (!department || card.dataset.department === department) &&
+          (selectedArrangement === 'All' || card.dataset.arrangement === selectedArrangement) &&
+          (!query ||
+            [card.dataset.title, card.dataset.department].some((value) =>
+              value?.toLowerCase().includes(query)
+            ));
+        card.hidden = !matches;
+        if (matches) count++;
       }
-
-      if (visibleCount === 0) {
-        emptyStateEl?.classList.remove('hidden');
-        gridEl?.classList.add('hidden');
-      } else {
-        emptyStateEl?.classList.add('hidden');
-        gridEl?.classList.remove('hidden');
-      }
+      if (counter)
+        counter.textContent = `Showing ${count} open ${count === 1 ? 'position' : 'positions'}`;
+      if (empty) empty.hidden = count > 0;
     }
 
-    deptButtons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        activeDept = btn.getAttribute('data-filter-dept') || 'All';
-        deptButtons.forEach((b) => {
-          b.classList.remove('bg-blue-600', 'text-white', 'shadow-none');
-          b.classList.add('bg-white', 'dark:bg-surface', 'text-slate-600', 'dark:text-slate-400');
-        });
-        btn.classList.add('bg-blue-600', 'text-white', 'shadow-none');
-        btn.classList.remove(
-          'bg-white',
-          'dark:bg-surface',
-          'text-slate-600',
-          'dark:text-slate-400'
-        );
-        applyJobFilters();
-      });
-    });
-
-    arrangementSelect?.addEventListener('change', (e) => {
-      activeArrangement = (e.target as HTMLSelectElement).value;
-      applyJobFilters();
-    });
-
-    searchInput?.addEventListener('input', (e) => {
-      searchQuery = (e.target as HTMLInputElement).value;
-      applyJobFilters();
-    });
-
-    resetBtn?.addEventListener('click', () => {
-      activeDept = 'All';
-      activeArrangement = 'All';
-      searchQuery = '';
-      if (searchInput) searchInput.value = '';
-      if (arrangementSelect) arrangementSelect.value = 'All';
-
-      deptButtons.forEach((b) => {
-        const d = b.getAttribute('data-filter-dept');
-        if (d === 'All') {
-          b.classList.add('bg-blue-600', 'text-white', 'shadow-none');
-          b.classList.remove(
-            'bg-white',
-            'dark:bg-surface',
-            'text-slate-600',
-            'dark:text-slate-400'
-          );
-        } else {
-          b.classList.remove('bg-blue-600', 'text-white', 'shadow-none');
-          b.classList.add('bg-white', 'dark:bg-surface', 'text-slate-600', 'dark:text-slate-400');
-        }
-      });
-      applyJobFilters();
-    });
-
-    // 2. Talent Pool Form Submission
-    const talentForm = document.getElementById('general-talent-form');
-    const talentSuccess = document.getElementById('talent-success-msg');
-    const talentSubmitBtn = document.getElementById(
-      'talent-submit-btn'
-    ) as HTMLButtonElement | null;
-
-    talentForm?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const fullName = (document.getElementById('talent-name') as HTMLInputElement).value;
-      const email = (document.getElementById('talent-email') as HTMLInputElement).value;
-      const phone = (document.getElementById('talent-phone') as HTMLInputElement).value;
-      const specialization = (document.getElementById('talent-role') as HTMLSelectElement).value;
-      const linkedinUrl = (document.getElementById('talent-linkedin') as HTMLInputElement).value;
-      const resumeUrl = (document.getElementById('talent-resume') as HTMLInputElement).value;
-      const coverLetter = (document.getElementById('talent-note') as HTMLTextAreaElement).value;
-      const consentAgreed = (document.getElementById('talent-consent') as HTMLInputElement).checked;
-
-      if (!consentAgreed) {
-        alert('Please accept the data privacy consent to proceed.');
-        return;
+    function selectDepartment(value: string) {
+      department = value;
+      for (const button of departmentButtons) {
+        button.setAttribute('aria-pressed', String(value === button.dataset.filterDept));
       }
+      filterRoles();
+    }
 
-      if (talentSubmitBtn) {
-        talentSubmitBtn.disabled = true;
-        talentSubmitBtn.textContent = 'Submitting...';
-      }
-
-      await submitCareerApplication('general', {
-        fullName,
-        email,
-        phone,
-        location: 'Kenya',
-        linkedinUrl,
-        portfolioUrl: resumeUrl,
-        coverLetter: `[Specialization: ${specialization}] ${coverLetter}`,
-        consentAgreed,
-      });
-
-      talentForm.classList.add('hidden');
-      talentSuccess?.classList.remove('hidden');
+    for (const button of departmentButtons) {
+      button.addEventListener('click', () => selectDepartment(button.dataset.filterDept ?? ''));
+    }
+    arrangement?.addEventListener('change', filterRoles);
+    search?.addEventListener('input', filterRoles);
+    reset?.addEventListener('click', () => {
+      if (search) search.value = '';
+      if (arrangement) arrangement.value = 'All';
+      selectDepartment('');
+      departmentButtons[0]?.focus();
     });
+    filterRoles();
   }
 
-  document.addEventListener('DOMContentLoaded', initCareersPage);
-  document.addEventListener('astro:page-load', initCareersPage);
+  initCareerFilters();
+  document.addEventListener('astro:page-load', initCareerFilters);
 </script>

@@ -189,9 +189,11 @@ test('Careers CMS — Static build artifacts contain Schema.org JobPosting and K
   assert.ok(fs.existsSync(careersIndexHtml), 'dist/careers/index.html must exist');
 
   const indexContent = fs.readFileSync(careersIndexHtml, 'utf-8');
-  assert.match(indexContent, /Build the Future of Business Conversations/i);
-  assert.match(indexContent, /Kenya Data Protection Act/i);
-  assert.match(indexContent, /general-talent-form/i);
+  assert.match(indexContent, /Careers at MarkChat/i);
+  assert.match(indexContent, /Secure application portal in preparation/i);
+  assert.match(indexContent, /Online CV submissions are currently disabled/i);
+  assert.doesNotMatch(indexContent, /id="general-talent-form"|data-career-application-form/i);
+  assert.doesNotMatch(indexContent, /\/api\/careers\/apply/);
 
   // Check detail page
   const fintechHtmlPath = path.join(
@@ -208,6 +210,8 @@ test('Careers CMS — Static build artifacts contain Schema.org JobPosting and K
   assert.match(fintechContent, /"hiringOrganization"/i);
   assert.match(fintechContent, /Nairobi/i);
   assert.match(fintechContent, /KES 250,000/i);
+  assert.match(fintechContent, /Applications temporarily paused/);
+  assert.doesNotMatch(fintechContent, /id="job-apply-form"|data-career-application-form/i);
 });
 
 test('Careers CMS — Live dev server returns HTTP 200 for careers routes', async () => {
