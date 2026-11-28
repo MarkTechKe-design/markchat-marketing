@@ -19,7 +19,6 @@ test('hero media URLs reject external, protocol-relative, traversal and executab
     'http://markchat.co.ke/image.webp',
     'https://example.com/tracker.png',
     'https://markchat.co.ke.evil.org/banner.png',
-    '/images/anything.jpg',
     '/media/asset.png#fragment',
     'https://markchat.co.ke:8443/banner.webp',
   ]) {

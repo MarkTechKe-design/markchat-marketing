@@ -5,6 +5,7 @@
 export interface D1RateDatabase {
   prepare(sql: string): {
     bind(...args: (string | number)[]): {
+      all<T>(): Promise<{ success: boolean; results: T[] }>;
       first<T>(): Promise<T | null>;
       run(): Promise<{
         success: boolean;
@@ -14,9 +15,16 @@ export interface D1RateDatabase {
   };
 }
 export interface EdgeEnv {
+  MARKCHAT_CAREERS_BUCKET?: {
+    put(key: string, value: Uint8Array): Promise<{ key: string } | null>;
+    get(key: string): Promise<{ body: ReadableStream<Uint8Array> } | null>;
+    delete(key: string): Promise<void>;
+  };
   MARKCHAT_RATE_DB?: D1RateDatabase;
   RATE_HASH_SECRET?: string;
   CMS_API_BASE_URL?: string;
+  CAREERS_MEDIA_ORIGIN?: string;
+  CAREERS_SCAN_WEBHOOK_SECRET?: string;
   CMS_SERVICE_TOKEN?: string;
   CONTROL_PLANE_API_URL?: string;
   RESEND_API_KEY?: string;
@@ -184,38 +192,51 @@ export function sameOrigin(request: Request): boolean {
 export async function readJson(request: Request, maxBytes = 12_000): Promise<unknown> {
   const type = request.headers.get('Content-Type') || '';
   if (!/^application\/json(?:;|$)/i.test(type)) throw new Error('Unsupported content type');
+  const body = await readBoundedBytes(request, maxBytes);
+  return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(body));
+}
+export async function readBoundedBytes(
+  request: {
+    headers: Headers;
+    // R2 streams may yield Uint8Array<ArrayBufferLike>; the size guard is unchanged.
+    body: ReadableStream<Uint8Array<ArrayBufferLike>> | null;
+  },
+  maxBytes: number
+): Promise<Uint8Array<ArrayBuffer>> {
   const length = Number(request.headers.get('Content-Length') || '0');
   if (length > maxBytes) throw new Error('Too large');
   // Stream with an upper bound; a lying Content-Length cannot force unbounded memory use.
   if (!request.body) throw new Error('Missing body');
   const reader = request.body.getReader();
-  const chunks: Uint8Array[] = [];
+  let buffer = new Uint8Array(0);
   let bytes = 0;
   try {
     while (true) {
       const part = await reader.read();
       if (part.done) break;
-      bytes += part.value.byteLength;
-      if (bytes > maxBytes) {
+      const required = bytes + part.value.byteLength;
+      if (required > maxBytes) {
         await reader.cancel();
         throw new Error('Too large');
       }
-      chunks.push(part.value);
+      if (required > buffer.length) {
+        // Bound allocation even when the sender splits the body into tiny chunks.
+        const capacity = Math.min(maxBytes, Math.max(required, 4096, buffer.length * 2));
+        const expanded = new Uint8Array(capacity);
+        expanded.set(buffer);
+        buffer = expanded;
+      }
+      buffer.set(part.value, bytes);
+      bytes = required;
     }
+    return buffer.subarray(0, bytes);
   } finally {
     reader.releaseLock();
   }
-  const body = new Uint8Array(bytes);
-  let offset = 0;
-  for (const chunk of chunks) {
-    body.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(body));
 }
 export async function enforceRate(
   context: EdgeContext,
-  scope: 'chat' | 'lead'
+  scope: 'chat' | 'lead' | 'careers_apply'
 ): Promise<Response | null> {
   // Cloudflare Pages supports a D1 binding. An atomic upsert prevents
   // in-memory per-isolate bypasses. Fail closed until the D1 table is provisioned.
@@ -252,7 +273,10 @@ export async function enforceRate(
       )
       .bind(scope, key, windowStart)
       .first<{ attempts: number }>();
-    if (!result || result.attempts > max) {
+    if (!result || !Number.isSafeInteger(result.attempts) || result.attempts < 1) {
+      return httpJson({ success: false, error: 'Service temporarily unavailable.' }, 503);
+    }
+    if (result.attempts > max) {
       return httpJson({ success: false, error: 'Too many requests. Try again shortly.' }, 429, {
         'Retry-After': '60',
       });

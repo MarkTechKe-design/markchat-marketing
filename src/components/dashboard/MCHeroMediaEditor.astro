@@ -19,9 +19,8 @@ const field = (name: string) => 'hero-media-' + page + '-' + name;
   <div class="mb-5">
     <h3 class="text-base font-semibold text-text">Hero Background &amp; Visual Media</h3>
     <p class="mt-2 text-sm leading-relaxed text-text-muted">
-      Approved editorial images only. Use a public HTTPS CMS media URL or a deployed /media/ asset.
-      Images are not verified product screenshots. Uploaded local files require a deployed media
-      asset.
+      Use a bundled image path or an approved HTTPS media URL. Add a mobile crop and focal points to
+      keep the subject in view on smaller screens.
     </p>
   </div>
   <div class="grid gap-4 sm:grid-cols-2">
@@ -119,11 +118,56 @@ const field = (name: string) => 'hero-media-' + page + '-' + name;
       </select>
     </div>
   </div>
+  <fieldset class="mt-5 grid gap-4 sm:grid-cols-2">
+    <legend class="mb-3 text-sm font-semibold text-text">Image focal points (0–100%)</legend>
+    {
+      (
+        [
+          ['heroFocalX', 'Desktop horizontal'],
+          ['heroFocalY', 'Desktop vertical'],
+          ['heroMobileFocalX', 'Mobile horizontal'],
+          ['heroMobileFocalY', 'Mobile vertical'],
+        ] as const
+      ).map(([key, label]) => (
+        <div>
+          <label class="form-label" for={field(key)}>
+            {label}
+          </label>
+          <input
+            id={field(key)}
+            data-hero-field={key}
+            type="number"
+            min="0"
+            max="100"
+            step="1"
+            class="form-input w-full"
+            value={data[key] ?? 50}
+          />
+        </div>
+      ))
+    }
+  </fieldset>
+  <div class="mt-5 flex items-center gap-2" role="group" aria-label="Hero preview crop">
+    <button
+      type="button"
+      data-hero-preview-mode="desktop"
+      aria-pressed="true"
+      class="btn btn-secondary text-sm">Desktop preview</button
+    >
+    <button
+      type="button"
+      data-hero-preview-mode="mobile"
+      aria-pressed="false"
+      class="btn btn-secondary text-sm">Mobile preview</button
+    >
+  </div>
   <div class="mt-5 overflow-hidden rounded-lg border border-border bg-background">
     <img
       data-hero-media-preview
       alt="Hero image preview"
-      class="hidden aspect-[16/9] max-h-64 w-full object-cover object-center"
+      class="hidden aspect-[16/10] max-h-72 w-full object-cover object-center"
+      width="1600"
+      height="1000"
       loading="lazy"
     />
     <div data-hero-media-empty class="p-6 text-center text-sm text-text-muted">
@@ -144,7 +188,11 @@ const field = (name: string) => 'hero-media-' + page + '-' + name;
 
 <script>
   import { normalizeHeroMedia, HERO_MEDIA_PAGES } from '@/lib/hero-media';
-  import { updateHeroMediaSettings, uploadHeroMediaAsset } from '@/lib/cms-api';
+  import {
+    fetchHeroMediaSettings,
+    updateHeroMediaSettings,
+    uploadHeroMediaAsset,
+  } from '@/lib/cms-api';
   import type { HeroMediaPage, HeroMediaSettings } from '@/lib/types';
 
   function collectHeroMedia(root: HTMLElement): Partial<HeroMediaSettings> {
@@ -157,6 +205,10 @@ const field = (name: string) => 'hero-media-' + page + '-' + name;
       heroBackgroundAlt: value('heroBackgroundAlt'),
       heroMediaMode: value('heroMediaMode') as HeroMediaSettings['heroMediaMode'],
       heroScrimStrength: value('heroScrimStrength') as HeroMediaSettings['heroScrimStrength'],
+      heroFocalX: Number(value('heroFocalX')),
+      heroFocalY: Number(value('heroFocalY')),
+      heroMobileFocalX: Number(value('heroMobileFocalX')),
+      heroMobileFocalY: Number(value('heroMobileFocalY')),
     };
   }
 
@@ -173,9 +225,18 @@ const field = (name: string) => 'hero-media-' + page + '-' + name;
       if (!HERO_MEDIA_PAGES.includes(page)) return;
       const preview = root.querySelector<HTMLImageElement>('[data-hero-media-preview]');
       const empty = root.querySelector<HTMLElement>('[data-hero-media-empty]');
+      let previewMode = 'desktop';
+      let dirty = false;
       const render = () => {
-        const media = normalizeHeroMedia(page, collectHeroMedia(root));
-        const url = media.heroBackgroundImageUrl || media.heroBackgroundMobileImageUrl;
+        const media = normalizeHeroMedia(
+          page,
+          collectHeroMedia(root),
+          import.meta.env.PUBLIC_CMS_MEDIA_HOST || ''
+        );
+        const url =
+          previewMode === 'mobile'
+            ? media.heroBackgroundMobileImageUrl || media.heroBackgroundImageUrl
+            : media.heroBackgroundImageUrl || media.heroBackgroundMobileImageUrl;
         if (!preview || !empty) return;
         if (!url) {
           preview.removeAttribute('src');
@@ -185,9 +246,41 @@ const field = (name: string) => 'hero-media-' + page + '-' + name;
         }
         preview.src = url;
         preview.alt = media.heroBackgroundAlt || 'Selected editorial preview';
+        preview.style.objectPosition =
+          previewMode === 'mobile'
+            ? `${media.heroMobileFocalX}% ${media.heroMobileFocalY}%`
+            : `${media.heroFocalX}% ${media.heroFocalY}%`;
         preview.classList.remove('hidden');
         empty.classList.add('hidden');
       };
+      root.querySelectorAll<HTMLButtonElement>('[data-hero-preview-mode]').forEach((button) => {
+        button.addEventListener('click', () => {
+          previewMode = button.dataset.heroPreviewMode || 'desktop';
+          root
+            .querySelectorAll<HTMLButtonElement>('[data-hero-preview-mode]')
+            .forEach((option) => option.setAttribute('aria-pressed', String(option === button)));
+          render();
+        });
+      });
+      if (page === 'careers') {
+        void fetchHeroMediaSettings('careers')
+          .then((saved) => {
+            if (dirty) return;
+            root
+              .querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-hero-field]')
+              .forEach((input) => {
+                const key = input.dataset.heroField as keyof HeroMediaSettings;
+                if (saved[key] !== undefined) input.value = String(saved[key]);
+              });
+            render();
+          })
+          .catch(() => {
+            const status = root.querySelector<HTMLElement>('[data-hero-media-status]');
+            if (status)
+              status.textContent =
+                'Saved settings could not be loaded. The bundled image is shown for reference.';
+          });
+      }
       root.querySelectorAll<HTMLButtonElement>('[data-hero-upload]').forEach((button) => {
         button.addEventListener('click', async () => {
           const variant = button.dataset.heroUpload as 'desktop' | 'mobile';
@@ -207,6 +300,7 @@ const field = (name: string) => 'hero-media-' + page + '-' + name;
               '[data-hero-field="' + fieldName + '"]'
             );
             if (field) field.value = uploadedUrl;
+            dirty = true;
             if (status)
               status.textContent =
                 'Upload confirmed. Save the page settings to publish the selected media.';
@@ -224,6 +318,9 @@ const field = (name: string) => 'hero-media-' + page + '-' + name;
         empty?.classList.remove('hidden');
       });
       root.querySelectorAll('input,select').forEach((input) => {
+        input.addEventListener('input', () => {
+          dirty = true;
+        });
         input.addEventListener('input', render);
         input.addEventListener('change', render);
       });
@@ -237,7 +334,9 @@ const field = (name: string) => 'hero-media-' + page + '-' + name;
             await updateHeroMediaSettings(page, collectHeroMedia(root));
             if (status)
               status.textContent =
-                'Saved in this browser; confirm the CMS bridge before treating it as published.';
+                page === 'careers'
+                  ? 'Careers hero saved. The updated image is available on the public Careers page.'
+                  : 'Saved in this browser; confirm the CMS bridge before treating it as published.';
           } catch {
             if (status) status.textContent = 'Unable to save; check your session and CMS bridge.';
           } finally {

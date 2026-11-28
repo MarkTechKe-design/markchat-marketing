@@ -237,7 +237,7 @@ export interface BillingHistoryItem {
 export type HeroMediaMode = 'layered-preview' | 'editorial-backdrop' | 'hybrid';
 export type HeroScrimStrength = 'subtle' | 'medium' | 'strong';
 export type HeroMediaPage =
-  'homepage' | 'features' | 'markcopilot' | 'integrations' | 'solutions' | 'about';
+  'homepage' | 'features' | 'markcopilot' | 'integrations' | 'solutions' | 'about' | 'careers';
 
 export interface HeroMediaSettings {
   heroBackgroundImageUrl: string;
@@ -245,4 +245,8 @@ export interface HeroMediaSettings {
   heroBackgroundAlt: string;
   heroMediaMode: HeroMediaMode;
   heroScrimStrength: HeroScrimStrength;
+  heroFocalX?: number;
+  heroFocalY?: number;
+  heroMobileFocalX?: number;
+  heroMobileFocalY?: number;
 }

@@ -1,0 +1,443 @@
+---
+const statuses = ['new', 'shortlisted', 'interview', 'rejected', 'hired'];
+const inputClass =
+  'w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text focus-visible:outline-2 focus-visible:outline-blue-600';
+const secondaryButton =
+  'rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-text hover:border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed';
+---
+
+<career-applications
+  class="block rounded-2xl border border-border bg-surface p-4 sm:p-6"
+  aria-labelledby="candidate-applications-heading"
+>
+  <h2 id="candidate-applications-heading" class="text-xl font-bold text-text">
+    Candidate Applications
+  </h2>
+  <div class="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,12rem)]">
+    <label class="min-w-0 text-sm font-semibold text-text">
+      Search applications
+      <input
+        data-application-search
+        type="search"
+        class:list={[inputClass, 'mt-1']}
+        maxlength="100"
+        placeholder="Name, email, role or specialization"
+        autocomplete="off"
+      />
+    </label>
+    <label class="min-w-0 text-sm font-semibold text-text">
+      Status
+      <select data-application-status class:list={[inputClass, 'mt-1']}>
+        <option value="">All statuses</option>
+        {
+          statuses.map((status) => (
+            <option value={status}>{status[0].toUpperCase() + status.slice(1)}</option>
+          ))
+        }
+      </select>
+    </label>
+  </div>
+  <div class="my-4 flex flex-wrap items-center gap-3 text-sm">
+    <p data-application-count class="text-text-muted" role="status">Loading applications…</p>
+    <p data-status-announcement class="sr-only" role="status"></p>
+    <button type="button" data-application-clear class={secondaryButton}>Clear filters</button>
+  </div>
+  <div
+    data-applications-error
+    hidden
+    class="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200"
+  >
+    <p data-error-text role="alert"></p>
+    <button type="button" data-retry class="mt-1 font-semibold underline">Retry</button>
+  </div>
+  <ul
+    data-application-list
+    class="divide-y divide-border border-y border-border"
+    aria-label="Candidate applications"
+  >
+  </ul>
+  <nav data-pagination aria-label="Application pages" class="mt-4 flex flex-wrap gap-2" hidden>
+    <button type="button" data-previous class={secondaryButton} disabled>Previous</button>
+    <button type="button" data-next class={secondaryButton} disabled>Next</button>
+  </nav>
+
+  <dialog
+    aria-labelledby="candidate-detail-heading"
+    class="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-2xl border border-border bg-surface p-4 text-text shadow-2xl backdrop:bg-slate-950/65 sm:p-6"
+  >
+    <div class="mb-4 flex items-start justify-between gap-3">
+      <h3 id="candidate-detail-heading" class="min-w-0 wrap-break-word text-xl font-bold">
+        Application details
+      </h3>
+      <form method="dialog">
+        <button type="submit" class={secondaryButton} autofocus>Close</button>
+      </form>
+    </div>
+    <div data-application-detail></div>
+  </dialog>
+</career-applications>
+
+<script>
+  import {
+    downloadCareerCv,
+    fetchCareerApplicationPage,
+    updateCareerApplicationStatus,
+    type CareerApplication,
+  } from '@/lib/cms-api';
+  import { isCareerLink } from '@/lib/careers-form';
+
+  const statusLabels = {
+    new: 'New',
+    shortlisted: 'Shortlisted',
+    interview: 'Interview',
+    rejected: 'Rejected',
+    hired: 'Hired',
+  };
+  type Status = keyof typeof statusLabels;
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const pageSize = 25;
+  const shortDate = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
+
+  function makeElement<K extends keyof globalThis.HTMLElementTagNameMap>(
+    name: K,
+    className: string,
+    text?: string
+  ) {
+    const element = document.createElement(name);
+    element.className = className;
+    if (text) element.textContent = text;
+    return element;
+  }
+
+  function messageFrom(error: unknown, fallback: string) {
+    return error instanceof Error && error.message ? error.message : fallback;
+  }
+
+  function canonicalStatus(value: CareerApplication['status']): Status {
+    if (value === 'reviewed') return 'shortlisted';
+    if (value === 'contacted') return 'interview';
+    return Object.hasOwn(statusLabels, value) ? value : 'new';
+  }
+
+  class CandidateApplications extends HTMLElement {
+    connectedCallback() {
+      if (this.dataset.bound) return;
+      const search = this.querySelector<HTMLInputElement>('[data-application-search]');
+      const status = this.querySelector<HTMLSelectElement>('[data-application-status]');
+      const count = this.querySelector<HTMLElement>('[data-application-count]');
+      const statusAnnouncement = this.querySelector<HTMLElement>('[data-status-announcement]');
+      const list = this.querySelector<HTMLUListElement>('[data-application-list]');
+      const errorBox = this.querySelector<HTMLElement>('[data-applications-error]');
+      const errorText = this.querySelector<HTMLElement>('[data-error-text]');
+      const pager = this.querySelector<HTMLElement>('[data-pagination]');
+      const previous = this.querySelector<HTMLButtonElement>('[data-previous]');
+      const next = this.querySelector<HTMLButtonElement>('[data-next]');
+      const dialog = this.querySelector<HTMLDialogElement>('dialog');
+      const heading = dialog?.querySelector<HTMLElement>('#candidate-detail-heading');
+      const detail = dialog?.querySelector<HTMLElement>('[data-application-detail]');
+      if (
+        !search ||
+        !status ||
+        !count ||
+        !list ||
+        !errorBox ||
+        !errorText ||
+        !pager ||
+        !previous ||
+        !next ||
+        !dialog ||
+        !heading ||
+        !detail
+      )
+        return;
+      this.dataset.bound = 'true';
+
+      let offset = 0;
+      let sequence = 0;
+      let searchTimer: number | undefined;
+      let applicationId = new URLSearchParams(location.search).get('application');
+      if (applicationId && !uuid.test(applicationId)) applicationId = null;
+      const openId = applicationId;
+      let openOnFirstLoad = Boolean(openId);
+      const statusUpdates = new Set<string>();
+      const renderedStatus = new Map<string, HTMLSelectElement>();
+
+      function showError(message: string) {
+        errorText!.textContent = message;
+        errorBox!.hidden = !message;
+      }
+
+      function updateSelect(application: CareerApplication) {
+        const select = makeElement(
+          'select',
+          'min-w-0 rounded-lg border border-border bg-surface px-2 py-2 text-sm text-text'
+        );
+        select.setAttribute('aria-label', `Status for ${application.fullName}`);
+        for (const [value, label] of Object.entries(statusLabels)) {
+          const option = makeElement('option', '', label);
+          option.value = value;
+          select.append(option);
+        }
+        select.value = canonicalStatus(application.status);
+        select.disabled = statusUpdates.has(application.id);
+        renderedStatus.set(application.id, select);
+        select.addEventListener('change', async () => {
+          const before = canonicalStatus(application.status);
+          const after = select.value as Status;
+          if (statusUpdates.has(application.id) || before === after) {
+            select.value = before;
+            return;
+          }
+          select.disabled = true;
+          select.value = before;
+          statusUpdates.add(application.id);
+          showError('');
+          if (statusAnnouncement) statusAnnouncement.textContent = '';
+          try {
+            await updateCareerApplicationStatus(application.id, after);
+            application.status = after;
+            select.value = after;
+            if (statusAnnouncement) statusAnnouncement.textContent = 'Application status updated.';
+            if (status?.value || !select.isConnected) void load();
+          } catch (error) {
+            showError(messageFrom(error, 'Could not update the application status.'));
+          } finally {
+            statusUpdates.delete(application.id);
+            select.disabled = false;
+            const current = renderedStatus.get(application.id);
+            if (current) current.disabled = false;
+          }
+        });
+        return select;
+      }
+
+      function showDetails(application: CareerApplication) {
+        if (!detail || !dialog || !heading) return;
+        heading.textContent = application.fullName;
+        const properties = makeElement('dl', 'grid gap-4 text-sm sm:grid-cols-2');
+        const addProperty = (label: string, value: unknown) => {
+          if (typeof value !== 'string' || !value) return;
+          const item = makeElement('div', 'min-w-0');
+          item.append(
+            makeElement('dt', 'mb-1 font-semibold text-text-muted', label),
+            makeElement('dd', 'whitespace-pre-wrap wrap-break-word', value)
+          );
+          properties.append(item);
+        };
+        addProperty('Role', application.careerTitle);
+        addProperty('Specialization', application.specialization);
+        addProperty('Email', application.email);
+        addProperty('Phone', application.phone);
+        addProperty('Location', application.location);
+        addProperty('Status', statusLabels[canonicalStatus(application.status)]);
+        const scanLabels = {
+          pending: 'Quarantined — scan pending',
+          clean: 'Clean — CV download allowed',
+          infected: 'Malware detected — download blocked',
+          scan_failed: 'Scan failed — download blocked',
+        };
+        addProperty('CV security scan', scanLabels[application.scanStatus ?? 'pending']);
+        addProperty('Recruiter notification', application.notificationSent ? 'Sent' : 'Pending');
+        addProperty('Recruitment consent', application.consentAgreed ? 'Recorded' : '');
+        detail.replaceChildren(properties);
+
+        const links = makeElement('ul', 'mt-4 flex flex-wrap gap-4 text-sm');
+        for (const [label, url] of [
+          ['LinkedIn', application.linkedinUrl],
+          ['GitHub', application.githubUrl],
+          ['Portfolio', application.portfolioUrl],
+        ]) {
+          if (!url || !isCareerLink(url)) continue;
+          const link = makeElement(
+            'a',
+            'font-semibold text-blue-800 underline dark:text-blue-300',
+            label
+          );
+          link.href = url;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          const item = makeElement('li', '');
+          item.append(link);
+          links.append(item);
+        }
+        if (links.childElementCount) detail.append(links);
+
+        if (application.coverLetter) {
+          detail.append(
+            makeElement('h4', 'mt-6 font-semibold', 'Cover letter'),
+            makeElement(
+              'p',
+              'mt-2 whitespace-pre-wrap wrap-break-word text-sm',
+              application.coverLetter
+            )
+          );
+        }
+        if (application.hasCv) {
+          const documentInfo = makeElement('div', 'mt-6 rounded-xl border border-border p-3');
+          const metadata = [
+            application.cvFilename,
+            application.cvMime,
+            application.cvSize && `${Math.ceil(application.cvSize / 1024)} KB`,
+          ]
+            .filter(Boolean)
+            .join(' · ');
+          const download = makeElement(
+            'button',
+            'mt-3 rounded-lg bg-[#1D4ED8] px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-60',
+            'Download CV'
+          );
+          download.type = 'button';
+          const feedback = makeElement('p', 'mt-2 text-sm text-red-800 dark:text-red-300');
+          feedback.setAttribute('role', 'alert');
+          download.addEventListener('click', async () => {
+            feedback.textContent = '';
+            download.disabled = true;
+            try {
+              const blob = await downloadCareerCv(application.id);
+              if (!dialog.open || !download.isConnected) return;
+              const objectUrl = URL.createObjectURL(blob);
+              const anchor = document.createElement('a');
+              const extension = /^.*\.(pdf|docx?)$/i
+                .exec(application.cvFilename ?? '')?.[1]
+                ?.toLowerCase();
+              anchor.href = objectUrl;
+              anchor.download = extension ? `candidate-cv.${extension}` : 'candidate-cv';
+              anchor.click();
+              setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+            } catch (error) {
+              feedback.textContent = messageFrom(error, 'The CV could not be downloaded.');
+            } finally {
+              download.disabled = false;
+            }
+          });
+          documentInfo.append(
+            makeElement('h4', 'font-semibold', 'CV'),
+            makeElement('p', 'mt-1 wrap-break-word text-sm text-text-muted', metadata),
+            download,
+            feedback
+          );
+          detail.append(documentInfo);
+        }
+        if (!dialog.open) dialog.showModal();
+      }
+
+      function row(application: CareerApplication) {
+        const item = makeElement('li', 'flex flex-wrap items-center justify-between gap-3 py-3');
+        const context = makeElement('div', 'min-w-0');
+        const timestamp = new Date(application.submittedAt);
+        const summary = [
+          application.email,
+          application.careerTitle,
+          Number.isFinite(timestamp.getTime()) ? shortDate.format(timestamp) : '',
+        ]
+          .filter(Boolean)
+          .join(' · ');
+        context.append(
+          makeElement('p', 'wrap-break-word font-semibold text-text', application.fullName),
+          makeElement('p', 'mt-0.5 wrap-break-word text-sm text-text-muted', summary)
+        );
+        const actions = makeElement('div', 'flex flex-wrap items-center gap-2');
+        const review = makeElement(
+          'button',
+          'rounded-lg border border-border px-3 py-2 text-sm font-semibold text-blue-800 hover:border-blue-600 dark:text-blue-300',
+          'Review'
+        );
+        review.type = 'button';
+        review.setAttribute('aria-label', `Review ${application.fullName}`);
+        review.addEventListener('click', () => showDetails(application));
+        actions.append(updateSelect(application), review);
+        item.append(context, actions);
+        return item;
+      }
+
+      async function load() {
+        if (!list || !count || !previous || !next || !pager) return;
+        const request = ++sequence;
+        const id = applicationId;
+        showError('');
+        renderedStatus.clear();
+        list.replaceChildren();
+        list.setAttribute('aria-busy', 'true');
+        count.textContent = 'Loading applications…';
+        previous.disabled = true;
+        next.disabled = true;
+        try {
+          const page = await fetchCareerApplicationPage({
+            search: id ? undefined : search?.value.trim(),
+            status: id ? undefined : status?.value,
+            limit: pageSize,
+            offset,
+            id: id ?? undefined,
+          });
+          if (request !== sequence || !list.isConnected) return;
+          if (offset > 0 && page.applications.length === 0) {
+            offset = Math.max(0, offset - pageSize);
+            return void load();
+          }
+          list.replaceChildren(...page.applications.map(row));
+          const first = page.offset + 1;
+          const last = page.offset + page.applications.length;
+          count.textContent = page.total
+            ? `Showing ${first}–${last} of ${page.total} applications`
+            : 'No matching applications.';
+          previous.disabled = page.offset <= 0;
+          next.disabled = last >= page.total;
+          pager.hidden = previous.disabled && next.disabled;
+          if (openOnFirstLoad && id === openId && page.applications.length) {
+            openOnFirstLoad = false;
+            showDetails(page.applications[0]);
+          }
+        } catch (error) {
+          if (request !== sequence || !list.isConnected) return;
+          count.textContent = 'Applications could not be loaded.';
+          pager.hidden = true;
+          showError(messageFrom(error, 'Applications are unavailable.'));
+        } finally {
+          if (request === sequence) list.removeAttribute('aria-busy');
+        }
+      }
+
+      function clearId() {
+        if (!applicationId) return;
+        applicationId = null;
+        const url = new URL(location.href);
+        url.searchParams.delete('application');
+        history.replaceState(history.state, '', url);
+      }
+
+      function filter(delay: number) {
+        clearId();
+        clearTimeout(searchTimer);
+        sequence++;
+        offset = 0;
+        searchTimer = window.setTimeout(load, delay);
+      }
+
+      search.addEventListener('input', () => filter(250));
+      status.addEventListener('change', () => filter(0));
+      this.querySelector('[data-application-clear]')?.addEventListener('click', () => {
+        search.value = '';
+        status.value = '';
+        filter(0);
+      });
+      this.querySelector('[data-retry]')?.addEventListener('click', () => void load());
+      previous.addEventListener('click', () => {
+        offset = Math.max(0, offset - pageSize);
+        void load();
+      });
+      next.addEventListener('click', () => {
+        offset += pageSize;
+        void load();
+      });
+      dialog.addEventListener('close', () => {
+        detail.replaceChildren();
+        heading.textContent = 'Application details';
+      });
+      void load();
+    }
+  }
+
+  if (!customElements.get('career-applications')) {
+    customElements.define('career-applications', CandidateApplications);
+  }
+</script>

@@ -8,7 +8,6 @@ import {
   fetchCareersContent,
   submitCareerApplication,
   fetchCareerApplications,
-  updateCareerApplicationStatus,
   upsertCareer,
 } from '../src/lib/cms-api.ts';
 
@@ -92,59 +91,25 @@ test('Careers CMS — fetchCareersContent returns hero, benefits, and operating 
   }
 });
 
-test('Careers CMS — Candidate application submission, KDPA consent, and status updates', async () => {
-  const testCandidate = {
-    fullName: 'Amina Hassan',
-    email: 'amina.hassan@example.co.ke',
-    phone: '+254 711 223 344',
-    location: 'Nairobi, Kenya',
-    linkedinUrl: 'https://linkedin.com/in/aminahassan',
-    coverLetter: 'Passionate about conversational commerce and M-Pesa developer integrations.',
-    consentAgreed: true,
-  };
-
-  // Submit to specific role
-  const submission = await submitCareerApplication(
-    'senior-full-stack-engineer-fintech',
-    testCandidate
+test('Careers CMS — applications require a CV and never use sample or local fallback data', async () => {
+  await assert.rejects(
+    submitCareerApplication('general', {
+      fullName: 'Test Candidate',
+      email: 'candidate@example.test',
+      phone: '+254711223344',
+      consentAgreed: true,
+    }),
+    /attach your CV/
   );
-  assert.ok(submission.success, 'Submission should succeed');
-  assert.ok(submission.id, 'Submission should return a unique application ID');
-
-  // Verify application in list
-  const apps = await fetchCareerApplications();
-  const createdApp = apps.find((a) => a.id === submission.id);
-  assert.ok(createdApp, 'Created application should be found in application list');
-  assert.equal(createdApp.fullName, 'Amina Hassan');
-  assert.equal(createdApp.status, 'new');
-  assert.equal(createdApp.consentAgreed, true, 'KDPA consent should be confirmed true');
-
-  // Submit general talent pool application
-  const generalSubmission = await submitCareerApplication('general', {
-    fullName: 'Brian Kiprop',
-    email: 'brian.k@example.com',
-    phone: '+254 722 000 111',
-    location: 'Eldoret / Remote',
-    coverLetter: 'General talent pool application for future merchant operations roles.',
-    consentAgreed: true,
-  });
-  assert.ok(generalSubmission.success, 'General submission should succeed');
-
-  const appsAfter = await fetchCareerApplications();
-  const generalApp = appsAfter.find((a) => a.id === generalSubmission.id);
-  assert.ok(generalApp, 'General application should be stored');
-  assert.equal(generalApp.careerTitle, 'General Application (Talent Pool)');
-
-  // Update application status
-  const updated = await updateCareerApplicationStatus(submission.id, 'reviewed');
-  assert.ok(updated, 'Status update should return true');
-
-  const appsFinal = await fetchCareerApplications();
-  const reviewedApp = appsFinal.find((a) => a.id === submission.id);
-  assert.equal(reviewedApp.status, 'reviewed', 'Application status should now be reviewed');
+  assert.deepEqual(await fetchCareerApplications(), []);
 });
 
-test('Careers CMS — upsertCareer creates new roles with automatic slug generation', async () => {
+test('Careers CMS — upsertCareer creates new roles after a confirmed CMS save', async (t) => {
+  t.mock.method(globalThis, 'fetch', async (_url, options) =>
+    options?.method === 'POST'
+      ? Response.json({ success: true })
+      : Response.json({}, { status: 503 })
+  );
   const newRole = await upsertCareer({
     title: 'Senior Site Reliability Engineer (Infrastructure & Redis)',
     department: 'Infrastructure',
