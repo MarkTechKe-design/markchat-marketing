@@ -1,11 +1,8 @@
 ---
-/**
- * MarkChat Customer Self-Service Billing Portal
- *
- * Allows tenants to view active subscription, select canonical plans,
- * and initiate secure M-Pesa / Card checkout through Paystack.
- */
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import BillingBrand from '@/components/billing/BillingBrand.astro';
+import ThemeToggle from '@/components/ui/ThemeToggle.astro';
+import { Icon } from 'astro-icon/components';
 import { primaryCtaClasses } from '@/lib/cta-classes';
 import { siteConfig } from '@/config';
 
@@ -13,409 +10,1044 @@ const controlPlaneUrl =
   import.meta.env.PUBLIC_CONTROL_PLANE_URL ||
   import.meta.env.PUBLIC_CONTROL_PLANE_API_URL ||
   'http://localhost:5000';
+const coreUrl =
+  import.meta.env.PUBLIC_CHATWOOT_URL ||
+  import.meta.env.PUBLIC_CORE_URL ||
+  'https://app.markchat.co.ke';
+const plans = [
+  {
+    id: 'starter',
+    name: 'Starter',
+    price: '1,500',
+    seats: 3,
+    inboxes: '2',
+    description: 'A focused home for your customer conversations.',
+  },
+  {
+    id: 'growth',
+    name: 'Growth',
+    price: '3,500',
+    seats: 10,
+    inboxes: '5',
+    description: 'More room for your team and connected channels.',
+  },
+  {
+    id: 'scale',
+    name: 'Scale',
+    price: '5,000',
+    seats: 25,
+    inboxes: 'Unlimited',
+    description: 'Capacity for bigger teams and busy operations.',
+  },
+];
 ---
 
 <BaseLayout
   title={`Subscription & Billing — ${siteConfig.name} Kenya`}
-  description="Manage your MarkChat workspace subscription securely with M-Pesa or card."
+  description="Choose your MarkChat workspace plan and manage secure M-Pesa or card billing."
+  noindex={true}
 >
   <div
-    class="min-h-screen w-full bg-surface dark:bg-background relative overflow-hidden px-4 py-12 transition-colors duration-200"
-    data-api-url={controlPlaneUrl}
     id="billing-portal-container"
+    data-api-url={controlPlaneUrl}
+    data-core-url={coreUrl}
+    class="min-h-screen bg-slate-50 text-slate-900 transition-colors duration-200 dark:bg-[#0B1120] dark:text-slate-100"
   >
-    <div class="max-w-4xl mx-auto relative z-10">
-      <!-- Top Navigation & Brand -->
-      <div class="flex items-center justify-between mb-8">
-        <a href="/" class="flex items-center gap-2 group">
-          <div
-            class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-white font-bold shadow-none"
+    <header class="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <div
+        class="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
+      >
+        <BillingBrand />
+        <div class="flex items-center gap-2 sm:gap-4">
+          <button
+            id="billing-back-link"
+            type="button"
+            aria-label="Back to workspace"
+            title="Back to workspace"
+            disabled
+            class="inline-flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-wait disabled:opacity-50 sm:text-sm dark:text-slate-300 dark:hover:bg-slate-800"
           >
-            M
-          </div>
-          <span class="text-xl font-bold tracking-tight text-text">
-            Mark<span class="text-primary">Chat</span>
-          </span>
-        </a>
-        <a
-          href="/login"
-          id="billing-back-link"
-          class="text-xs font-semibold px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-200"
-        >
-          &larr; Back to Workspace
-        </a>
+            <Icon name="lucide:arrow-left" class="h-4 w-4" aria-hidden="true" />
+            <span class="hidden sm:inline">Back to workspace</span>
+          </button>
+          <ThemeToggle />
+        </div>
       </div>
+    </header>
 
-      <!-- Main Header -->
-      <div class="text-center mb-10">
+    <main id="main-content" class="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+      <div class="mb-8 max-w-2xl">
         <span
-          class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20 mb-3"
+          class="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300"
         >
-          Self-Service Billing
+          <Icon name="lucide:credit-card" class="h-3.5 w-3.5" aria-hidden="true" />
+          Workspace billing
         </span>
-        <h1 class="text-3xl font-extrabold tracking-tight text-text sm:text-4xl">
-          Subscription & Plans
+        <h1 class="text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-[2.75rem]">
+          A plan that fits your team.
         </h1>
-        <p class="mt-2 text-sm text-text-muted max-w-xl mx-auto">
-          Upgrade your communication capacity with instant Safaricom M-Pesa STK Push or Card
-          payment.
+        <p class="mt-3 max-w-xl text-base leading-relaxed text-slate-600 dark:text-slate-400">
+          Choose your workspace capacity, set your billing cycle, and pay securely in Kenyan
+          shillings.
         </p>
       </div>
+
+      <section
+        id="subscription-summary-card"
+        aria-labelledby="current-plan-name"
+        aria-live="polite"
+        class="mb-8 flex flex-col justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:flex-row sm:items-center sm:px-6 dark:border-slate-800 dark:bg-slate-900"
+      >
+        <div class="min-w-0">
+          <p
+            id="workspace-name"
+            class="mb-1 truncate text-xs font-medium text-slate-500 dark:text-slate-400"
+          >
+            Confirming your workspace
+          </p>
+          <div class="flex flex-wrap items-center gap-2.5">
+            <h2 id="current-plan-name" class="text-base font-semibold">
+              Loading your subscription…
+            </h2>
+            <span
+              id="current-plan-status-badge"
+              class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+              >Checking live status</span
+            >
+          </div>
+          <p
+            id="current-plan-expiry-text"
+            class="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400"
+          >
+            Your current plan and access are confirmed by MarkChat.
+          </p>
+        </div>
+        <div
+          class="inline-flex shrink-0 items-center gap-2 text-xs text-slate-500 dark:text-slate-400"
+        >
+          <Icon
+            name="lucide:shield-check"
+            class="h-4 w-4 text-blue-600 dark:text-blue-400"
+            aria-hidden="true"
+          /> Authenticated workspace billing
+        </div>
+      </section>
 
       <div
         id="billing-upgrade-context"
         role="status"
+        class="mb-6 hidden rounded-2xl border border-blue-200 bg-blue-50 p-5 text-sm dark:border-blue-900 dark:bg-blue-950/30"
+      >
+        <h2 id="billing-upgrade-heading" class="font-semibold text-blue-900 dark:text-blue-200">
+          Plan upgrade requested
+        </h2>
+        <p id="billing-upgrade-description" class="mt-1 text-blue-800 dark:text-blue-300"></p>
+      </div>
+      <div
+        id="billing-error-box"
+        role="alert"
+        class="mb-6 hidden rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-900 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200"
+      >
+        <p class="font-semibold">Billing notice</p>
+        <p id="billing-error-message" class="mt-1 leading-relaxed"></p>
+        <div class="mt-3 flex flex-wrap gap-4">
+          <button
+            id="billing-reload-btn"
+            type="button"
+            class="cursor-pointer rounded text-sm font-semibold underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >Refresh billing details</button
+          >
+          <button
+            id="billing-reconnect-btn"
+            type="button"
+            class="hidden cursor-pointer rounded text-sm font-semibold underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >Reconnect workspace</button
+          >
+          <a
+            id="billing-recovery-receipt"
+            class="hidden rounded text-sm font-semibold underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >Open saved payment receipt</a
+          >
+        </div>
+      </div>
+
+      <section
+        id="billing-pending-payment"
+        class="mb-6 hidden rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200"
         aria-live="polite"
-        class="hidden mb-6 rounded-xl border border-primary/30 bg-primary/5 p-5 text-sm text-text"
       >
-        <h2 id="billing-upgrade-heading" class="font-semibold">Plan upgrade requested</h2>
-        <p id="billing-upgrade-description" class="mt-1 text-text-muted"></p>
-      </div>
-
-      <!-- Active Subscription Summary Banner -->
-      <div
-        id="subscription-summary-card"
-        class="mb-8 p-6 rounded-xl border border-border bg-background dark:bg-surface shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-      >
-        <div>
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400"
-            >Workspace subscription</span
+        <h2 id="billing-pending-heading" class="font-semibold">
+          An existing payment needs confirmation
+        </h2>
+        <p id="billing-pending-message" class="mt-1 leading-relaxed"></p>
+        <a
+          id="billing-resume-payment"
+          class="mt-3 hidden rounded font-semibold underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          >Resume existing Paystack checkout</a
+        >
+      </section>
+      <form id="billing-form" class="grid grid-cols-1 items-start gap-7 lg:grid-cols-12 lg:gap-8">
+        <div class="min-w-0 space-y-7 lg:col-span-7">
+          <section
+            class="rounded-3xl border border-slate-200 bg-white p-5 sm:p-7 dark:border-slate-800 dark:bg-slate-900"
           >
-          <div class="flex items-center gap-3 mt-1">
-            <h2 id="current-plan-name" class="text-xl font-bold text-text">Workspace billing</h2>
-            <span
-              id="current-plan-status-badge"
-              class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
-            >
-              Account status
-            </span>
-          </div>
-          <p id="current-plan-expiry-text" class="text-xs text-text-muted mt-1">
-            Sign in to manage your workspace subscription. Your active plan and trial are confirmed
-            by MarkChat when you open your workspace.
-          </p>
-        </div>
-        <div class="flex flex-col sm:items-end gap-2 shrink-0">
-          <div class="sm:text-right">
-            <span class="text-xs font-medium text-text-muted">Payment Currency</span>
-            <p class="text-base font-bold text-text">KES (Kenyan Shillings)</p>
-          </div>
-        </div>
-      </div>
+            <div class="mb-6 flex items-center gap-3">
+              <span
+                class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
+                aria-hidden="true">1</span
+              ><h2 class="text-lg font-semibold tracking-tight">Choose your plan</h2>
+            </div>
+            <fieldset id="billing-cycle-controls" disabled class="mb-6">
+              <legend class="sr-only">Billing cycle</legend>
+              <div
+                class="inline-flex w-full rounded-xl border border-slate-200 bg-slate-100 p-1 sm:w-auto dark:border-slate-700 dark:bg-slate-800"
+              >
+                <label class="flex-1 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="billingCycle"
+                    value="monthly"
+                    checked
+                    class="peer sr-only"
+                  />
+                  <span
+                    class="flex h-10 items-center justify-center rounded-lg px-5 text-sm font-semibold text-slate-600 transition-colors peer-checked:bg-white peer-checked:text-slate-900 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 dark:text-slate-400 dark:peer-checked:bg-slate-700 dark:peer-checked:text-white"
+                    >Monthly</span
+                  >
+                </label>
+                <label id="annual-cycle-label" class="flex-1 cursor-pointer">
+                  <input
+                    id="annual-cycle"
+                    type="radio"
+                    name="billingCycle"
+                    value="annual"
+                    disabled
+                    class="peer sr-only"
+                  />
+                  <span
+                    class="flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold text-slate-600 transition-colors peer-checked:bg-white peer-checked:text-slate-900 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 peer-disabled:opacity-50 dark:text-slate-400 dark:peer-checked:bg-slate-700 dark:peer-checked:text-white"
+                    >Annually <span
+                      class="whitespace-nowrap rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                      >Save 20%</span
+                    ></span
+                  >
+                </label>
+              </div>
+              <p
+                id="billing-cycle-note"
+                class="mt-2.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400"
+              >
+                Confirming available billing cycles…
+              </p>
+            </fieldset>
+            <fieldset id="billing-plan-controls" disabled class="space-y-3">
+              <legend class="sr-only">Workspace plan</legend>
+              {
+                plans.map((plan) => (
+                  <label
+                    data-plan-card={plan.id}
+                    class="block cursor-pointer rounded-2xl border-2 border-slate-200 p-4 transition-colors hover:border-blue-300 has-checked:border-blue-600 has-checked:bg-blue-50/40 has-focus-visible:ring-2 has-focus-visible:ring-blue-500 has-focus-visible:ring-offset-2 sm:p-5 dark:border-slate-700 dark:hover:border-blue-500 dark:has-checked:border-blue-400 dark:has-checked:bg-blue-950/20 dark:has-focus-visible:ring-offset-slate-900"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="flex min-w-0 items-start gap-3">
+                        <input
+                          type="radio"
+                          name="planSelect"
+                          value={plan.id}
+                          checked={plan.id === 'growth'}
+                          class="mt-1 h-4 w-4 shrink-0 accent-blue-600 dark:accent-blue-400"
+                        />
+                        <div class="min-w-0">
+                          <div class="flex flex-wrap items-center gap-2">
+                            <span class="font-semibold">{plan.name}</span>
+                            {plan.id === 'growth' && (
+                              <span class="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                                Recommended
+                              </span>
+                            )}
+                            <span
+                              data-current-plan={plan.id}
+                              class="hidden rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                            >
+                              Current plan
+                            </span>
+                          </div>
+                          <p class="mt-1.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                            {plan.description}
+                          </p>
+                        </div>
+                      </div>
+                      <div class="shrink-0 text-right">
+                        <>
+                          <span
+                            data-plan-price={plan.id}
+                            class="block text-sm font-semibold sm:text-base"
+                          >
+                            KES {plan.price}
+                          </span>
+                          <span
+                            data-plan-period={plan.id}
+                            class="text-[11px] text-slate-500 dark:text-slate-400"
+                          >
+                            per month
+                          </span>
+                        </>
+                      </div>
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-x-5 gap-y-2 pl-7 text-xs text-slate-600 dark:text-slate-300">
+                      <span class="inline-flex items-center gap-1.5">
+                        <>
+                          <Icon
+                            name="lucide:users"
+                            class="h-3.5 w-3.5 text-slate-400"
+                            aria-hidden="true"
+                          />
+                          <span data-plan-seats={plan.id}>{plan.seats} agent seats</span>
+                        </>
+                      </span>
+                      <span class="inline-flex items-center gap-1.5">
+                        <>
+                          <Icon
+                            name="lucide:inbox"
+                            class="h-3.5 w-3.5 text-slate-400"
+                            aria-hidden="true"
+                          />
+                          <span data-plan-inboxes={plan.id}>{plan.inboxes} inboxes</span>
+                        </>
+                      </span>
+                    </div>
+                  </label>
+                ))
+              }
+            </fieldset>
+          </section>
 
-      <p class="mb-5 text-sm text-text-muted">
-        This checkout covers MarkChat Core workspace subscriptions only. Third-party channel and
-        payment provider fees are handled separately.
-      </p>
-      <!-- 3 Canonical Plans Selection Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <!-- Starter Plan -->
-        <label
-          class="relative flex flex-col p-5 rounded-xl border-2 border-slate-200 dark:border-slate-800 bg-background dark:bg-surface cursor-pointer hover:border-primary/50 transition-all select-none has-checked:border-primary has-checked:ring-2 has-checked:ring-primary/20"
-        >
-          <input type="radio" name="planSelect" value="starter" class="sr-only" />
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-bold text-text">Starter</span>
-            <span class="text-xs font-semibold text-slate-500">KES 1,500/mo</span>
-          </div>
-          <p class="text-xs text-text-muted mb-3">For micro-teams & emerging merchants.</p>
-          <ul class="text-xs space-y-1.5 text-slate-600 dark:text-slate-300 mt-auto">
-            <li class="flex items-center gap-1.5">&check; 3 Agent Seats</li>
-            <li class="flex items-center gap-1.5">&check; 2 Connected Inboxes</li>
-            <li class="flex items-center gap-1.5">&check; M-Pesa Express Billing</li>
-          </ul>
-        </label>
+          <section
+            class="rounded-3xl border border-slate-200 bg-white p-5 sm:p-7 dark:border-slate-800 dark:bg-slate-900"
+          >
+            <div class="mb-6 flex items-center gap-3">
+              <span
+                class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
+                aria-hidden="true">2</span
+              ><h2 class="text-lg font-semibold tracking-tight">How would you like to pay?</h2>
+            </div>
+            <fieldset id="billing-payment-controls" disabled>
+              <legend class="sr-only">Payment method</legend>
+              <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label
+                  class="cursor-pointer rounded-2xl border-2 border-slate-200 p-4 transition-colors has-checked:border-blue-600 has-checked:bg-blue-50/40 has-focus-visible:ring-2 has-focus-visible:ring-blue-500 has-focus-visible:ring-offset-2 dark:border-slate-700 dark:has-checked:border-blue-400 dark:has-checked:bg-blue-950/20 dark:has-focus-visible:ring-offset-slate-900"
+                >
+                  <span class="mb-3 flex items-center justify-between"
+                    ><Icon
+                      name="lucide:smartphone"
+                      class="h-5 w-5 text-emerald-600 dark:text-emerald-400"
+                      aria-hidden="true"
+                    /><input
+                      type="radio"
+                      name="paymentMethod"
+                      value="mpesa"
+                      checked
+                      class="h-4 w-4 accent-blue-600 dark:accent-blue-400"
+                    /></span
+                  >
+                  <span class="block text-sm font-semibold">Safaricom M-Pesa</span><span
+                    class="mt-1 block text-xs text-slate-500 dark:text-slate-400"
+                    >Mobile money via Paystack</span
+                  >
+                </label>
+                <label
+                  class="cursor-pointer rounded-2xl border-2 border-slate-200 p-4 transition-colors has-checked:border-blue-600 has-checked:bg-blue-50/40 has-focus-visible:ring-2 has-focus-visible:ring-blue-500 has-focus-visible:ring-offset-2 dark:border-slate-700 dark:has-checked:border-blue-400 dark:has-checked:bg-blue-950/20 dark:has-focus-visible:ring-offset-slate-900"
+                >
+                  <span class="mb-3 flex items-center justify-between"
+                    ><Icon
+                      name="lucide:credit-card"
+                      class="h-5 w-5 text-blue-600 dark:text-blue-400"
+                      aria-hidden="true"
+                    /><input
+                      type="radio"
+                      name="paymentMethod"
+                      value="card"
+                      class="h-4 w-4 accent-blue-600 dark:accent-blue-400"
+                    /></span
+                  >
+                  <span class="block text-sm font-semibold">Debit or credit card</span><span
+                    class="mt-1 block text-xs text-slate-500 dark:text-slate-400"
+                    >Card details entered on Paystack</span
+                  >
+                </label>
+              </div>
+              <div id="mpesa-phone-field" class="mt-6">
+                <label for="billingPhone" class="mb-2 block text-sm font-medium"
+                  >M-Pesa phone number <span class="text-rose-500" aria-hidden="true">*</span
+                  ></label
+                >
+                <input
+                  type="tel"
+                  id="billingPhone"
+                  name="billingPhone"
+                  required
+                  autocomplete="tel"
+                  inputmode="tel"
+                  maxlength="24"
+                  placeholder="0712 345 678"
+                  aria-describedby="billing-phone-note"
+                  class="block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:placeholder:text-slate-500"
+                />
+                <p
+                  id="billing-phone-note"
+                  class="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400"
+                >
+                  Use your Kenyan mobile number: 07…, 01…, 254… or +254…. Payment authorization
+                  happens securely through Paystack.
+                </p>
+              </div>
+            </fieldset>
+          </section>
+        </div>
 
-        <!-- Growth Plan (Recommended) -->
-        <label
-          class="relative flex flex-col p-5 rounded-xl border-2 border-primary bg-background dark:bg-surface cursor-pointer shadow-none transition-all select-none has-checked:border-primary has-checked:ring-2 has-checked:ring-primary/20"
+        <aside
+          class="min-w-0 lg:col-span-5 lg:sticky lg:top-8"
+          aria-labelledby="order-summary-heading"
         >
-          <input type="radio" name="planSelect" value="growth" checked class="sr-only" />
           <div
-            class="absolute -top-3 right-4 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary text-white tracking-wide uppercase"
+            class="overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
           >
-            Recommended
-          </div>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-bold text-text">Growth</span>
-            <span class="text-xs font-bold text-primary">KES 3,500/mo</span>
-          </div>
-          <p class="text-xs text-text-muted mb-3">For growing omnichannel businesses.</p>
-          <ul class="text-xs space-y-1.5 text-slate-600 dark:text-slate-300 mt-auto">
-            <li class="flex items-center gap-1.5">&check; 10 Agent Seats</li>
-            <li class="flex items-center gap-1.5">&check; 5 Connected Inboxes</li>
-            <li class="flex items-center gap-1.5">&check; Connected customer inbox workflows</li>
-            <li
-              class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium"
+            <div class="border-b border-slate-200 px-6 py-5 sm:px-7 dark:border-slate-800">
+              <h2 id="order-summary-heading" class="text-lg font-semibold tracking-tight">
+                Your order summary
+              </h2><p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Clear pricing. One connected workspace.
+              </p>
+            </div>
+            <div class="p-6 sm:p-7" aria-live="polite" aria-atomic="true">
+              <div class="mb-6 flex items-center gap-3">
+                <span
+                  class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
+                  ><Icon name="lucide:layers" class="h-5 w-5" aria-hidden="true" /></span
+                ><div>
+                  <p id="summary-plan" class="text-base font-semibold">Growth plan</p><p
+                    class="mt-0.5 text-xs text-slate-500 dark:text-slate-400"
+                  >
+                    MarkChat Core workspace
+                  </p>
+                </div>
+              </div>
+              <dl class="space-y-3 text-sm">
+                <div class="flex items-center justify-between gap-4">
+                  <dt class="text-slate-500 dark:text-slate-400">Agent seats</dt><dd
+                    id="summary-seats"
+                    class="font-medium"
+                  >
+                    10 seats
+                  </dd>
+                </div>
+                <div class="flex items-center justify-between gap-4">
+                  <dt class="text-slate-500 dark:text-slate-400">Connected inboxes</dt><dd
+                    id="summary-inboxes"
+                    class="font-medium"
+                  >
+                    5 inboxes
+                  </dd>
+                </div>
+                <div class="flex items-center justify-between gap-4">
+                  <dt class="text-slate-500 dark:text-slate-400">Billing cycle</dt><dd
+                    id="summary-cycle"
+                    class="font-medium"
+                  >
+                    Monthly
+                  </dd>
+                </div>
+                <div class="flex items-center justify-between gap-4">
+                  <dt class="text-slate-500 dark:text-slate-400">Payment method</dt><dd
+                    id="summary-method"
+                    class="font-medium"
+                  >
+                    M-Pesa
+                  </dd>
+                </div>
+                <div
+                  id="summary-saving-row"
+                  class="hidden items-center justify-between gap-4 text-emerald-700 dark:text-emerald-400"
+                >
+                  <dt>Annual saving</dt><dd id="summary-saving" class="font-semibold"></dd>
+                </div>
+              </dl>
+              <div class="my-6 border-t border-slate-200 pt-6 dark:border-slate-800">
+                <div class="flex flex-wrap items-end justify-between gap-2">
+                  <span id="summary-amount-label" class="text-sm font-medium">Total due now</span
+                  ><span id="summary-amount" class="text-3xl font-bold tracking-tight">—</span>
+                </div><p
+                  id="summary-charge-note"
+                  class="mt-2 text-right text-xs text-slate-500 dark:text-slate-400"
+                >
+                  Verifying the current price
+                </p>
+              </div>
+              <div class="mb-6 rounded-xl bg-slate-50 p-4 dark:bg-slate-800/60">
+                <p
+                  id="summary-trial-note"
+                  class="text-xs leading-relaxed text-slate-600 dark:text-slate-300"
+                >
+                  Your trial and subscription terms will appear after your workspace is verified.
+                </p>
+              </div>
+              <p
+                id="summary-approval-note"
+                class="mb-4 hidden text-xs leading-relaxed text-amber-800 dark:text-amber-300"
+              >
+                Plan changes require MarkChat Super Admin approval. Selecting a plan does not change
+                your current subscription.
+              </p>
+              <button
+                type="submit"
+                id="billing-checkout-btn"
+                disabled
+                class={primaryCtaClasses +
+                  ' inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-4 text-sm font-semibold'}
+                ><Icon
+                  name="lucide:lock-keyhole"
+                  class="h-4 w-4 shrink-0"
+                  aria-hidden="true"
+                /><span id="btn-label">Confirming your workspace…</span></button
+              >
+              <p
+                id="summary-checkout-note"
+                class="mt-3 text-center text-xs leading-relaxed text-slate-500 dark:text-slate-400"
+              >
+                You'll complete your payment on Paystack.
+              </p>
+            </div>
+            <div
+              class="flex items-center justify-center gap-2 border-t border-slate-200 bg-slate-50/70 px-5 py-4 text-[11px] font-medium text-slate-600 dark:border-slate-800 dark:bg-slate-800/30 dark:text-slate-400"
             >
-              &check; Trial duration subject to current settings
-            </li>
-          </ul>
-        </label>
-
-        <!-- Scale Plan -->
-        <label
-          class="relative flex flex-col p-5 rounded-xl border-2 border-slate-200 dark:border-slate-800 bg-background dark:bg-surface cursor-pointer hover:border-primary/50 transition-all select-none has-checked:border-primary has-checked:ring-2 has-checked:ring-primary/20"
-        >
-          <input type="radio" name="planSelect" value="scale" class="sr-only" />
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-bold text-text">Scale</span>
-            <span class="text-xs font-semibold text-slate-500">KES 5,000/mo</span>
+              <Icon
+                name="lucide:shield-check"
+                class="h-4 w-4 text-emerald-600 dark:text-emerald-400"
+                aria-hidden="true"
+              /> Secure Paystack checkout · Safaricom M-Pesa &amp; cards
+            </div>
           </div>
-          <p class="text-xs text-text-muted mb-3">For larger teams and agencies.</p>
-          <ul class="text-xs space-y-1.5 text-slate-600 dark:text-slate-300 mt-auto">
-            <li class="flex items-center gap-1.5">&check; 25 Agent Seats</li>
-            <li class="flex items-center gap-1.5">&check; Unlimited Inboxes</li>
-            <li class="flex items-center gap-1.5">&check; Team collaboration and routing</li>
-            <li class="flex items-center gap-1.5">&check; High-Priority Queueing</li>
-          </ul>
-        </label>
-      </div>
-
-      <!-- Checkout Configuration Card -->
-      <div
-        class="p-6 sm:p-8 rounded-xl border border-border bg-background dark:bg-surface shadow-none"
-      >
-        <h3 class="text-lg font-bold text-text mb-4">Payment Method</h3>
-
-        <!-- Payment Method Toggle -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          <label
-            class="flex items-center gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 has-checked:border-primary has-checked:bg-primary/5"
+          <p
+            class="mt-4 px-2 text-center text-xs leading-relaxed text-slate-500 dark:text-slate-400"
           >
-            <input
-              type="radio"
-              name="paymentMethod"
-              value="mpesa"
-              checked
-              class="text-primary focus:ring-primary"
-            />
-            <div>
-              <span class="text-sm font-bold text-text flex items-center gap-1.5">
-                Safaricom M-Pesa
-              </span>
-              <p class="text-xs text-text-muted">Instant STK prompt on your mobile phone</p>
-            </div>
-          </label>
-
-          <label
-            class="flex items-center gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 has-checked:border-primary has-checked:bg-primary/5"
-          >
-            <input
-              type="radio"
-              name="paymentMethod"
-              value="card"
-              class="text-primary focus:ring-primary"
-            />
-            <div>
-              <span class="text-sm font-bold text-text flex items-center gap-1.5">
-                Debit / Credit Card
-              </span>
-              <p class="text-xs text-text-muted">Visa, Mastercard, & International Cards</p>
-            </div>
-          </label>
-        </div>
-
-        <!-- Phone number input for M-Pesa STK Push -->
-        <div id="mpesa-phone-field" class="mb-6">
-          <label
-            for="billingPhone"
-            class="block text-sm font-medium text-slate-800 dark:text-slate-200 mb-1.5"
-          >
-            M-Pesa Phone Number <span class="text-red-500">*</span>
-          </label>
-          <input
-            type="tel"
-            id="billingPhone"
-            name="billingPhone"
-            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder="+254 712 345 678"
-          />
-          <p class="text-xs text-text-muted mt-1">
-            Enter the Safaricom phone number that should receive the STK PIN prompt.
+            This purchase covers your Core workspace subscription. Channel, SMS, and payment
+            provider charges are separate.
           </p>
-        </div>
-
-        <!-- Feedback & Error State -->
-        <div
-          id="billing-error-box"
-          class="hidden mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-sm"
+          <p class="mt-5 text-center text-xs text-slate-500 dark:text-slate-400">
+            Need a hand? <a
+              href="mailto:hello@markchat.co.ke"
+              class="rounded font-semibold text-blue-600 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-blue-400"
+              >Talk to our team</a
+            >
+          </p>
+        </aside>
+      </form>
+      <noscript
+        ><p class="mt-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          Enable JavaScript to confirm your live workspace subscription and continue to secure
+          checkout.
+        </p></noscript
+      >
+    </main>
+    <footer
+      class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 border-t border-slate-200 px-4 py-6 text-xs text-slate-500 sm:px-6 lg:px-8 dark:border-slate-800 dark:text-slate-400"
+    >
+      <span>MarkChat · Built for connected teams</span><div class="flex gap-5">
+        <a href="/terms" class="hover:underline">Terms</a><a href="/privacy" class="hover:underline"
+          >Privacy</a
         >
-          <p class="font-bold">Checkout Notice</p>
-          <p id="billing-error-message" class="text-xs mt-1 text-rose-700 dark:text-rose-300"></p>
-        </div>
-
-        <!-- Submit Checkout Button -->
-        <button
-          type="button"
-          id="billing-checkout-btn"
-          class={primaryCtaClasses +
-            ' w-full cursor-pointer rounded-xl px-6 py-4 text-sm font-bold flex items-center justify-center gap-2'}
-        >
-          <span id="btn-label">Proceed to Paystack Checkout &rarr;</span>
-          <span id="btn-loading" class="hidden">
-            <svg class="animate-spin inline-block w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
-              <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"></circle>
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-            Initializing secure checkout...
-          </span>
-        </button>
-
-        <p class="text-center text-xs text-slate-400 dark:text-slate-500 mt-4">
-          Payment information is handled by Paystack. Subscription activation requires verified
-          payment confirmation.
-        </p>
       </div>
-    </div>
+    </footer>
   </div>
 </BaseLayout>
 
 <script>
-  import { readCustomerSession } from '@/lib/customer-session';
+  import { prepareBillingSession, beginCoreBillingHandoff } from '@/lib/billing-handoff';
+  import {
+    beginBillingCheckoutIntent,
+    readBillingCheckoutIntent,
+    recordBillingCheckoutReference,
+    clearBillingCheckoutIntent,
+  } from '@/lib/billing-checkout-intent';
+  import {
+    fetchBillingSubscription,
+    fetchWorkspaceDestination,
+    resolveBillingCheckout,
+    fetchExistingBillingCheckout,
+    BillingRecoveryRequired,
+    type BillingOverview,
+  } from '@/lib/billing-client';
+  import { RegistrationError, registrationRequest } from '@/lib/registration-client';
+  import {
+    billingCheckoutPayload,
+    billingLoginDestination,
+    billingQuote,
+    formatKes,
+    parseBillingCatalog,
+    supportsAnnualBilling,
+    trialBillingNote,
+    validateBillingCheckout,
+    type BillingCatalog,
+    type BillingCycle,
+    type ExistingBillingCheckout,
+  } from '@/lib/billing-state';
 
   const container = document.getElementById('billing-portal-container');
   const apiUrl = container?.dataset.apiUrl || 'http://localhost:5000';
+  const form = document.getElementById('billing-form') as HTMLFormElement;
   const checkoutBtn = document.getElementById('billing-checkout-btn') as HTMLButtonElement;
-  const btnLabel = document.getElementById('btn-label');
-  const btnLoading = document.getElementById('btn-loading');
-  const errorBox = document.getElementById('billing-error-box');
-  const errorMsg = document.getElementById('billing-error-message');
-
-  function showError(msg: string) {
-    if (errorBox && errorMsg) {
-      errorMsg.textContent = msg;
-      errorBox.classList.remove('hidden');
-    }
-  }
-
-  function hideError() {
-    errorBox?.classList.add('hidden');
-  }
-
+  const backBtn = document.getElementById('billing-back-link') as HTMLButtonElement;
   const phoneInput = document.getElementById('billingPhone') as HTMLInputElement;
+  const annualInput = document.getElementById('annual-cycle') as HTMLInputElement;
+  const reconnectBtn = document.getElementById('billing-reconnect-btn') as HTMLButtonElement;
+  const fieldsets = [
+    'billing-cycle-controls',
+    'billing-plan-controls',
+    'billing-payment-controls',
+  ].map((id) => document.getElementById(id) as HTMLFieldSetElement);
+  let intent = new URLSearchParams(window.location.search);
+  let token: string | null = null;
+  let accountId: string | null = null;
+  let catalog: BillingCatalog | null = null;
+  let overview: BillingOverview | null = null;
+  let loading = false;
+  let submitting = false;
+  let pendingCheckout: ExistingBillingCheckout | null = null;
 
-  // Honor plan selection; block unsupported annual checkout rather than misbill.
-  const intent = new URLSearchParams(window.location.search);
-  const chosenPlan = intent.get('plan');
-  if (chosenPlan && ['starter', 'growth', 'scale'].includes(chosenPlan)) {
-    const radio = document.querySelector(
-      `input[name="planSelect"][value="${chosenPlan}"]`
-    ) as HTMLInputElement | null;
-    if (radio) radio.checked = true;
-    if (chosenPlan === 'growth' || chosenPlan === 'scale') {
-      const upgradeContext = document.getElementById('billing-upgrade-context');
-      const heading = document.getElementById('billing-upgrade-heading');
-      const description = document.getElementById('billing-upgrade-description');
-      const label = chosenPlan === 'scale' ? 'Scale' : 'Growth';
-      upgradeContext?.classList.remove('hidden');
-      if (heading) heading.textContent = 'Upgrade to ' + label;
-      if (description)
-        description.textContent =
-          label === 'Scale'
-            ? 'This feature requires Scale. Your current access remains subject to Control Plane approval.'
-            : 'This feature requires Growth or higher. Your current access remains subject to Control Plane approval.';
-    }
+  function setText(id: string, value: string) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
   }
-  if (intent.get('interval') === 'annual')
-    showError(
-      'Annual billing is not available for online checkout. Choose monthly or contact sales.'
+  function showError(message: string) {
+    setText('billing-error-message', message);
+    document.getElementById('billing-error-box')?.classList.remove('hidden');
+  }
+  function signIn() {
+    window.location.assign(
+      billingLoginDestination(window.location.pathname + window.location.search)
     );
-  // Handle Checkout Dispatch
-  checkoutBtn?.addEventListener('click', async () => {
-    hideError();
-    if (intent.get('interval') === 'annual') {
-      showError('Annual checkout is not enabled; contact sales or select monthly.');
+  }
+  function handleError(error: unknown, checkout = false) {
+    if (error instanceof BillingRecoveryRequired) {
+      showError(error.message);
+      const recovery = document.getElementById('billing-recovery-receipt') as HTMLAnchorElement;
+      if (error.reference) {
+        recovery.href = '/billing/return?reference=' + encodeURIComponent(error.reference);
+        recovery.classList.remove('hidden');
+      }
       return;
     }
-
-    const selectedPlan =
-      (document.querySelector('input[name="planSelect"]:checked') as HTMLInputElement)?.value ||
-      'growth';
-    const paymentMethod =
-      (document.querySelector('input[name="paymentMethod"]:checked') as HTMLInputElement)?.value ||
-      'mpesa';
-    const phone = phoneInput?.value.trim();
-
-    if (paymentMethod === 'mpesa' && !phone) {
-      showError('Please provide a valid Safaricom phone number for M-Pesa payment.');
-      phoneInput?.focus();
+    if (error instanceof RegistrationError && error.status === 401) {
+      signIn();
       return;
     }
-
-    checkoutBtn.disabled = true;
-    btnLabel?.classList.add('hidden');
-    btnLoading?.classList.remove('hidden');
-
-    const token = readCustomerSession();
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    };
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const callbackUrl = `${window.location.origin}/billing/return`;
-
-    try {
-      const res = await fetch(`${apiUrl}/api/v1/billing/checkout`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          planId: selectedPlan,
-          paymentMethod,
-          callbackUrl,
-        }),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        let message =
-          errJson.message || 'Unable to initialize checkout. Please ensure you are logged in.';
-        if (res.status === 403 && (chosenPlan === 'growth' || chosenPlan === 'scale')) {
-          message =
-            'Plan upgrades require MarkChat Super Admin approval. Your current plan has not changed and no upgrade payment was taken.';
-        }
-        if (res.status === 401) {
-          message = 'Please sign in to your workspace before initializing payment.';
-          setTimeout(() => {
-            window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
-          }, 1500);
-        }
-        showError(message);
-        checkoutBtn.disabled = false;
-        btnLabel?.classList.remove('hidden');
-        btnLoading?.classList.add('hidden');
+    if (error instanceof RegistrationError && error.status === 403) {
+      if (['BILLING_ACCOUNT_ON_HOLD', 'BILLING_ACCOUNT_INACTIVE'].includes(error.code)) {
+        showError(
+          'This workspace needs support before billing or access can continue. Contact hello@markchat.co.ke; a payment will not remove this account restriction.'
+        );
         return;
       }
+      showError(
+        error.code.includes('MISMATCH') || /another|mismatch|match/i.test(error.message)
+          ? 'This customer session does not match the requested workspace. Reconnect that workspace to continue securely.'
+          : checkout && error.code === 'FORBIDDEN'
+            ? 'Plan upgrades require MarkChat Super Admin approval. Your current plan has not changed and no upgrade payment was taken.'
+            : error.message ||
+              'This action is not available for this workspace. Contact your workspace administrator or MarkChat support.'
+      );
+      reconnectBtn.classList.toggle('hidden', !accountId);
+      return;
+    }
+    showError(
+      error instanceof Error
+        ? error.message
+        : 'Billing could not be confirmed. Please refresh and try again.'
+    );
+  }
+  function selected(name: string): string {
+    return (form.querySelector(`input[name="${name}"]:checked`) as HTMLInputElement)?.value || '';
+  }
+  function renderSummary() {
+    const card = selected('paymentMethod') === 'card';
+    document.getElementById('mpesa-phone-field')?.classList.toggle('hidden', card);
+    phoneInput.disabled = card;
+    phoneInput.required = !card;
+    if (!catalog || !overview) return;
+    const cycle = selected('billingCycle') as BillingCycle;
+    const plan = catalog.plans.find((candidate) => candidate.id === selected('planSelect'))!;
+    const quote = pendingCheckout
+      ? {
+          ...plan,
+          billingCycle: pendingCheckout.billingCycle,
+          amountKesCents: pendingCheckout.amountKesCents,
+          monthlyEquivalentKesCents:
+            pendingCheckout.billingCycle === 'annual'
+              ? Math.round(pendingCheckout.amountKesCents / 12)
+              : pendingCheckout.amountKesCents,
+          savingKesCents:
+            pendingCheckout.billingCycle === 'annual'
+              ? Math.max(0, plan.priceKesCents * 12 - pendingCheckout.amountKesCents)
+              : 0,
+        }
+      : billingQuote(catalog, selected('planSelect'), cycle, overview.capabilities);
+    for (const plan of catalog.plans) {
+      const planQuote = billingQuote(
+        catalog,
+        plan.id,
+        cycle === 'annual' && !supportsAnnualBilling(catalog, overview.capabilities)
+          ? 'monthly'
+          : cycle,
+        overview.capabilities
+      );
+      const price = document.querySelector(`[data-plan-price="${plan.id}"]`);
+      const period = document.querySelector(`[data-plan-period="${plan.id}"]`);
+      const seats = document.querySelector(`[data-plan-seats="${plan.id}"]`);
+      const inboxes = document.querySelector(`[data-plan-inboxes="${plan.id}"]`);
+      if (price) price.textContent = formatKes(planQuote.monthlyEquivalentKesCents);
+      if (period) period.textContent = cycle === 'annual' ? 'per month · paid yearly' : 'per month';
+      if (seats) seats.textContent = `${plan.maxAgents} agent seats`;
+      if (inboxes)
+        inboxes.textContent =
+          plan.maxInboxes === null ? 'Unlimited inboxes' : `${plan.maxInboxes} inboxes`;
+    }
+    setText('summary-plan', quote.name + ' plan');
+    setText('summary-seats', `${quote.maxAgents} seats`);
+    setText(
+      'summary-inboxes',
+      quote.maxInboxes === null ? 'Unlimited' : `${quote.maxInboxes} inboxes`
+    );
+    setText('summary-cycle', cycle === 'annual' ? 'Annual · 12 months' : 'Monthly');
+    setText('summary-method', card ? 'Card' : 'M-Pesa');
+    setText('summary-amount', formatKes(quote.amountKesCents));
+    setText(
+      'summary-amount-label',
+      pendingCheckout?.status === 'success'
+        ? 'Payment received'
+        : pendingCheckout
+          ? 'Existing payment amount'
+          : 'Total due now'
+    );
+    setText(
+      'summary-charge-note',
+      pendingCheckout?.status === 'success' && pendingCheckout.requiresReconciliation
+        ? 'Received · support reconciliation required'
+        : pendingCheckout?.status === 'success'
+          ? 'Payment confirmed · review your receipt'
+          : cycle === 'annual'
+            ? `${formatKes(quote.monthlyEquivalentKesCents)} / month, billed annually`
+            : 'Billed monthly in Kenyan shillings'
+    );
+    setText(
+      'summary-checkout-note',
+      pendingCheckout
+        ? 'This action opens your existing receipt and does not start another payment.'
+        : "You'll complete your payment on Paystack."
+    );
+    setText('summary-saving', formatKes(quote.savingKesCents));
+    const saving = document.getElementById('summary-saving-row');
+    saving?.classList.toggle('hidden', cycle !== 'annual');
+    saving?.classList.toggle('flex', cycle === 'annual');
+    document
+      .getElementById('summary-approval-note')
+      ?.classList.toggle(
+        'hidden',
+        !!pendingCheckout ||
+          overview.capabilities.canChangePlan !== false ||
+          quote.id === overview.subscription?.planId
+      );
+    if (!submitting)
+      setText(
+        'btn-label',
+        pendingCheckout
+          ? pendingCheckout.status === 'success' && pendingCheckout.requiresReconciliation
+            ? 'View received payment and get support'
+            : 'View existing payment status'
+          : overview.capabilities.canCheckout === false
+            ? 'Contact support to restore billing'
+            : `Pay ${formatKes(quote.amountKesCents)} with ${card ? 'card' : 'M-Pesa'}`
+      );
+  }
 
-      const body = await res.json();
-      const checkoutUrl = body.authorizationUrl || body.data?.authorizationUrl;
-
-      if (checkoutUrl) {
-        window.location.href = checkoutUrl;
-      } else {
-        showError('No checkout redirection URL was received from Paystack.');
-        checkoutBtn.disabled = false;
-        btnLabel?.classList.remove('hidden');
-        btnLoading?.classList.add('hidden');
+  function applyPlanIntent() {
+    const chosenPlan = intent.get('plan');
+    if (chosenPlan && ['starter', 'growth', 'scale'].includes(chosenPlan)) {
+      const radio = document.querySelector(
+        `input[name="planSelect"][value="${chosenPlan}"]`
+      ) as HTMLInputElement | null;
+      if (radio) radio.checked = true;
+      if (chosenPlan === 'growth' || chosenPlan === 'scale') {
+        document.getElementById('billing-upgrade-context')?.classList.remove('hidden');
+        setText(
+          'billing-upgrade-heading',
+          'Upgrade to ' + (chosenPlan === 'growth' ? 'Growth' : 'Scale')
+        );
+        setText(
+          'billing-upgrade-description',
+          'Your requested plan is selected below. Workspace plan changes remain subject to MarkChat Super Admin approval.'
+        );
       }
-    } catch {
-      showError('Network communication error with billing server. Please verify your connection.');
-      checkoutBtn.disabled = false;
-      btnLabel?.classList.remove('hidden');
-      btnLoading?.classList.add('hidden');
+    }
+  }
+  applyPlanIntent();
+
+  function selectInput(name: string, value: string) {
+    const input = Array.from(form.querySelectorAll<HTMLInputElement>(`input[name="${name}"]`)).find(
+      (candidate) => candidate.value === value
+    );
+    if (input) input.checked = true;
+  }
+
+  async function initialize() {
+    if (loading || submitting) return;
+    loading = true;
+    token = null;
+    catalog = null;
+    overview = null;
+    pendingCheckout = null;
+    checkoutBtn.disabled = true;
+    backBtn.disabled = true;
+    fieldsets.forEach((fieldset) => {
+      fieldset.disabled = true;
+    });
+    document.getElementById('billing-error-box')?.classList.add('hidden');
+    const recovery = document.getElementById('billing-recovery-receipt') as HTMLAnchorElement;
+    recovery.classList.add('hidden');
+    recovery.removeAttribute('href');
+    try {
+      const session = await prepareBillingSession(apiUrl);
+      accountId = session.accountId;
+      if (session.redirecting) return;
+      token = session.token;
+      if (!token) {
+        signIn();
+        return;
+      }
+      intent = new URLSearchParams(window.location.search);
+      applyPlanIntent();
+      const [plansData, current] = await Promise.all([
+        registrationRequest(apiUrl, '/api/v1/billing/plans'),
+        fetchBillingSubscription(apiUrl, token, accountId),
+      ]);
+      catalog = parseBillingCatalog(plansData);
+      overview = current;
+      const savedIntent = readBillingCheckoutIntent(current.tenant.id);
+      pendingCheckout = await fetchExistingBillingCheckout(apiUrl, token, {
+        accountId,
+        allowLegacyMonthly: !catalog.billingCycles.includes('annual'),
+        intent: savedIntent,
+      });
+      setText('workspace-name', current.tenant.name);
+      setText(
+        'current-plan-name',
+        current.plan?.name ? current.plan.name + ' plan' : 'No active subscription'
+      );
+      setText(
+        'current-plan-status-badge',
+        current.subscription?.status.replace(/_/g, ' ') || 'Not subscribed'
+      );
+      const end = current.subscription?.currentPeriodEnd;
+      const date = end ? new Date(end) : null;
+      const validDate = date && Number.isFinite(date.getTime());
+      setText(
+        'current-plan-expiry-text',
+        validDate
+          ? `Current period ends ${date.toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}. ${current.entitlements.accessAllowed ? 'Workspace access is available.' : 'Workspace access awaits billing or activation.'}`
+          : current.entitlements.accessAllowed
+            ? 'Your workspace access is available.'
+            : 'Workspace access awaits billing or activation.'
+      );
+      for (const badge of document.querySelectorAll<HTMLElement>('[data-current-plan]'))
+        badge.classList.toggle(
+          'hidden',
+          badge.dataset.currentPlan !== current.subscription?.planId
+        );
+      setText('summary-trial-note', trialBillingNote(current.entitlements.trialInfo));
+      const annual = supportsAnnualBilling(catalog, current.capabilities);
+      annualInput.disabled = !annual;
+      if (annual && intent.get('interval') === 'annual') annualInput.checked = true;
+      if (!annual) {
+        const monthly = document.querySelector(
+          'input[name="billingCycle"][value="monthly"]'
+        ) as HTMLInputElement;
+        monthly.checked = true;
+      }
+      setText(
+        'billing-cycle-note',
+        annual
+          ? 'Save 20% with annual billing. The full 12-month total is charged at checkout.'
+          : 'Monthly checkout is available. Annual billing is not enabled by the billing service.'
+      );
+      if (!annual && intent.get('interval') === 'annual')
+        showError(
+          'Annual billing is not available on this billing service. Monthly is selected; review the amount before continuing.'
+        );
+      document
+        .getElementById('billing-pending-payment')
+        ?.classList.toggle('hidden', !pendingCheckout);
+      const resumePayment = document.getElementById('billing-resume-payment') as HTMLAnchorElement;
+      resumePayment.classList.add('hidden');
+      resumePayment.removeAttribute('href');
+      const heldSelection = pendingCheckout || savedIntent?.selection;
+      if (heldSelection) {
+        selectInput('planSelect', heldSelection.planId);
+        selectInput('billingCycle', heldSelection.billingCycle);
+        selectInput('paymentMethod', heldSelection.paymentMethod);
+      }
+      if (pendingCheckout) {
+        document.getElementById('billing-upgrade-context')?.classList.add('hidden');
+        recordBillingCheckoutReference(current.tenant.id, pendingCheckout.reference);
+        setText(
+          'billing-pending-heading',
+          pendingCheckout.status === 'success' && pendingCheckout.requiresReconciliation
+            ? 'Payment received. Support reconciliation is needed.'
+            : pendingCheckout.status === 'pending'
+              ? 'Continue your existing payment'
+              : 'Your earlier payment has an update'
+        );
+        setText(
+          'billing-pending-message',
+          pendingCheckout.status === 'success' && pendingCheckout.requiresReconciliation
+            ? `Reference ${pendingCheckout.reference} · ${formatKes(pendingCheckout.amountKesCents)} received. ${pendingCheckout.reconciliationReason === 'subscription_changed' ? 'Your workspace plan changed after checkout began. ' : ''}MarkChat support must reconcile this payment with your plan. Open the receipt below and do not pay again.`
+            : `Reference ${pendingCheckout.reference} · ${formatKes(pendingCheckout.amountKesCents)}. Review this payment before starting a new one. Your selected checkout is preserved.`
+        );
+        if (pendingCheckout.status === 'success' && pendingCheckout.requiresReconciliation)
+          setText(
+            'summary-trial-note',
+            'Your payment has been received. Support must reconcile it with your workspace plan before this receipt can enable launch. Do not pay again while this payment is under review.'
+          );
+        if (pendingCheckout.authorizationUrl && current.capabilities.canCheckout !== false) {
+          resumePayment.href = pendingCheckout.authorizationUrl;
+          resumePayment.classList.remove('hidden');
+        }
+      } else if (savedIntent) {
+        showError(
+          'An earlier checkout response was not confirmed. The same plan and payment method are restored. Re-enter the same M-Pesa number if needed, then continue to safely retry that request.'
+        );
+      }
+      if (current.capabilities.canCheckout === false)
+        showError(
+          'This workspace needs support before a new payment can be made. Contact hello@markchat.co.ke; payment will not remove an account restriction.'
+        );
+      fieldsets.forEach((fieldset) => {
+        fieldset.disabled = !!pendingCheckout || current.capabilities.canCheckout === false;
+      });
+      checkoutBtn.disabled = !pendingCheckout && current.capabilities.canCheckout === false;
+      backBtn.disabled = false;
+      renderSummary();
+    } catch (error) {
+      handleError(error);
+      reconnectBtn.classList.toggle(
+        'hidden',
+        !new URLSearchParams(window.location.search).get('account_id')
+      );
+      setText('current-plan-name', 'Workspace could not be confirmed');
+      setText('current-plan-status-badge', 'Verification needed');
+      setText('btn-label', 'Verify workspace to continue');
+    } finally {
+      loading = false;
+    }
+  }
+
+  form.addEventListener('change', renderSummary);
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (submitting || !catalog || !overview || !token) return;
+    const currentCatalog = catalog;
+    const currentOverview = overview;
+    const currentToken = token;
+    const existingCheckout = pendingCheckout;
+    if (!existingCheckout && currentOverview.capabilities.canCheckout === false) return;
+    document.getElementById('billing-error-box')?.classList.add('hidden');
+    let requestKey: string | null = null;
+    let newRequestKey = false;
+    let navigating = false;
+    try {
+      submitting = true;
+      const destination = await resolveBillingCheckout(existingCheckout, async () => {
+        const quote = billingQuote(
+          currentCatalog,
+          selected('planSelect'),
+          selected('billingCycle') as BillingCycle,
+          currentOverview.capabilities
+        );
+        const payload = billingCheckoutPayload({
+          quote,
+          paymentMethod: selected('paymentMethod') as 'mpesa' | 'card',
+          phone: phoneInput.value,
+          callbackUrl: `${window.location.origin}/billing/return`,
+          accountId,
+        });
+        if (payload.phone) phoneInput.value = payload.phone;
+        checkoutBtn.disabled = true;
+        fieldsets.forEach((fieldset) => {
+          fieldset.disabled = true;
+        });
+        setText('btn-label', 'Preparing secure checkout…');
+        newRequestKey = !readBillingCheckoutIntent(currentOverview.tenant.id);
+        const checkoutIntent = await beginBillingCheckoutIntent(currentOverview.tenant.id, payload);
+        requestKey = checkoutIntent.key;
+        const response = await registrationRequest(apiUrl, '/api/v1/billing/checkout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${currentToken}`,
+            'Idempotency-Key': requestKey,
+          },
+          body: JSON.stringify(payload),
+        });
+        return validateBillingCheckout(response, quote);
+      });
+      recordBillingCheckoutReference(currentOverview.tenant.id, destination.reference);
+      checkoutBtn.disabled = true;
+      if (existingCheckout) setText('btn-label', 'Opening your payment receipt…');
+      navigating = true;
+      window.location.assign(destination.url);
+    } catch (error) {
+      if (
+        requestKey &&
+        newRequestKey &&
+        error instanceof RegistrationError &&
+        [400, 401, 403, 404, 422, 429].includes(error.status)
+      )
+        clearBillingCheckoutIntent(requestKey);
+      handleError(error, true);
+      if (error instanceof Error && /phone number/.test(error.message)) phoneInput.focus();
+    } finally {
+      if (!navigating) {
+        submitting = false;
+        checkoutBtn.disabled =
+          !existingCheckout && currentOverview.capabilities.canCheckout === false;
+        fieldsets.forEach((fieldset) => {
+          fieldset.disabled =
+            !!existingCheckout || currentOverview.capabilities.canCheckout === false;
+        });
+        renderSummary();
+      }
     }
   });
+  backBtn.addEventListener('click', async () => {
+    if (!token || backBtn.disabled) return;
+    backBtn.disabled = true;
+    try {
+      window.location.assign(await fetchWorkspaceDestination(apiUrl, token));
+    } catch (error) {
+      handleError(error);
+    } finally {
+      backBtn.disabled = false;
+    }
+  });
+  document.getElementById('billing-reload-btn')?.addEventListener('click', () => {
+    void initialize();
+  });
+  reconnectBtn.addEventListener('click', async () => {
+    const currentAccountId = new URLSearchParams(window.location.search).get('account_id');
+    if (!currentAccountId) return;
+    try {
+      await beginCoreBillingHandoff(currentAccountId);
+    } catch (error) {
+      handleError(error);
+    }
+  });
+  void initialize();
 </script>

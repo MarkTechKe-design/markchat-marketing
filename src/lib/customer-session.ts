@@ -4,7 +4,12 @@ export type CustomerStores = { local?: CustomerStorage; session?: CustomerStorag
 
 const TOKEN_KEY = 'markchat_cp_token';
 const CORE_ORIGIN = 'https://app.markchat.co.ke';
-const LOCAL_CORE_ORIGINS = new Set(['http://localhost:3000', 'http://127.0.0.1:3000']);
+const LOCAL_CORE_ORIGINS = new Set([
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:8088',
+  'http://127.0.0.1:8088',
+]);
 
 function browserOrigin(): string {
   try {

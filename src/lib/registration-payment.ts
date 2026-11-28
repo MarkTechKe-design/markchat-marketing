@@ -23,6 +23,7 @@ type Payment = {
   retryAllowed: boolean;
   authorizationUrl: string | null;
   requiresReconciliation: boolean;
+  reconciliationReason?: string;
 };
 export type RegistrationPaymentProgress =
   | { kind: 'none' }
@@ -90,7 +91,9 @@ function validatePayment(
     data.retryAllowed !== retryAllowed ||
     (data.authorizationUrl !== null && !hasUrl) ||
     (hasUrl && (data.status !== 'pending' || !registrationCheckoutUrl(data.authorizationUrl))) ||
-    data.requiresReconciliation !== (data.status === 'pending' && !hasUrl) ||
+    data.requiresReconciliation !==
+      ((data.status === 'pending' && !hasUrl) ||
+        (data.status === 'success' && data.requiresReconciliation === true)) ||
     (expected &&
       (data.reference !== expected.reference ||
         data.purpose !== expected.purpose ||
@@ -230,7 +233,9 @@ export async function getRegistrationPaymentProgress(
     payment,
     message:
       payment.status === 'success'
-        ? 'Your payment is confirmed. Workspace activation is still processing; do not pay again.'
+        ? payment.requiresReconciliation
+          ? 'Your payment has been received. MarkChat support must reconcile it with the workspace plan before it can be applied. Share the payment reference with support and do not pay again.'
+          : 'Your payment is confirmed. Workspace activation is still processing; do not pay again.'
         : 'Payment initialization is awaiting confirmation. Check again or contact support; do not make another payment.',
   };
 }

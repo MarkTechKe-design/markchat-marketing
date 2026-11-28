@@ -70,6 +70,8 @@ test('loopback Core SSO is limited to actual local development pages', () => {
   for (const url of [
     'http://localhost:3000/app/accounts/12/dashboard',
     'http://127.0.0.1:3000/app/login?token=abc',
+    'http://localhost:8088/app/accounts/12/dashboard',
+    'http://127.0.0.1:8088/app/login?token=abc',
   ]) {
     assert.equal(safeSsoRedirect(url, 'http://localhost:4321'), url);
     assert.equal(safeSsoRedirect(url, 'http://127.0.0.1:4322'), url);

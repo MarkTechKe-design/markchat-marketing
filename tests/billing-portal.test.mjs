@@ -23,11 +23,16 @@ describe('Batch 9: Paystack Billing Portal & Payment Return Integration', () => 
 
   test('Billing portal renders plan choices, payment methods, and API integration', () => {
     const src = fs.readFileSync(billingPagePath, 'utf8');
+    const html = fs.readFileSync(path.join(marketingRoot, 'dist', 'billing', 'index.html'), 'utf8');
 
-    // Canonical plans
-    assert.match(src, /name="planSelect"\s+value="starter"/, 'Must include starter plan option');
-    assert.match(src, /name="planSelect"\s+value="growth"/, 'Must include growth plan option');
-    assert.match(src, /name="planSelect"\s+value="scale"/, 'Must include scale plan option');
+    // Inspect the rendered choices so generating them from a shared list retains coverage.
+    assert.match(html, /name="planSelect"\s+value="starter"/, 'Must include starter plan option');
+    assert.match(html, /name="planSelect"\s+value="growth"/, 'Must include growth plan option');
+    assert.match(html, /name="planSelect"\s+value="scale"/, 'Must include scale plan option');
+    const checkedPlans = [...html.matchAll(/<input\b[^>]*name="planSelect"[^>]*>/g)].filter(
+      ([input]) => /\schecked(?:\s|>|=)/.test(input)
+    );
+    assert.equal(checkedPlans.length, 1, 'Exactly one plan is initially checked');
 
     // Payment methods
     assert.match(src, /value="mpesa"/, 'Must include M-Pesa option');
@@ -37,6 +42,33 @@ describe('Batch 9: Paystack Billing Portal & Payment Return Integration', () => 
     // API integration
     assert.match(src, /\/api\/v1\/billing\/checkout/, 'Must dispatch to /api/v1/billing/checkout');
     assert.match(src, /billing\/return/, 'Must configure return callback URL');
+  });
+
+  test('rendered billing pages preserve branding, safe initial launch, and independently visible progress steps', () => {
+    const billing = fs.readFileSync(
+      path.join(marketingRoot, 'dist', 'billing', 'index.html'),
+      'utf8'
+    );
+    const returned = fs.readFileSync(
+      path.join(marketingRoot, 'dist', 'billing', 'return', 'index.html'),
+      'utf8'
+    );
+    for (const html of [billing, returned]) {
+      assert.match(html, /\/brand\/markchat-logo\.png/);
+      assert.match(html, /\/brand\/markchat-logo-dark\.png/);
+      assert.match(html, /id="main-content"/);
+      assert.match(html, /name="robots" content="noindex, nofollow"/);
+    }
+    assert.match(billing, /lg:grid-cols-12/);
+    assert.match(billing, /lg:col-span-7/);
+    assert.match(billing, /lg:col-span-5 lg:sticky/);
+    for (const id of ['payment', 'entitlements', 'workspace'])
+      assert.match(returned, new RegExp('id="step-' + id + '"'));
+    const launch = returned.match(/<a\b[^>]*id="launch-workspace-btn"[^>]*>/)?.[0];
+    assert.ok(launch);
+    assert.doesNotMatch(launch, /\shref=/);
+    assert.match(launch, /aria-disabled="true"/);
+    assert.match(returned, /id="state-reconciliation"/);
   });
 
   test('Growth and Scale ingress denial redirects pre-select tier and show upgrade context', () => {
@@ -59,7 +91,7 @@ describe('Batch 9: Paystack Billing Portal & Payment Return Integration', () => 
     assert.ok(src.includes('persistCustomerSession(handoff.token)'));
     assert.ok(src.includes('readCustomerSession()'));
     assert.ok(src.includes('continue-registration-payment'));
-    assert.ok(src.includes("tx.purpose !== 'subscription'"));
+    assert.ok(src.includes('subscriptionSettlement(tx, reference!)'));
     assert.ok(!src.includes('launchBtn.href = tx.ssoUrl'));
   });
 
