@@ -149,44 +149,26 @@ test('Careers CMS — upsertCareer creates new roles with automatic slug generat
   assert.equal(resolved.id, newRole.id);
 });
 
-test('Careers CMS — Static build artifacts contain Schema.org JobPosting and KDPA compliance', async () => {
+test('Careers CMS — Public build defaults to closed recruitment with no demo job pages', async () => {
   const distDir = path.resolve(process.cwd(), 'dist');
-  const careersIndexHtml = path.join(distDir, 'careers', 'index.html');
-  assert.ok(fs.existsSync(careersIndexHtml), 'dist/careers/index.html must exist');
+  const indexPath = path.join(distDir, 'careers', 'index.html');
+  assert.ok(fs.existsSync(indexPath), 'careers page must exist');
+  const html = fs.readFileSync(indexPath, 'utf-8');
+  assert.match(html, /Careers at MarkChat/i);
+  assert.match(html, /No Open Positions at the Moment/i);
+  assert.match(html, /General applications are currently closed/i);
+  assert.doesNotMatch(html, /data-job-card=/);
+  assert.doesNotMatch(html, /id="general-talent-form"|data-career-application-form/i);
+  assert.doesNotMatch(html, /Secure application portal in preparation/i);
+  assert.doesNotMatch(html, /Talent Pool applications will reopen soon/i);
 
-  const indexContent = fs.readFileSync(careersIndexHtml, 'utf-8');
-  assert.match(indexContent, /Careers at MarkChat/i);
-  assert.match(indexContent, /Secure application portal in preparation/i);
-  assert.match(indexContent, /Online CV submissions are currently disabled/i);
-  assert.doesNotMatch(indexContent, /id="general-talent-form"|data-career-application-form/i);
-  assert.doesNotMatch(indexContent, /\/api\/careers\/apply/);
-
-  // Check detail page
-  const fintechHtmlPath = path.join(
-    distDir,
-    'careers',
-    'senior-full-stack-engineer-fintech',
-    'index.html'
-  );
-  assert.ok(fs.existsSync(fintechHtmlPath), 'fintech job HTML must exist in dist');
-
-  const fintechContent = fs.readFileSync(fintechHtmlPath, 'utf-8');
-  assert.match(fintechContent, /Senior Full-Stack Engineer/i);
-  assert.match(fintechContent, /"jobPosting"/i);
-  assert.match(fintechContent, /"hiringOrganization"/i);
-  assert.match(fintechContent, /Nairobi/i);
-  assert.match(fintechContent, /KES 250,000/i);
-  assert.match(fintechContent, /Applications temporarily paused/);
-  assert.doesNotMatch(fintechContent, /id="job-apply-form"|data-career-application-form/i);
+  const seededRole = path.join(distDir, 'careers', 'senior-full-stack-engineer-fintech', 'index.html');
+  assert.equal(fs.existsSync(seededRole), false, 'seeded role pages must not publish as vacancies');
 });
 
 test('Careers CMS — Live dev server returns HTTP 200 for careers routes', async () => {
   const routes = [
     'http://localhost:4321/careers',
-    'http://localhost:4321/careers/senior-full-stack-engineer-fintech',
-    'http://localhost:4321/careers/customer-success-mpesa-onboarding-lead',
-    'http://localhost:4321/careers/developer-advocate-technical-writer',
-    'http://localhost:4321/careers/sdr-commercial-partnerships-manager',
     'http://localhost:4321/dashboard/careers',
   ];
 
