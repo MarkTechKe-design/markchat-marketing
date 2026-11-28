@@ -295,7 +295,7 @@ The UTF-8 body must be an exact JSON object with only two fields:
 
 Only `clean`, `infected`, or `scan_failed` are accepted callback verdicts.
 The HMAC-SHA256 signature is computed over these **exact bytes** in order:
-`timestamp + "\\n" + UUID + "\\n" + rawRequestBody`, with the shared
+`timestamp + LF + UUID + LF + rawRequestBody`, where LF is a single byte\n`0x0A` (not the two printable characters `\\` and `n`), with the shared
 `CAREERS_SCAN_WEBHOOK_SECRET`. The Worker verifies the signature in constant
 time with Web Crypto, rejects timestamps over five minutes old or in the
 future by more than five minutes, bounds request bodies to 1 KiB, rejects
