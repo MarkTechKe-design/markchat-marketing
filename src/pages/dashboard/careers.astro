@@ -31,11 +31,22 @@ const newApps = applications.filter((a) => a.status === 'new').length;
           Careers &amp; Applicants Manager
         </h1>
         <p class="text-sm text-text-muted mt-1">
-          Post roles for Nairobi engineering, merchant success, and partner growth teams. Full KDPA
-          2019 compliance.
+          Manage role details and applications. Recruitment availability is controlled separately
+          through the authenticated Control Plane Super Admin. Candidate uploads remain disabled
+          until secure document screening is verified.
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
+        <a
+          href="https://app.markchat.co.ke/_cp/admin#careers"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-secondary text-sm"
+          title="Requires a separate Control Plane Super Admin session"
+        >
+          <Icon name="lucide:shield-check" class="w-4 h-4 mr-1.5 inline" />
+          Recruitment Settings
+        </a>
         <a href="/careers" target="_blank" class="btn btn-secondary text-sm">
           <Icon name="lucide:external-link" class="w-4 h-4 mr-1.5 inline" />
           View Live /careers

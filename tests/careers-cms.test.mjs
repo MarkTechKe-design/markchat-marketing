@@ -92,56 +92,22 @@ test('Careers CMS — fetchCareersContent returns hero, benefits, and operating 
   }
 });
 
-test('Careers CMS — Candidate application submission, KDPA consent, and status updates', async () => {
-  const testCandidate = {
-    fullName: 'Amina Hassan',
-    email: 'amina.hassan@example.co.ke',
-    phone: '+254 711 223 344',
-    location: 'Nairobi, Kenya',
-    linkedinUrl: 'https://linkedin.com/in/aminahassan',
-    coverLetter: 'Passionate about conversational commerce and M-Pesa developer integrations.',
-    consentAgreed: true,
-  };
-
-  // Submit to specific role
-  const submission = await submitCareerApplication(
-    'senior-full-stack-engineer-fintech',
-    testCandidate
-  );
-  assert.ok(submission.success, 'Submission should succeed');
-  assert.ok(submission.id, 'Submission should return a unique application ID');
-
-  // Verify application in list
-  const apps = await fetchCareerApplications();
-  const createdApp = apps.find((a) => a.id === submission.id);
-  assert.ok(createdApp, 'Created application should be found in application list');
-  assert.equal(createdApp.fullName, 'Amina Hassan');
-  assert.equal(createdApp.status, 'new');
-  assert.equal(createdApp.consentAgreed, true, 'KDPA consent should be confirmed true');
-
-  // Submit general talent pool application
-  const generalSubmission = await submitCareerApplication('general', {
-    fullName: 'Brian Kiprop',
-    email: 'brian.k@example.com',
-    phone: '+254 722 000 111',
-    location: 'Eldoret / Remote',
-    coverLetter: 'General talent pool application for future merchant operations roles.',
+test('Careers CMS — unavailable application backend must fail closed', async () => {
+  const submission = await submitCareerApplication('senior-full-stack-engineer-fintech', {
+    fullName: 'Test Candidate',
+    email: 'test@example.com',
+    phone: '+254700000000',
     consentAgreed: true,
   });
-  assert.ok(generalSubmission.success, 'General submission should succeed');
 
-  const appsAfter = await fetchCareerApplications();
-  const generalApp = appsAfter.find((a) => a.id === generalSubmission.id);
-  assert.ok(generalApp, 'General application should be stored');
-  assert.equal(generalApp.careerTitle, 'General Application (Talent Pool)');
+  // No live, verified application service exists in the static build.
+  // Never tell applicants that a browser-only fallback received their CV.
+  assert.equal(submission.success, false);
+  assert.equal(submission.id, '');
+  assert.match(submission.message, /could not confirm receipt/i);
 
-  // Update application status
-  const updated = await updateCareerApplicationStatus(submission.id, 'reviewed');
-  assert.ok(updated, 'Status update should return true');
-
-  const appsFinal = await fetchCareerApplications();
-  const reviewedApp = appsFinal.find((a) => a.id === submission.id);
-  assert.equal(reviewedApp.status, 'reviewed', 'Application status should now be reviewed');
+  const updated = await updateCareerApplicationStatus('nonexistent-application', 'reviewed');
+  assert.equal(updated, false, 'Unconfirmed admin status updates must fail');
 });
 
 test('Careers CMS — upsertCareer creates new roles with automatic slug generation', async () => {
@@ -183,44 +149,30 @@ test('Careers CMS — upsertCareer creates new roles with automatic slug generat
   assert.equal(resolved.id, newRole.id);
 });
 
-test('Careers CMS — Static build artifacts contain Schema.org JobPosting and KDPA compliance', async () => {
+test('Careers CMS — Public build defaults to closed recruitment with no demo job pages', async () => {
   const distDir = path.resolve(process.cwd(), 'dist');
-  const careersIndexHtml = path.join(distDir, 'careers', 'index.html');
-  assert.ok(fs.existsSync(careersIndexHtml), 'dist/careers/index.html must exist');
+  const indexPath = path.join(distDir, 'careers', 'index.html');
+  assert.ok(fs.existsSync(indexPath), 'careers page must exist');
+  const html = fs.readFileSync(indexPath, 'utf-8');
+  assert.match(html, /Careers at MarkChat/i);
+  assert.match(html, /No Open Positions at the Moment/i);
+  assert.match(html, /General applications are currently closed/i);
+  assert.doesNotMatch(html, /data-job-card=/);
+  // The secure form may be prerendered but must remain hidden until a live
+  // backend health check explicitly enables Talent Pool admissions.
+  assert.match(html, /id="talent-application-open"/);
+  assert.match(html, /data-career-application-form/);
+  assert.doesNotMatch(html, /id="general-talent-form"/);
+  assert.doesNotMatch(html, /Secure application portal in preparation/i);
+  assert.doesNotMatch(html, /Talent Pool applications will reopen soon/i);
 
-  const indexContent = fs.readFileSync(careersIndexHtml, 'utf-8');
-  assert.match(indexContent, /Careers at MarkChat/i);
-  assert.match(indexContent, /Secure application portal in preparation/i);
-  assert.match(indexContent, /Online CV submissions are currently disabled/i);
-  assert.doesNotMatch(indexContent, /id="general-talent-form"|data-career-application-form/i);
-  assert.doesNotMatch(indexContent, /\/api\/careers\/apply/);
-
-  // Check detail page
-  const fintechHtmlPath = path.join(
-    distDir,
-    'careers',
-    'senior-full-stack-engineer-fintech',
-    'index.html'
-  );
-  assert.ok(fs.existsSync(fintechHtmlPath), 'fintech job HTML must exist in dist');
-
-  const fintechContent = fs.readFileSync(fintechHtmlPath, 'utf-8');
-  assert.match(fintechContent, /Senior Full-Stack Engineer/i);
-  assert.match(fintechContent, /"jobPosting"/i);
-  assert.match(fintechContent, /"hiringOrganization"/i);
-  assert.match(fintechContent, /Nairobi/i);
-  assert.match(fintechContent, /KES 250,000/i);
-  assert.match(fintechContent, /Applications temporarily paused/);
-  assert.doesNotMatch(fintechContent, /id="job-apply-form"|data-career-application-form/i);
+  const seededRole = path.join(distDir, 'careers', 'senior-full-stack-engineer-fintech', 'index.html');
+  assert.equal(fs.existsSync(seededRole), false, 'seeded role pages must not publish as vacancies');
 });
 
 test('Careers CMS — Live dev server returns HTTP 200 for careers routes', async () => {
   const routes = [
     'http://localhost:4321/careers',
-    'http://localhost:4321/careers/senior-full-stack-engineer-fintech',
-    'http://localhost:4321/careers/customer-success-mpesa-onboarding-lead',
-    'http://localhost:4321/careers/developer-advocate-technical-writer',
-    'http://localhost:4321/careers/sdr-commercial-partnerships-manager',
     'http://localhost:4321/dashboard/careers',
   ];
 

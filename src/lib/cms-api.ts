@@ -2691,19 +2691,23 @@ export async function submitCareerApplication(
         body: JSON.stringify(application),
       }
     );
+    // A candidate application is only accepted after server-side persistence is confirmed.
+    // Never claim receipt based on browser-local storage or a non-2xx response.
     if (res.ok) {
-      return { success: true, id: application.id, message: 'Application submitted successfully!' };
+      const result = await res.json().catch(() => null);
+      if (result?.success === true && typeof result.id === 'string' && result.id.length > 0) {
+        return { success: true, id: result.id, message: 'Application submitted successfully!' };
+      }
     }
   } catch {
-    // Local fallback
+    // Fail closed: offline browsers cannot receive or persist job applications.
   }
 
-  const existingApps = [
-    ...getLocalItem<CareerApplication[]>(STORAGE_KEYS.applications, DEFAULT_CAREER_APPLICATIONS),
-  ];
-  existingApps.unshift(application);
-  setLocalItem(STORAGE_KEYS.applications, existingApps);
-  return { success: true, id: application.id, message: 'Application received and saved!' };
+  return {
+    success: false,
+    id: '',
+    message: 'We could not confirm receipt of your application. Please try again later.',
+  };
 }
 
 /**
@@ -2724,7 +2728,9 @@ export async function fetchCareerApplications(): Promise<CareerApplication[]> {
   } catch {
     // Fallback
   }
-  return getLocalItem<CareerApplication[]>(STORAGE_KEYS.applications, DEFAULT_CAREER_APPLICATIONS);
+  // No locally generated or demo candidates in the production applicant inbox.
+  // The recruiter must see only records returned by the authorized server.
+  return [];
 }
 
 /**
@@ -2734,17 +2740,8 @@ export async function updateCareerApplicationStatus(
   appId: string,
   status: CareerApplication['status']
 ): Promise<boolean> {
-  const apps = [
-    ...getLocalItem<CareerApplication[]>(STORAGE_KEYS.applications, DEFAULT_CAREER_APPLICATIONS),
-  ];
-  const idx = apps.findIndex((a) => a.id === appId);
-  if (idx !== -1) {
-    apps[idx] = { ...apps[idx], status };
-    setLocalItem(STORAGE_KEYS.applications, apps);
-  }
-
   try {
-    await apiFetch(
+    const response = await apiFetch(
       `${BRIDGE_API_URL}/api/admin/cms/applications/${encodeURIComponent(appId)}/status`,
       {
         method: 'PATCH',
@@ -2755,9 +2752,9 @@ export async function updateCareerApplicationStatus(
         body: JSON.stringify({ status }),
       }
     );
-    return true;
+    return response.ok;
   } catch {
-    return true;
+    return false;
   }
 }
 

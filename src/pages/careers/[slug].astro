@@ -14,14 +14,13 @@ import MarketingLayout from '@/layouts/MarketingLayout.astro';
 import CareerApplicationNotice from '@/components/careers/CareerApplicationNotice.astro';
 import { Icon } from 'astro-icon/components';
 import { siteConfig } from '@/config';
-import { fetchCareers, type Career } from '@/lib/cms-api';
+import { type Career } from '@/lib/cms-api';
 
 export async function getStaticPaths() {
-  const careers = await fetchCareers();
-  return careers.map((job) => ({
-    params: { slug: job.slug || job.id },
-    props: { job, allJobs: careers },
-  }));
+  // No authoritative role-availability service or screened CV pipeline is live.
+  // Do not publish bundled demo job pages or JobPosting structured data.
+  // Re-enable only with server-backed dynamic roles and verified recruitment state.
+  return [];
 }
 
 interface Props {
