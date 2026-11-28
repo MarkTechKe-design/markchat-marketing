@@ -44,8 +44,10 @@ export async function onRequestPost(context: EdgeContext): Promise<Response> {
     return invalid();
   }
   if (!cv) return httpJson({ success: false, error: 'Upload a valid PDF, DOC, or DOCX CV.' }, 400);
+  // New CVs are never downloadable until a signed scanner verdict promotes
+  // the private object into the clean/ namespace.
   const id = crypto.randomUUID(),
-    key = 'applications/' + id + '/cv.' + cv.extension;
+    key = 'quarantine/applications/' + id + '/cv.' + cv.extension;
   let title: string | null;
   try {
     title = await roleTitle(data.careerId, env);
@@ -59,8 +61,8 @@ export async function onRequestPost(context: EdgeContext): Promise<Response> {
     const result = await db
       .prepare(
         `INSERT INTO markchat_career_applications
-      (id,career_id,career_title,full_name,email,phone,location,specialization,linkedin_url,github_url,portfolio_url,cover_letter,consent_agreed,submitted_at,cv_key,cv_filename,cv_mime,cv_size)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,?,?,?)`
+      (id,career_id,career_title,full_name,email,phone,location,specialization,linkedin_url,github_url,portfolio_url,cover_letter,consent_agreed,submitted_at,scan_status,cv_key,cv_filename,cv_mime,cv_size)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,1,?,'pending',?,?,?,?)`
       )
       .bind(
         id,

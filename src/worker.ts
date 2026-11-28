@@ -2,6 +2,7 @@ import { onRequestPost as apply } from '../functions/api/careers/apply';
 import { onRequestGet as listApplications } from '../functions/api/careers/applications';
 import { onRequestPatch as updateApplication } from '../functions/api/careers/application';
 import { onRequestGet as downloadCv } from '../functions/api/careers/cv';
+import { onRequestPost as scanCvResult } from '../functions/api/careers/cv-scan-result';
 import {
   onRequestGet as getCareersHero,
   onRequestPut as putCareersHero,
@@ -59,6 +60,12 @@ export default {
       return request.method === 'PATCH'
         ? updateApplication(context, application[1])
         : methodNotAllowed('PATCH');
+    }
+    const scanResult = pathname.match(/^\/api\/careers\/cv\/([^/]+)\/scan-result$/);
+    if (scanResult) {
+      return request.method === 'POST'
+        ? scanCvResult(context, scanResult[1])
+        : methodNotAllowed('POST');
     }
     const cv = pathname.match(/^\/api\/careers\/cv\/([^/]+)$/);
     if (cv) {

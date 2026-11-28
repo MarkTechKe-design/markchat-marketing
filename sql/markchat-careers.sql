@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS markchat_career_applications (
   consent_agreed INTEGER NOT NULL CHECK(consent_agreed=1),
   submitted_at TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'new' CHECK(status IN ('new','shortlisted','interview','rejected','hired')),
+  scan_status TEXT NOT NULL DEFAULT 'pending' CHECK(scan_status IN ('pending','clean','infected','scan_failed')),
   cv_key TEXT NOT NULL UNIQUE,
   cv_filename TEXT NOT NULL,
   cv_mime TEXT NOT NULL,
@@ -22,6 +23,7 @@ CREATE TABLE IF NOT EXISTS markchat_career_applications (
 );
 CREATE INDEX IF NOT EXISTS markchat_careers_submitted ON markchat_career_applications(submitted_at DESC, id DESC);
 CREATE INDEX IF NOT EXISTS markchat_careers_status ON markchat_career_applications(status, submitted_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS markchat_careers_scan_status ON markchat_career_applications(scan_status, submitted_at DESC);
 CREATE TABLE IF NOT EXISTS markchat_career_hero (
   id TEXT PRIMARY KEY CHECK(id='careers'),
   settings_json TEXT NOT NULL,

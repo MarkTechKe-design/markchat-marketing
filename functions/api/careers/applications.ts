@@ -51,7 +51,7 @@ export async function onRequestGet(context: EdgeContext): Promise<Response> {
     ' FROM markchat_career_applications' +
     (filters.length ? ' WHERE ' + filters.join(' AND ') : '');
   const columns =
-    'id,career_id AS careerId,career_title AS careerTitle,full_name AS fullName,email,phone,location,linkedin_url AS linkedinUrl,github_url AS githubUrl,portfolio_url AS portfolioUrl,cover_letter AS coverLetter,consent_agreed AS consentAgreed,submitted_at AS submittedAt,status,specialization,cv_filename AS cvFilename,cv_size AS cvSize,cv_mime AS cvMime,notification_sent AS notificationSent';
+    'id,career_id AS careerId,career_title AS careerTitle,full_name AS fullName,email,phone,location,linkedin_url AS linkedinUrl,github_url AS githubUrl,portfolio_url AS portfolioUrl,cover_letter AS coverLetter,consent_agreed AS consentAgreed,submitted_at AS submittedAt,status,specialization,cv_filename AS cvFilename,cv_size AS cvSize,cv_mime AS cvMime,scan_status AS scanStatus,notification_sent AS notificationSent';
   try {
     const count = await db
       .prepare('SELECT COUNT(*) AS total' + from)
@@ -64,7 +64,7 @@ export async function onRequestGet(context: EdgeContext): Promise<Response> {
     if (!count || result.success !== true) return unavailable();
     const applications = result.results.map((row) => ({
       ...row,
-      hasCv: true,
+      hasCv: row.scanStatus === 'clean',
       notificationSent: row.notificationSent === 1,
       consentAgreed: row.consentAgreed === 1,
     }));

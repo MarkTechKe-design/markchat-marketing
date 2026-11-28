@@ -331,6 +331,7 @@ export interface CareerApplication {
   cvFilename?: string;
   cvSize?: number;
   cvMime?: string;
+  scanStatus?: 'pending' | 'clean' | 'infected' | 'scan_failed';
   hasCv?: boolean;
   notificationSent?: boolean;
 }

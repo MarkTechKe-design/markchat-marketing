@@ -24,6 +24,7 @@ export interface EdgeEnv {
   RATE_HASH_SECRET?: string;
   CMS_API_BASE_URL?: string;
   CAREERS_MEDIA_ORIGIN?: string;
+  CAREERS_SCAN_WEBHOOK_SECRET?: string;
   CMS_SERVICE_TOKEN?: string;
   CONTROL_PLANE_API_URL?: string;
   RESEND_API_KEY?: string;

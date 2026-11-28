@@ -26,6 +26,8 @@ const OFFICE_DOCUMENT_RELATIONSHIPS = new Set([
 ]);
 const WORD_CONTENT_TYPE =
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml';
+const FORBIDDEN_PDF_ACTION_NAME =
+  /\/(?:JavaScript|JS|OpenAction|AA|Launch|EmbeddedFile|RichMedia|XFA)(?=$|[\x00-\x20()<>\[\]{}%/])/i;
 
 function requireValid(condition: unknown): asserts condition {
   if (!condition) throw new Error('Invalid CV document');
@@ -64,7 +66,13 @@ function validPdf(bytes: Uint8Array): boolean {
     .replace(/#([0-9a-f]{2})/gi, (_, value: string) =>
       String.fromCharCode(Number.parseInt(value, 16))
     );
-  return /\/Root\s+\d+\s+\d+\s+R\b/.test(text) && !/\/Encrypt\b/.test(text);
+  // Fail closed on active PDF name tokens, including #xx-escaped spellings.
+  // Match PDF name delimiters so /JS does not accidentally match /JScript.
+  return (
+    /\/Root\s+\d+\s+\d+\s+R\b/.test(text) &&
+    !/\/Encrypt\b/.test(text) &&
+    !FORBIDDEN_PDF_ACTION_NAME.test(text)
+  );
 }
 
 interface CompoundEntry {

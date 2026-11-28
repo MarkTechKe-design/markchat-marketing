@@ -133,7 +133,7 @@ export async function notifyRecruiter(
 ): Promise<void> {
   if (!env.RESEND_API_KEY || !env.RESEND_FROM_EMAIL) return;
   const lines = [
-    'A new careers application is ready for review.',
+    'A new careers application was received. CV download remains blocked until malware scanning is complete.',
     'Role: ' + title,
     'Candidate: ' + data.fullName,
     'Email: ' + data.email,

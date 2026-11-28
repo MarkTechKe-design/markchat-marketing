@@ -230,6 +230,13 @@ const secondaryButton =
         addProperty('Phone', application.phone);
         addProperty('Location', application.location);
         addProperty('Status', statusLabels[canonicalStatus(application.status)]);
+        const scanLabels = {
+          pending: 'Quarantined — scan pending',
+          clean: 'Clean — CV download allowed',
+          infected: 'Malware detected — download blocked',
+          scan_failed: 'Scan failed — download blocked',
+        };
+        addProperty('CV security scan', scanLabels[application.scanStatus ?? 'pending']);
         addProperty('Recruiter notification', application.notificationSent ? 'Sent' : 'Pending');
         addProperty('Recruitment consent', application.consentAgreed ? 'Recorded' : '');
         detail.replaceChildren(properties);
