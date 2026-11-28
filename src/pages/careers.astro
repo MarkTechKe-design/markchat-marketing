@@ -394,12 +394,12 @@ const defaultDeptAccent = {
     if (!positions || positions.dataset.bound) return;
     positions.dataset.bound = 'true';
 
-    const departmentButtons = Array.from(
+    const departmentButtons = () => Array.from(
       positions.querySelectorAll<HTMLButtonElement>('[data-filter-dept]')
     );
     const arrangement = positions.querySelector<HTMLSelectElement>('#filter-arrangement');
     const search = positions.querySelector<HTMLInputElement>('#career-search-input');
-    const cards = positions.querySelectorAll<HTMLElement>('[data-job-card]');
+    const cards = () => positions.querySelectorAll<HTMLElement>('[data-job-card]');
     const counter = positions.querySelector<HTMLElement>('#vacancy-counter');
     const empty = positions.querySelector<HTMLElement>('#vacancies-empty-state');
     const reset = positions.querySelector<HTMLButtonElement>('#reset-vacancies-btn');
@@ -409,7 +409,7 @@ const defaultDeptAccent = {
       const query = search?.value.toLowerCase().trim() ?? '';
       const selectedArrangement = arrangement?.value ?? 'All';
       let count = 0;
-      for (const card of cards) {
+      for (const card of cards()) {
         const matches =
           (!department || card.dataset.department === department) &&
           (selectedArrangement === 'All' || card.dataset.arrangement === selectedArrangement) &&
@@ -427,22 +427,24 @@ const defaultDeptAccent = {
 
     function selectDepartment(value: string) {
       department = value;
-      for (const button of departmentButtons) {
+      for (const button of departmentButtons()) {
         button.setAttribute('aria-pressed', String(value === button.dataset.filterDept));
       }
       filterRoles();
     }
 
-    for (const button of departmentButtons) {
-      button.addEventListener('click', () => selectDepartment(button.dataset.filterDept ?? ''));
-    }
+    positions.addEventListener('click', (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-filter-dept]');
+      if (button) selectDepartment(button.dataset.filterDept ?? '');
+    });
+    positions.addEventListener('careers:updated', filterRoles);
     arrangement?.addEventListener('change', filterRoles);
     search?.addEventListener('input', filterRoles);
     reset?.addEventListener('click', () => {
       if (search) search.value = '';
       if (arrangement) arrangement.value = 'All';
       selectDepartment('');
-      departmentButtons[0]?.focus();
+      departmentButtons()[0]?.focus();
     });
     filterRoles();
   }
