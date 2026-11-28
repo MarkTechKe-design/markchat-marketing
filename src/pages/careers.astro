@@ -452,3 +452,118 @@ const defaultDeptAccent = {
   initCareerFilters();
   document.addEventListener('astro:page-load', initCareerFilters);
 </script>
+
+<script>
+  interface LiveRole {
+    slug: string;
+    title: string;
+    department: string;
+    location: string;
+    description: string;
+    workArrangement: 'Remote' | 'Hybrid' | 'On-site';
+    employmentType: string;
+  }
+
+  async function hydrateVerifiedVacancies() {
+    const section = document.getElementById('open-positions');
+    const grid = document.getElementById('vacancies-grid');
+    if (!section || !grid) return;
+    // Never expose static seeded roles while the authoritative service is unavailable.
+    let roles: LiveRole[] = [];
+    try {
+      const response = await fetch('/api/careers/roles', {
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (data?.success !== true || !Array.isArray(data.roles)) return;
+      roles = data.roles.filter((role: unknown): role is LiveRole => {
+        if (!role || typeof role !== 'object') return false;
+        const r = role as Record<string, unknown>;
+        return (
+          typeof r.slug === 'string' &&
+          /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(r.slug) &&
+          typeof r.title === 'string' &&
+          typeof r.department === 'string' &&
+          typeof r.location === 'string' &&
+          typeof r.description === 'string' &&
+          ['Remote', 'Hybrid', 'On-site'].includes(String(r.workArrangement))
+        );
+      });
+    } catch {
+      return;
+    }
+    if (roles.length === 0) return;
+
+    const createText = (tag: string, value: string, className: string) => {
+      const node = document.createElement(tag);
+      node.textContent = value;
+      node.className = className;
+      return node;
+    };
+    const fragment = document.createDocumentFragment();
+    for (const role of roles) {
+      const card = document.createElement('article');
+      card.dataset.jobCard = '';
+      card.dataset.title = role.title.toLowerCase();
+      card.dataset.department = role.department;
+      card.dataset.arrangement = role.workArrangement;
+      card.className =
+        'p-5 sm:p-6 rounded-2xl bg-white dark:bg-surface border border-border ' +
+        'hover:border-blue-500/50 shadow-lg shadow-slate-900/5 dark:shadow-black/20 ' +
+        'flex flex-col lg:flex-row lg:items-center justify-between gap-6';
+      const info = document.createElement('div');
+      info.className = 'min-w-0 flex-1';
+      info.appendChild(
+        createText('span', role.department + ' · ' + role.workArrangement,
+          'text-xs font-semibold text-blue-700 dark:text-blue-300')
+      );
+      const heading = document.createElement('h3');
+      heading.className = 'text-lg sm:text-xl font-bold mt-3 text-slate-900 dark:text-white';
+      const link = document.createElement('a');
+      link.href = '/careers/' + role.slug;
+      link.className = 'hover:underline';
+      link.textContent = role.title;
+      heading.appendChild(link);
+      info.appendChild(heading);
+      info.appendChild(createText('p', role.description.slice(0, 220),
+        'mt-2 text-sm text-slate-600 dark:text-slate-400'));
+      info.appendChild(createText('p', role.location,
+        'mt-3 text-xs text-slate-500 dark:text-slate-400'));
+      card.appendChild(info);
+      const action = document.createElement('a');
+      action.href = '/careers/' + role.slug;
+      action.className =
+        'shrink-0 inline-flex items-center justify-center rounded-xl bg-[#1D4ED8] ' +
+        'px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800';
+      action.textContent = 'View Role & Apply';
+      card.appendChild(action);
+      fragment.appendChild(card);
+    }
+    grid.replaceChildren(fragment);
+
+    const filters = section.querySelector<HTMLElement>('.mb-8.space-y-4');
+    if (filters) filters.hidden = false;
+    const departmentGroup = section.querySelector<HTMLElement>('[aria-label="Filter by department"]');
+    if (departmentGroup) {
+      for (const department of [...new Set(roles.map((role) => role.department))].sort()) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.filterDept = department;
+        button.setAttribute('aria-pressed', 'false');
+        button.className =
+          'min-w-0 cursor-pointer rounded-xl border border-border bg-white px-3 py-2 ' +
+          'text-sm font-semibold text-slate-700 aria-pressed:border-[#1D4ED8] ' +
+          'aria-pressed:bg-[#1D4ED8] aria-pressed:text-white dark:bg-surface dark:text-slate-200';
+        button.textContent = department;
+        departmentGroup.appendChild(button);
+      }
+    }
+    const emptyTitle = section.querySelector<HTMLElement>('#vacancies-empty-state h3');
+    if (emptyTitle) emptyTitle.textContent = 'No positions match your filters';
+    section.dispatchEvent(new Event('careers:updated'));
+  }
+
+  hydrateVerifiedVacancies();
+</script>
