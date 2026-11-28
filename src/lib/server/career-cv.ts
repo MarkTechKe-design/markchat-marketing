@@ -417,7 +417,9 @@ async function expandEntry(entry: ZipEntry): Promise<Uint8Array> {
     // eslint-disable-next-line no-undef -- BufferSource is a DOM TypeScript type.
     const input = new ReadableStream<BufferSource>({
       start(controller) {
-        controller.enqueue(entry.compressed.slice().buffer);
+        // Keep the byte chunk as Uint8Array: passing its ArrayBuffer can stall
+        // Node's DecompressionStream without resolving the pending read.
+        controller.enqueue(entry.compressed.slice());
         controller.close();
       },
     });
