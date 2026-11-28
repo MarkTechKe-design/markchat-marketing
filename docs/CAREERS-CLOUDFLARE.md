@@ -56,6 +56,14 @@ npx wrangler@4.169.0 d1 execute markchat-preview-db --remote --file sql/markchat
 npx wrangler@4.169.0 d1 execute markchat-preview-db --remote --file sql/markchat-careers.sql
 ```
 
+**Existing installations:** `CREATE TABLE IF NOT EXISTS` does not add
+`scan_status` to an existing table. Inspect `PRAGMA table_info(markchat_career_applications)`
+on the intended D1 instance first. If the table already exists without
+`scan_status`, apply **only** `sql/markchat-careers-scan-status-migration.sql`
+once. Do not run that ALTER migration on a fresh database. The migration defaults
+all existing CVs to `pending` so no legacy files become downloadable without
+independent verification.
+
 Check the target database reported by Wrangler. If the CLI does not resolve the
 preview-only configuration, select the exact preview database and UUID in the
 D1 dashboard and execute the files there; do not substitute the production
@@ -76,6 +84,7 @@ Secrets must not be committed or placed in `PUBLIC_*` variables.
 | Setting                 | Actual use                                                                                                                                           |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `RATE_HASH_SECRET`      | Required secret, at least 32 characters. HMAC-hashes IPs for the D1 rate guard. Missing/short values make submission unavailable.                    |
+| `CAREERS_SCAN_WEBHOOK_SECRET` | Required secret for the scanner callback (at least 32 characters). Configure for the correct Worker or Preview only, never in client code. Without it, scanner promotion fails closed. |
 | `CMS_API_BASE_URL`      | Required for live admin verification and authoritative role checks. Use the reachable HTTPS CMS base; no credentials, query, or fragment in the URL. |
 | `CMS_SERVICE_TOKEN`     | Existing server-only integration secret, if used elsewhere. It is explicitly rejected as a Careers admin credential.                                 |
 | `RESEND_API_KEY`        | Optional notification secret. Omit during ordinary preview testing to avoid real email.                                                              |
@@ -147,8 +156,15 @@ Verify these flows on the deployed Preview:
 2. With a valid CMS session, review, search, paginate, and change status through
    the dashboard. Repeat list/download/status requests with invalid credentials;
    they must never disclose records. Test both existing dashboard mount aliases.
-3. Download the CV through `GET /api/careers/cv/:id`. Verify attachment disposition,
+3. Newly uploaded CVs must have `scan_status = pending` and an R2 key beneath
+   `quarantine/applications/`. An authenticated recruiter must receive HTTP 423
+   when requesting a pending, infected, or failed-scan CV. A separate scanner
+   with the configured HMAC secret must inspect those R2 bytes and submit a
+   correctly signed verdict; only a confirmed `clean` verdict makes the
+   CV downloadable from `clean/applications/`. Verify attachment disposition,
    `private, no-store`, `nosniff`, sandbox CSP, and no public R2 link.
+   Test tampered signatures, expired timestamps, SHA mismatches, duplicate
+   callbacks, scanner errors, and failed R2/D1 promotion.
 4. Save a hero override, reload the public Careers page, and test mobile framing
    and an unavailable image. Verify a failed save reports failure.
 5. If deliberately enabling a synthetic notification, verify Resend acceptance,
@@ -179,7 +195,7 @@ map is used instead. `general` is the separate General Talent Pool route.
 
 ## Persistence, ambiguous acknowledgements, and notifications
 
-Submission writes `applications/<UUID>/cv.<verified-extension>` to private R2,
+Submission writes `quarantine/applications/<UUID>/cv.<verified-extension>` to private R2,
 then requires D1 `success === true` and exactly one changed row before returning 201. Notification runs afterward. There is no transaction spanning R2, D1,
 and Resend; a 503 does not prove that nothing was saved.
 
@@ -191,7 +207,8 @@ does not provide client retry deduplication: resubmitting can create another UUI
 
 For an incident, inspect the relevant time window in the private D1/R2 resources.
 Match rows and objects by ID and exact `cv_key`; preserve both whenever the write
-outcome remains uncertain. After the original operation has settled, verify a
+outcome remains uncertain. For scanner incidents, check both the
+`quarantine/applications/` and `clean/applications/` keys before cleanup. After the original operation has settled, verify a
 row on primary D1 before deleting an apparent orphan. Check for duplicate
 submissions and missing objects. Do not infer safe deletion from one transport
 error or one absence observed while a write may still be in flight. No automated
@@ -230,19 +247,92 @@ DOCX limits are 256 entries, 8 MiB per expanded part, 20 MiB expanded total,
 limited to 64 nesting levels, 64 attributes per element, 8 KiB per tag, and
 100,000 tags. Conservative format restrictions can reject unusual valid files.
 
-**This is not antivirus, quarantine, or content disarm/reconstruction.** Treat
-accepted files as untrusted and use the organization's document-review process.
-The dashboard downloads attachments after authentication and does not embed
-document content. Profile actual preview requests before selecting a Workers CPU
-budget; bounded DOCX inspection may exceed the Free request allowance. See
+**A quarantine and scanner-verdict gate is implemented, but no malware scanning
+engine or scan queue is included in this PR.** New files are private and
+non-downloadable until an external, trusted scanner verifies the exact R2
+bytes and reports a signed clean verdict. The structural validator cannot
+prove malware absence; PDF token checks do not replace canonical PDF parsing
+or deep analysis of compressed object streams, and a DOC/DOCX may still be
+malicious. Do not send unsigned, automatic, or assumed-clean verdicts.
+Only administrators should read private candidate records, and all downloads
+remain attachments. Profile actual preview requests before selecting a Workers
+CPU budget; bounded DOCX inspection may exceed the Free request allowance. See
 [Workers limits](https://developers.cloudflare.com/workers/platform/limits/).
+
+## Scanner callback, quarantine and promotion
+
+**Scanner deployment is a required operational dependency and is NOT provided
+by this repository.** Use an isolated private scanner service with access to
+the correct Cloudflare R2 quarantine objects and an actual up-to-date AV engine
+(e.g. a maintained ClamAV deployment plus any required document-analysis
+policy). Scan the **actual full quarantined file**, not only the filename or
+the upload metadata. Scan failures must report `scan_failed`, not `clean`.
+Set up a trusted pending-work discovery mechanism (such as a private
+queue/worker or an authenticated D1 poller). Neither scheduling nor engine
+installation is implemented here; without these, all new CVs remain pending.
+
+**Callback:** `POST /api/careers/cv/<UUID>/scan-result`. This route is for
+authenticated internal scanner-to-Worker calls only. It does not accept a
+recruiter cookie, applicant credential, or public download token.
+Configure `CAREERS_SCAN_WEBHOOK_SECRET` independently for Preview and Production
+(minimum 32 characters, random; never commit it). Restrict callback ingress at
+the network/Cloudflare layer when feasible. Keep the scanner's R2 credentials
+least-privileged and private; never create a public R2 domain for quarantine.
+
+Send exactly these request headers:
+
+```text
+Content-Type: application/json
+X-MarkChat-Scan-Timestamp: <10-digit Unix epoch seconds>
+X-MarkChat-Scan-Signature: sha256=<64 lowercase hex characters>
+```
+
+The UTF-8 body must be an exact JSON object with only two fields:
+
+```json
+{"status":"clean","sha256":"<64-digit lowercase SHA-256 hex of the R2 file bytes>"}
+```
+
+Only `clean`, `infected`, or `scan_failed` are accepted callback verdicts.
+The HMAC-SHA256 signature is computed over these **exact bytes** in order:
+`timestamp + "\\n" + UUID + "\\n" + rawRequestBody`, with the shared
+`CAREERS_SCAN_WEBHOOK_SECRET`. The Worker verifies the signature in constant
+time with Web Crypto, rejects timestamps over five minutes old or in the
+future by more than five minutes, bounds request bodies to 1 KiB, rejects
+extra body fields, and fails closed if configuration is absent.
+Do not log the signature, the secret, applicant details, or CV contents.
+
+After authentication, the Worker re-reads the D1 row and quarantined R2
+object, bounds the R2 byte stream to 5 MiB, and recalculates SHA-256.
+A mismatch results in HTTP 409 with no approval. All transitions are
+conditional on `scan_status='pending'` and the original `cv_key`; no
+second verdict can overwrite a finalized scan state. For `infected` or
+`scan_failed`, the object remains in private quarantine, and downloads
+stay blocked.
+
+For `clean`, the Worker first copies the verified bytes to a private
+`clean/applications/<UUID>/cv.<extension>` R2 key. Only after that copy
+is confirmed does a conditional D1 UPDATE set `scan_status='clean'` and
+replace `cv_key`. HTTP 423 denies downloads unless **both** the clean status
+and exact released key are present. The original quarantined object is
+deleted only after the D1 transition confirms success. If the copy or
+database acknowledgement fails, the Worker returns 503 and retains
+objects for manual reconciliation; it never approves without a D1
+transition. Repeated signed callbacks receive 409.
+
+**The callback authenticates a scanner verdict; it does not establish that
+malware scanning happened.** Verify scanner result integrity, engine updates,
+supply-chain controls, R2 access separation, a retry/dead-letter process, and
+alerts for stuck `pending` and `scan_failed` records before enabling real
+customer CV collection.
 
 ## Logs, retention, and erasure
 
 Both production and preview observability set `redact_query_string: true`, which
 helps keep applicant search terms out of invocation URLs. Confirm this remains
 enabled when deploying. Monitor the safe `CAREERS_*` warning codes for insert
-acknowledgement, reconciliation, rollback, notification, and hero failures. Do not
+acknowledgement, reconciliation, rollback, notification, scanner digest
+mismatch, release reconciliation, and hero failures. Do not
 add raw forms, tokens, CV bytes, or candidate records to logs.
 
 No retention scheduler or application-deletion API is included. Assign an owner
