@@ -27,7 +27,7 @@ const OFFICE_DOCUMENT_RELATIONSHIPS = new Set([
 const WORD_CONTENT_TYPE =
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml';
 const FORBIDDEN_PDF_ACTION_NAME =
-  /\/(?:JavaScript|JS|OpenAction|AA|Launch|EmbeddedFile|RichMedia|XFA)(?=$|[\x00-\x20()<>\[\]{}%/])/i;
+  /\/(?:JavaScript|JS|OpenAction|AA|Launch|EmbeddedFile|RichMedia|XFA)(?=$|[^!-~]|[()<>/{}%]|\[|\])/i;
 
 function requireValid(condition: unknown): asserts condition {
   if (!condition) throw new Error('Invalid CV document');
