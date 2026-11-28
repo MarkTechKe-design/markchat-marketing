@@ -1,380 +1,126 @@
-# Authentication Pages
-
-This theme includes pre-built Login and Register pages with form validation, social authentication buttons, and demo mode support.
-
-## Available Pages
-
-| Route | File | Description |
-|-------|------|-------------|
-| `/login` | `login.astro` | User login page |
-| `/register` | `register.astro` | User registration page |
-| `/forgot-password` | `forgot-password.astro` | Password reset request page |
-
-## Page Structure
-
-### Login Page
-
-The login page (`src/pages/login.astro`) includes:
-
-- Heading: "Welcome back"
-- Description: "Sign in to your account to continue"
-- Email and password fields
-- "Remember me" checkbox
-- "Forgot password?" link
-- Social login buttons (Google, GitHub)
-- Link to register page
-
-### Register Page
-
-The register page (`src/pages/register.astro`) includes:
-
-- Heading: "Create your account"
-- Description: "Start your free trial today"
-- Full name, email, and password fields
-- Terms of Service and Privacy Policy agreement checkbox
-- Social signup buttons (Google, GitHub)
-- Link to login page
-
-### Forgot Password Page
-
-The forgot password page (`src/pages/forgot-password.astro`) includes:
-
-- Icon and heading: "Forgot your password?"
-- Description: "No worries, we'll send you reset instructions."
-- Email input field
-- "Send reset link" button
-- Back to login link
-
-## Components
-
-### LoginForm
-
-Location: `src/components/forms/LoginForm.astro`
-
-```astro
----
-import LoginForm from '@forms/LoginForm.astro';
----
-
-<!-- Demo mode (no backend) -->
-<LoginForm />
-
-<!-- With custom endpoint -->
-<LoginForm 
-  action="https://api.example.com/login" 
-  method="POST"
-  redirectUrl="/dashboard"
-/>
-
-<!-- Netlify Identity -->
-<LoginForm netlify />
-```
-
-**Props:**
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `action` | `string` | `''` | Form action URL. Empty for demo mode |
-| `method` | `'POST' \| 'GET'` | `'POST'` | HTTP method |
-| `netlify` | `boolean` | `false` | Enable Netlify Identity |
-| `redirectUrl` | `string` | `'/'` | Redirect URL after success |
-
-### RegisterForm
-
-Location: `src/components/forms/RegisterForm.astro`
-
-```astro
----
-import RegisterForm from '@forms/RegisterForm.astro';
----
-
-<!-- Demo mode (no backend) -->
-<RegisterForm />
-
-<!-- With custom endpoint -->
-<RegisterForm 
-  action="https://api.example.com/register" 
-  method="POST"
-  redirectUrl="/welcome"
-/>
-
-<!-- Netlify Identity -->
-<RegisterForm netlify />
-```
-
-**Props:**
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `action` | `string` | `''` | Form action URL. Empty for demo mode |
-| `method` | `'POST' \| 'GET'` | `'POST'` | HTTP method |
-| `netlify` | `boolean` | `false` | Enable Netlify Identity |
-| `redirectUrl` | `string` | `'/'` | Redirect URL after success |
-
-### ForgotPasswordForm
-
-Location: `src/components/forms/ForgotPasswordForm.astro`
-
-```astro
----
-import ForgotPasswordForm from '@forms/ForgotPasswordForm.astro';
----
-
-<!-- Demo mode (no backend) -->
-<ForgotPasswordForm />
-
-<!-- With custom endpoint -->
-<ForgotPasswordForm action="https://api.example.com/forgot-password" />
-```
-
-**Props:**
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `action` | `string` | `''` | Form action URL. Empty for demo mode |
-| `method` | `'POST' \| 'GET'` | `'POST'` | HTTP method |
-
-### SocialAuthButtons
-
-Location: `src/components/forms/SocialAuthButtons.astro`
-
-```astro
----
-import SocialAuthButtons from '@forms/SocialAuthButtons.astro';
----
-
-<!-- Login variant -->
-<SocialAuthButtons 
-  dividerText="Or continue with" 
-  variant="login"
-  googleUrl="/auth/google"
-  githubUrl="/auth/github"
-/>
-
-<!-- Register variant -->
-<SocialAuthButtons 
-  dividerText="Or sign up with" 
-  variant="register"
-/>
-```
-
-**Props:**
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `dividerText` | `string` | `'Or continue with'` | Text in divider |
-| `variant` | `'login' \| 'register'` | `'login'` | Button text variant |
-| `googleUrl` | `string` | `'#'` | Google OAuth URL |
-| `githubUrl` | `string` | `'#'` | GitHub OAuth URL |
-
-## Form Validation
-
-Both forms include client-side validation with the following rules:
-
-### Login Form
-
-| Field | Rules |
-|-------|-------|
-| Email | Required, valid email format |
-| Password | Required |
-
-### Register Form
-
-| Field | Rules |
-|-------|-------|
-| Full name | Required, minimum 2 characters |
-| Email | Required, valid email format |
-| Password | Required, minimum 8 characters |
-| Terms agreement | Required (must be checked) |
-
-### Forgot Password Form
-
-| Field | Rules |
-|-------|-------|
-| Email | Required, valid email format |
-
-### Validation Behavior
-
-- Fields are validated on blur (when user leaves the field)
-- All fields are validated on form submit
-- Error messages appear below each field
-- Errors clear when user corrects the input
-- First invalid field is focused on submit
-
-## Demo Mode
-
-By default, forms run in demo mode when no `action` URL is provided:
-
-1. User fills out the form
-2. Form validates input
-3. Shows loading state for 1.5 seconds
-4. Displays success message
-5. Redirects to `redirectUrl`
-
-This allows you to test the UI without backend configuration.
-
-## Backend Integration
-
-### Netlify Identity
-
-```astro
-<LoginForm netlify />
-<RegisterForm netlify />
-```
-
-For full Netlify Identity integration, you'll also need to:
-
-1. Enable Identity in your Netlify dashboard
-2. Add the Netlify Identity widget script
-3. Configure identity settings
-
-See [Netlify Identity docs](https://docs.netlify.com/visitor-access/identity/) for details.
-
-### Supabase
-
-```astro
-<LoginForm action="/api/auth/login" />
-<RegisterForm action="/api/auth/register" />
-```
-
-Create API routes to handle Supabase authentication:
-
-```typescript
-// src/pages/api/auth/login.ts
-import { createClient } from '@supabase/supabase-js';
-
-export async function POST({ request }) {
-  const formData = await request.formData();
-  const email = formData.get('email');
-  const password = formData.get('password');
-  
-  const supabase = createClient(
-    import.meta.env.SUPABASE_URL,
-    import.meta.env.SUPABASE_ANON_KEY
-  );
-  
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-  
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 400,
-    });
+# Customer authentication and onboarding
+
+The customer routes use the existing Virex `AuthLayout`, form components, semantic colors, spacing, and light/dark styles. Customer credentials and tokens are separate from the marketing CMS administrator session. This implementation does not change Chatwoot Core, SMS Studio, or other account boundaries.
+
+## Routes and shared helpers
+
+| Route or file | Responsibility |
+| --- | --- |
+| `/register`, `RegisterForm.astro` | Two-step business/account form, email verification, live trial terms, registration progress and automatic session handoff |
+| `/login`, `LoginForm.astro` | Existing email/password login and Google entry point |
+| `/auth/callback` | Browser-bound Google ticket exchange; URL fragments are rejected and ticket state is scrubbed |
+| `/billing` | Authenticated subscription checkout using the saved customer token |
+| `/billing/return` | Resume initial registration payment gates or read an authenticated subscription receipt |
+| `src/lib/customer-session.ts` | Customer token persistence, storage fallback, local redirect validation and Core SSO validation |
+| `src/lib/registration-client.ts` | OTP state, registration settings, capability storage, payment gates and session exchange |
+
+The API base comes from `PUBLIC_CONTROL_PLANE_URL`, with `PUBLIC_CONTROL_PLANE_API_URL` retained as a compatibility alias. Development defaults to `http://localhost:5000`. Production requires an explicitly configured HTTPS Control Plane and matching CORS origins.
+
+## Live registration policy
+
+`GET /api/v1/registration/options` returns:
+
+```json
+{
+  "success": true,
+  "data": {
+    "trialHours": 720,
+    "verificationRequired": false,
+    "verificationAmountKesCents": 8200,
+    "otp": {
+      "channel": "email",
+      "expiresInSeconds": 600,
+      "resendAfterSeconds": 60
+    }
   }
-  
-  return new Response(JSON.stringify({ user: data.user }), {
-    status: 200,
-  });
 }
 ```
 
-### Custom API
+The Control Plane default is 720 hours, displayed as 30 days. Other configured durations are formatted from the response. An explicit zero means no free trial and requires an initial paid subscription. The configured confirmation amount remains in this response when verification is disabled; it is displayed or collected only if the verification gate is enabled. The browser does not substitute a default when this request fails or returns malformed policy: it shows an unavailable state, offers retry, and blocks signup until terms are confirmed.
 
-```astro
-<LoginForm 
-  action="https://api.yoursite.com/auth/login" 
-  method="POST"
-/>
+With verification disabled and a positive trial duration, no checkout is opened. Account-confirmation charges are presented only when `verificationRequired` is explicitly enabled. When both payment verification and a zero-length trial apply, the confirmation and subscription gates must each settle before activation. Annual checkout remains unavailable.
+
+## Six-digit email verification
+
+1. `POST /api/v1/registration/otp/send` receives `{email, channel: "email"}` and returns `{challengeId, expiresInSeconds, resendAfterSeconds}` in `data`.
+2. `POST /api/v1/registration/otp/verify` receives `{email, challengeId, code}` and returns `{otpVerificationToken, expiresInSeconds}` in `data`.
+3. `POST /api/v1/registration` receives the existing business/name/email/phone/password/plan fields plus `otpVerificationToken`, with the durable `Idempotency-Key` header.
+
+The browser normalizes the email before each request. Verification accepts exactly six digits, honors the server resend cooldown, rejects expired state, and discards late responses for an address that has since changed. Changing the normalized address clears the challenge and proof. A rejected or already-used proof can be cleared for re-verification without resetting the send cooldown. Generic rate-limit responses use the JSON `retryAfter` value when cross-origin browser access hides the HTTP header. The OTP proof stays in memory and is never written into browser storage or a URL.
+
+Existing Google customers retain the ticket exchange and session flow. New Google signup returns `GOOGLE_SIGNUP_EMAIL_VERIFICATION_REQUIRED` and is directed to the same verified-email registration flow. It must not create an unverified workspace as an alternative signup path.
+
+Passwords follow the Control Plane contract: 8–255 characters, including uppercase, lowercase, a digit, and an accepted special character. The existing common-password checks remain in the form.
+
+## Provisioning and session handoff
+
+Registration returns a registration ID and a short-lived opaque `sessionToken`; optional payment gates also use the existing `verificationToken` checkout capability. The browser stores only these capabilities, the registration ID, creation time, and validated billing intent in `sessionStorage`. This record expires after 60 minutes. Passwords and OTP proofs are never persisted. The hosted-payment reference is stored separately with its purpose and checkout amount.
+
+`GET /api/v1/registration/:id` reports provisioning status, `trialHours`, and `paymentRequirements: {verification, subscription}`. Each boolean indicates an outstanding payment gate. Verification takes priority, followed by subscription. A public status response never supplies a customer JWT or authorizes a session.
+
+After `status: "completed"`, the browser calls:
+
+```http
+POST /api/v1/registration/:id/session
+Authorization: Bearer <sessionToken>
+Content-Type: application/json
+
+{}
 ```
 
-Your API should:
+The authenticated response is `data: {token, ssoUrl, user, redirectTarget: "/billing"}`. A pending `409` remains in bounded provisioning retry. A successful session is saved as `markchat_cp_token` in both `localStorage` and `sessionStorage`. Either store can serve as a fallback if the other is unavailable. Stale credentials are not intentionally left behind during a partial storage update.
 
-1. Accept form data (email, password, etc.)
-2. Return JSON response
-3. Return 200 status for success
-4. Return 4xx/5xx status for errors
+For the free flow on the original form, a missing or expired capability can fall back to the existing password login endpoint using credentials still held by that submit handler. A returned payment page has no stored password, so an expired proof needs sign-in or support. The interface must not claim an automatic session if no verified token was received.
 
-### Environment Variables for Auth
+## Optional payment and return behavior
 
-Add to your `.env` file:
+Both capability-protected checkout routes accept `{paymentMethod: "mpesa"}` and return `{success: true, checkout: {reference, authorizationUrl, amountKesCents, currency}}`:
 
-```bash
-# Supabase
-SUPABASE_URL=your-project-url
-SUPABASE_ANON_KEY=your-anon-key
+- `POST /api/v1/registration/:id/verification-checkout`
+- `POST /api/v1/registration/:id/subscription-checkout`
 
-# Or for custom API
-AUTH_API_URL=https://api.yoursite.com
-AUTH_API_KEY=your-api-key
-```
+The browser validates the hosted URL, KES currency, positive integer amount and opaque reference before navigation. Checkout URLs must use `https://checkout.paystack.com`, the default HTTPS port and a nonempty path, with no credentials, fragment, whitespace, backslashes or control characters. URLs longer than 2048 characters are rejected. Capabilities never appear in query strings.
 
-## Dashboard Integration
+Recovery uses the same registration checkout capability in the `Authorization: Bearer` header:
 
-After successful authentication, users are typically redirected to the dashboard:
+- `GET /api/v1/registration/:id/payments/:reference` checks a saved reference.
+- `GET /api/v1/registration/:id/payments?purpose=subscription|account_verification` discovers the latest attempt when the initialization response was lost or a previous failure may have been superseded.
 
-```astro
-<LoginForm 
-  action="/api/auth/login"
-  redirectUrl="/dashboard"
-/>
-```
+Both return `data: {reference, status, purpose, amountKesCents, currency, retryAllowed, authorizationUrl, requiresReconciliation}`. Discovery returns `data: null` only when the server has no recorded attempt. A saved reference must match the response reference, purpose and amount; the server separately enforces registration and tenant ownership. A failed saved reference is followed by discovery before a replacement is considered, so a newer pending attempt is recovered rather than charged again.
 
-The dashboard requires authentication middleware to protect routes. See [Dashboard documentation](./07-dashboard.md) for implementation details on:
+If the provider returns a reference that the browser never saved, the return page first recovers it through the capability-protected reference lookup. Its purpose can belong to an earlier settled gate: for example, a verified account-confirmation payment can be restored before discovery advances to the separate subscription gate. A query-string reference alone never authorizes payment or identity.
 
-- Setting up authentication middleware
-- Protecting dashboard routes
-- Managing user sessions
-- Implementing logout functionality
+| Authoritative payment state | Browser action |
+| --- | --- |
+| Pending with a persisted, valid hosted URL | Resume that same checkout; do not initialize another payment. |
+| Pending without a hosted URL, or reconciliation required | Show awaiting-confirmation/support guidance; retain the attempt and do not charge again. |
+| Success | Continue checking registration activation and session readiness. |
+| Failed or abandoned, with `retryAllowed: true` | Offer **Retry payment**. Recheck the server on the click before replacing the confirmed failed reference. |
+| No attempt recorded after a lost initialization response | Offer **Retry connection**. Recheck discovery and require the explicit action before another initialization request. |
+| Lookup error, invalid response, or mismatched scope | Retain the saved reference and block another charge. |
 
-## Customization
+A minimal initialization intent is written to `sessionStorage` before each checkout POST. It contains only registration ID, purpose, the previous failed reference if any, and creation time. This prevents an automatic repeat after a lost response even when the browser never received a new reference. An explicit connection retry is safe only after successful discovery establishes no new active attempt: the Control Plane's pending/success database constraint serializes initializations before provider contact, including when an older request arrives late. A page reload, browser cancellation, elapsed time, or request error never establishes payment failure. The recovery GET routes read persisted state; they do not contact the payment provider to manufacture a terminal outcome.
 
-### Changing Form Fields
+Before a customer JWT exists, the return page relies on registration progress to determine whether provisioning or another payment gate is outstanding. It does not use public transaction lookup as identity proof. If a second gate remains, the user can continue to that payment. When setup completes, the saved session capability is exchanged and the customer enters the validated destination automatically.
 
-Edit the form components directly:
+Ordinary subscription receipts require a saved customer token. Receipt confirmation does not trust or navigate to an SSO URL supplied by a transaction record. Server-side authorization of receipt access remains the Control Plane's responsibility.
 
-- `src/components/forms/LoginForm.astro`
-- `src/components/forms/RegisterForm.astro`
-- `src/components/forms/ForgotPasswordForm.astro`
+## Redirect security
 
-### Changing Validation Rules
+The shared SSO validator allows the production Core origin with an `/app/` path. The two HTTP development origins are allowed only when the marketing page itself is served from `localhost`, `127.0.0.1`, or `[::1]`:
 
-Validation rules are defined in the `<script>` section of each form component. Modify the `validationRules` object:
+- `https://app.markchat.co.ke`
+- `http://localhost:3000`
+- `http://127.0.0.1:3000`
 
-```typescript
-const validationRules = {
-  email: (value) => {
-    if (!value.trim()) return 'Email is required';
-    // Add custom validation
-    return null;
-  },
-  // Add more fields...
-};
-```
+It checks the original path before URL normalization and rejects credentials, raw dot traversal, encoded/double-encoded path segments, backslashes, duplicate slashes, control characters, and fragments. Valid SSO query parameters remain intact. A missing or rejected SSO falls back to the validated local billing route, preserving selected plan/interval intent. Local redirect validation rejects external, protocol-relative, escaped, and traversal paths.
 
-### Adding Validation Utilities
+The Google callback still requires a browser-bound one-use ticket, sends credentials to the exchange endpoint, scrubs the selector before making requests, and never accepts a JWT or SSO link from URL query/fragment fields.
 
-The theme includes reusable validators in `src/lib/validation.ts`:
+## Verification and environment limits
 
-```typescript
-import { required, email, minLength, password, checkbox } from '@/lib/validation';
+Run `npm run check`, then `npm run build`, then `npm test`. The full test runner owns its Astro preview on port 4321. Executable tests cover email binding, exact OTP shape, expiry/resend/stale responses, policy zero/unavailable cases, session capability storage, checkout routing and recovery, lost initialization responses, explicit retry, retained ambiguous payments, dual customer-token storage, and hostile redirects. Component wiring checks preserve the existing Virex, OAuth and account boundaries.
 
-// Available validators:
-required('Field name')      // Required field
-email()                     // Email format
-minLength(n, 'Field name')  // Minimum length
-password(n)                 // Password minimum length (default: 8)
-checkbox('Field name')      // Checkbox must be checked
-```
+An additional `node scripts/test-onboarding-browser.mjs` smoke test uses an installed Playwright/Chromium runtime and owns a preview on port 4322. It exercises the free flow, zero-trial subscription, both payment gates, unavailable settings, unsafe SSO fallback, and existing Google callback. All API and provider traffic is intercepted with deterministic fixtures; it never creates a real account or payment. Set `ONBOARDING_TEST_URL` to use a separately owned preview, or `CHROMIUM_EXECUTABLE_PATH` to select an installed browser. Browser dependencies are optional and are not added to the application bundle.
 
-### Styling Social Buttons
-
-Edit `src/components/forms/SocialAuthButtons.astro` to:
-
-- Add more providers
-- Change button styling
-- Modify divider appearance
-
-### Removing Social Auth
-
-Simply remove the `<SocialAuthButtons />` component from the page files.
-
-## Navigation Integration
-
-The header automatically includes:
-
-- "Login" link → `/login`
-- "Get Started" button → `/register`
-
-These are configured in `src/config/navigation.ts` and rendered in `src/components/layout/Header.astro`.
+These checks do not prove live email delivery, Paystack settlement, or a configured Core SSO provider. Staging acceptance must use approved provider credentials and the deployed Control Plane contract. No frontend fallback can invent provider availability or bypass server verification.

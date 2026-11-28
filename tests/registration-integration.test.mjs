@@ -1,178 +1,76 @@
-/**
- * MarkChat Batch 5: Registration & Provisioning Integration Verification Tests
- *
- * Verifies that the marketing registration frontend integrates directly with the
- * Control Plane registration saga API (/api/v1/registration), ensures durable
- * idempotency, implements polling for asynchronous provisioning, handles SSO
- * redirection, and sanitizes errors without leaking stack traces.
- */
-
+/** Wiring checks complement executable session/OTP/policy tests in registration-client.test.mjs. */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const marketingRoot = path.resolve(__dirname, '..');
+const form = fs.readFileSync('src/components/forms/RegisterForm.astro', 'utf8');
+const page = fs.readFileSync('src/pages/register.astro', 'utf8');
 
-describe('Batch 5: Registration and Provisioning Integration', () => {
-  const registerFormPath = path.join(
-    marketingRoot,
-    'src',
-    'components',
-    'forms',
-    'RegisterForm.astro'
-  );
-  const registerFormSource = fs.readFileSync(registerFormPath, 'utf8');
-
-  test('RegisterForm includes API URL data attribute and honeypot field', () => {
-    assert.match(
-      registerFormSource,
-      /data-api-url=\{controlPlaneUrl\}/,
-      'Form must include data-api-url configured for Control Plane API'
-    );
-    assert.match(
-      registerFormSource,
-      /name="_gotcha"/,
-      'Form must include hidden honeypot input for anti-bot defense'
-    );
+describe('Verified registration and automatic customer handoff', () => {
+  test('registration retains Virex form controls, honeypot, and the configured API boundary', () => {
+    assert.match(form, /data-api-url=\{controlPlaneUrl\}/);
+    assert.match(form, /name="_gotcha"/);
+    for (const name of ['businessName', 'fullName', 'email', 'password', 'planId']) {
+      assert.ok(form.includes('name="' + name + '"'));
+    }
+    assert.ok(!form.includes('enterprise: {'));
+    assert.ok(!form.includes('Launch SMS Studio'));
   });
 
-  test('RegisterForm submit handler generates and persists Idempotency-Key in sessionStorage', () => {
-    assert.match(
-      registerFormSource,
-      /sessionStorage\.getItem\(['"]markchat_reg_idempotency_key['"]\)/,
-      'Must check sessionStorage for durable idempotency key'
-    );
-    assert.match(
-      registerFormSource,
-      /'Idempotency-Key':\s*idempotencyKey/,
-      'Must inject Idempotency-Key header into registration request'
-    );
-    assert.match(
-      registerFormSource,
-      /sessionStorage\.setItem\(['"]markchat_reg_idempotency_key['"]/,
-      'Must persist generated key in sessionStorage'
-    );
+  test('the wizard offers accessible six-digit email verification and submits the signed proof', () => {
+    for (const attribute of [
+      'id="send-email-otp"',
+      'id="verify-email-otp"',
+      'autocomplete="one-time-code"',
+      'inputmode="numeric"',
+      'maxlength="6"',
+    ]) {
+      assert.ok(form.includes(attribute));
+    }
+    assert.ok(form.includes('emailVerification.token'));
+    assert.ok(form.includes('otpVerificationToken:'));
+    assert.ok(form.includes('emailVerification.setEmail(emailInput.value)'));
+    assert.ok(form.includes('GOOGLE_SIGNUP_EMAIL_VERIFICATION_REQUIRED'));
   });
 
-  test('Form payload matches Control Plane registration contract', () => {
-    // Check that all required contract fields are gathered
-    assert.match(registerFormSource, /businessName/, 'Payload must contain businessName');
-    assert.match(registerFormSource, /fullName/, 'Payload must contain fullName');
-    assert.match(registerFormSource, /email/, 'Payload must contain email');
-    assert.match(registerFormSource, /password/, 'Payload must contain password');
-    assert.match(registerFormSource, /planId/, 'Payload must contain planId');
-
-    // Verify endpoint path
-    assert.match(
-      registerFormSource,
-      /\/api\/v1\/registration/,
-      'Must dispatch to /api/v1/registration'
-    );
+  test('registration retains a durable idempotency key and bounded provisioning checks', () => {
+    assert.ok(form.includes("sessionStorage.getItem('markchat_reg_idempotency_key')"));
+    assert.ok(form.includes("sessionStorage.setItem('markchat_reg_idempotency_key'"));
+    assert.ok(form.includes("'Idempotency-Key': idempotencyKey"));
+    assert.ok(form.includes('attempt < maxAttempts'));
+    assert.ok(form.includes("statusData.status === 'completed'"));
+    assert.ok(form.includes("statusData.status === 'failed'"));
   });
 
-  test('Missing verificationRequired cannot silently bypass the KES 82 gate', () => {
-    assert.ok(registerFormSource.includes("typeof data.verificationRequired !== 'boolean'"));
-    assert.ok(
-      registerFormSource.indexOf("typeof data.verificationRequired !== 'boolean'") <
-        registerFormSource.indexOf('if (data.verificationRequired === true)')
-    );
-    assert.ok(registerFormSource.includes('Registration verification is temporarily unavailable'));
+  test('trial and payment presentation uses live settings and server remaining gates', () => {
+    assert.ok(form.includes('fetchRegistrationOptions(apiUrl)'));
+    assert.ok(form.includes('formatTrialDuration(registrationOptions.trialHours)'));
+    assert.ok(form.includes('registrationPaymentRequired(statusData.paymentRequirements)'));
+    assert.ok(form.includes('prepareRegistrationPayment(apiUrl, registration, purpose,'));
+    assert.ok(form.includes('readPendingRegistrationPayment()'));
+    assert.ok(!form.includes('72-Hr Free Trial'));
+    assert.ok(!page.includes('KES 82'));
   });
 
-  test('KES 82 verification exchanges signed capability for hosted checkout', () => {
-    assert.ok(registerFormSource.includes('data.verificationRequired === true'));
-    assert.ok(registerFormSource.includes('data.verificationToken'));
-    assert.ok(registerFormSource.includes('/verification-checkout'));
-    assert.ok(registerFormSource.includes('Authorization: `Bearer'));
-    assert.ok(registerFormSource.includes('checkout?.amountKesCents !== 8200'));
-    assert.ok(registerFormSource.includes("checkout?.currency !== 'KES'"));
-    assert.ok(registerFormSource.includes('window.location.assign(checkout.authorizationUrl)'));
-    assert.ok(registerFormSource.includes('markchat_verification_pending'));
-    assert.ok(!registerFormSource.includes("sessionStorage.setItem('markchat_verificationToken'"));
+  test('payment recovery uses the shared scoped checks and a separate explicit retry action', () => {
+    assert.ok(form.includes('id="retry-registration-payment"'));
+    assert.ok(form.includes("progress.kind === 'retry'"));
+    assert.ok(form.includes("progress.kind === 'connection_retry'"));
+    assert.ok(form.includes('await beginPayment(registration, purpose, true)'));
+    assert.ok(!form.includes('startRegistrationCheckout('));
+    assert.ok(!form.includes('savePendingRegistrationPayment('));
+    assert.ok(!form.includes("window.location.assign('/billing/return')"));
   });
 
-  test('Completed registration and an existing pending checkout never trigger a second charge', () => {
-    assert.ok(
-      registerFormSource.indexOf("if (data.status === 'completed')") <
-        registerFormSource.indexOf('if (data.verificationRequired === true)')
-    );
-    assert.ok(
-      registerFormSource.includes(
-        "const previousRaw = sessionStorage.getItem('markchat_verification_pending')"
-      )
-    );
-    assert.ok(registerFormSource.includes('previous?.registrationId === registrationId'));
-    assert.ok(registerFormSource.includes("window.location.assign('/billing/return')"));
-  });
-
-  test('Verification-disabled registration retains bounded saga polling', () => {
-    assert.ok(
-      registerFormSource.includes('Verification is OFF: proceed with standard saga polling')
-    );
-    assert.ok(
-      registerFormSource.includes('pollRegistrationStatus(apiUrl, registrationId, redirectTarget)')
-    );
-    assert.ok(registerFormSource.includes('KES 82 is charged to confirm payment ownership'));
-    assert.ok(registerFormSource.includes('automatically refunded within 3 days'));
-  });
-
-  test('Registration remains Core-only Starter, Growth and Scale', () => {
-    assert.ok(!registerFormSource.includes('enterprise: {'));
-    assert.ok(!registerFormSource.includes('Launch SMS Studio'));
-  });
-
-  test('Asynchronous saga polling loop handles status lifecycle', () => {
-    assert.match(
-      registerFormSource,
-      /\/api\/v1\/registration\/\$\{registrationId\}/,
-      'Must query registration status endpoint during polling'
-    );
-    assert.match(
-      registerFormSource,
-      /statusData\.status === 'completed'/,
-      'Must check for completed saga status'
-    );
-    assert.match(
-      registerFormSource,
-      /statusData\.status === 'failed'/,
-      'Must check for failed saga status'
-    );
-    assert.match(
-      registerFormSource,
-      /maxAttempts/,
-      'Must enforce a bounded maximum polling count to prevent infinite polling'
-    );
-  });
-
-  test('Safe post-registration login redirect and error sanitization integrity', () => {
-    assert.match(
-      registerFormSource,
-      /completeRegistration\(redirectTarget\)/,
-      'Completed provisioning must lead to the registration completion handler'
-    );
-    assert.match(
-      registerFormSource,
-      /const destination = '\/login\?redirect=' \+ encodeURIComponent\(redirectTarget\)/,
-      'Registration must lead to local login with an encoded redirect target'
-    );
+  test('completed provisioning exchanges a session capability before the validated handoff', () => {
+    assert.ok(form.includes('obtainRegistrationSession(apiUrl, registration, credentials)'));
+    assert.ok(form.includes('persistCustomerSession(handoff.token)'));
+    assert.ok(form.includes('customerDestination(handoff.ssoUrl, registration.redirectTarget)'));
+    assert.ok(form.includes('saveRegistrationResume(currentRegistration)'));
+    assert.ok(form.includes("sessionStorage.removeItem('markchat_reg_idempotency_key')"));
     assert.doesNotMatch(
-      registerFormSource,
-      /window\.location\.href\s*=\s*(?:statusData|data)\.ssoUrl/,
-      'Untrusted Control Plane SSO URLs must not be used as browser navigation targets'
-    );
-    assert.match(
-      registerFormSource,
-      /sessionStorage\.removeItem\(['"]markchat_reg_idempotency_key['"]\)/,
-      'Must clear idempotency key upon successful provisioning'
-    );
-    assert.match(
-      registerFormSource,
-      /!errData\.message\.includes\(['"]stack['"]\)/,
-      'Must sanitize error messages to prevent exposing stack traces to customers'
+      form,
+      /window\.location\.(?:href|assign)\s*(?:=|\()\s*(?:statusData|data)\.ssoUrl/
     );
   });
 });

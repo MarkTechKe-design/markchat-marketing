@@ -82,19 +82,17 @@ const controlPlaneUrl =
             >Workspace subscription</span
           >
           <div class="flex items-center gap-3 mt-1">
-            <h2 id="current-plan-name" class="text-xl font-bold text-text">
-              Confirm your subscription
-            </h2>
+            <h2 id="current-plan-name" class="text-xl font-bold text-text">Workspace billing</h2>
             <span
               id="current-plan-status-badge"
               class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
             >
-              Verification required
+              Account status
             </span>
           </div>
           <p id="current-plan-expiry-text" class="text-xs text-text-muted mt-1">
-            Your exact plan and subscription status must be confirmed through the Control Plane.
-            Core channel access depends on provisioning.
+            Sign in to manage your workspace subscription. Your active plan and trial are confirmed
+            by MarkChat when you open your workspace.
           </p>
         </div>
         <div class="flex flex-col sm:items-end gap-2 shrink-0">
@@ -284,6 +282,8 @@ const controlPlaneUrl =
 </BaseLayout>
 
 <script>
+  import { readCustomerSession } from '@/lib/customer-session';
+
   const container = document.getElementById('billing-portal-container');
   const apiUrl = container?.dataset.apiUrl || 'http://localhost:5000';
   const checkoutBtn = document.getElementById('billing-checkout-btn') as HTMLButtonElement;
@@ -303,20 +303,7 @@ const controlPlaneUrl =
     errorBox?.classList.add('hidden');
   }
 
-  // Pre-fill phone if saved in localStorage
   const phoneInput = document.getElementById('billingPhone') as HTMLInputElement;
-  const savedUser = localStorage.getItem('markchat_user');
-  if (savedUser) {
-    try {
-      const parsed = JSON.parse(savedUser);
-      if (parsed.email) {
-        const backLink = document.getElementById('billing-back-link');
-        if (backLink) backLink.textContent = `Signed in as ${parsed.email}`;
-      }
-    } catch {
-      // ignore parse
-    }
-  }
 
   // Honor plan selection; block unsupported annual checkout rather than misbill.
   const intent = new URLSearchParams(window.location.search);
@@ -370,7 +357,7 @@ const controlPlaneUrl =
     btnLabel?.classList.add('hidden');
     btnLoading?.classList.remove('hidden');
 
-    const token = localStorage.getItem('markchat_cp_token');
+    const token = readCustomerSession();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       Accept: 'application/json',

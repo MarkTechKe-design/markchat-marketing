@@ -25,7 +25,7 @@ test('OAuth callback accepts only browser-bound one-use server ticket exchange',
 });
 
 test('Password login refuses arbitrary SSO redirects', () => {
-  assert.match(login, /https:\/\/app\.markchat\.co\.ke/);
-  assert.match(login, /candidate\.pathname\.startsWith\('\/app\/'\)/);
+  assert.match(login, /customerDestination\(payload\.ssoUrl, targetRedirect\)/);
+  assert.match(login, /persistCustomerSession\(payload\.token\)/);
   assert.doesNotMatch(login, /const destination = payload\.ssoUrl \|\| targetRedirect/);
 });
