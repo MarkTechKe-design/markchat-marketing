@@ -151,6 +151,22 @@ test('rejects CFB magic with fake WordDocument text instead of a real directory 
   assert.equal(await validateCareerCv(file(spoof, 'cv.doc')), null);
 });
 
+test('rejects active PDF tokens including hexadecimal escapes', async () => {
+  const original = fixture('pdf').toString('latin1');
+  for (const token of [
+    '/JavaScript', '/JS', '/OpenAction', '/AA',
+    '/Launch', '/EmbeddedFile', '/RichMedia', '/XFA',
+    '/J#53', '/Open#41ction', '/Embedded#46ile',
+  ]) {
+    const malicious = original.replace('/Root ', token + ' /Root ');
+    assert.equal(
+      await validateCareerCv(file(Buffer.from(malicious, 'latin1'), 'active.pdf')),
+      null,
+      token
+    );
+  }
+});
+
 test('rejects non-Word, encrypted and macro-bearing compound documents', async () => {
   const original = fixture('doc');
   const wordName = Buffer.from('WordDocument', 'utf16le');

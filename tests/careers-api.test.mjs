@@ -2,10 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
+import { createHash, createHmac } from 'node:crypto';
 import { onRequestPost } from '../functions/api/careers/apply.ts';
 import { onRequestGet as list } from '../functions/api/careers/applications.ts';
 import { onRequestPatch } from '../functions/api/careers/application.ts';
 import { onRequestGet as download } from '../functions/api/careers/cv.ts';
+import { onRequestPost as scanResult } from '../functions/api/careers/cv-scan-result.ts';
 
 const origin = 'https://markchat.co.ke';
 const pdf = readFileSync(new URL('./fixtures/careers/sample-cv.pdf', import.meta.url));
@@ -53,13 +55,23 @@ function fixture() {
         return { key };
       },
       async get(key) {
-        return objects.has(key) ? { body: objects.get(key) } : null;
+        if (!objects.has(key)) return null;
+        const bytes = objects.get(key);
+        return {
+          body: new ReadableStream({
+            start(controller) {
+              controller.enqueue(bytes);
+              controller.close();
+            },
+          }),
+        };
       },
       async delete(key) {
         objects.delete(key);
       },
     },
     RATE_HASH_SECRET: 'x'.repeat(32),
+    CAREERS_SCAN_WEBHOOK_SECRET: 'scanner-auth-test-only-32-byte-secret-xxxxxxxx',
     CMS_API_BASE_URL: 'https://cms.example/bridge',
     RESEND_API_KEY: 'secret',
     RESEND_FROM_EMAIL: 'careers@markchat.co.ke',
@@ -105,7 +117,33 @@ function fixture() {
       }),
     };
   }
-  return { env, objects, sql, request, admin };
+  async function signedScan(id, status, bytes = pdf, overrides = {}) {
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const body = JSON.stringify({
+      status,
+      sha256: createHash('sha256').update(bytes).digest('hex'),
+      ...overrides,
+    });
+    const signature = createHmac('sha256', env.CAREERS_SCAN_WEBHOOK_SECRET)
+      .update(timestamp + '\n' + id + '\n' + body)
+      .digest('hex');
+    return scanResult(
+      {
+        env,
+        request: new Request(origin + '/api/careers/cv/' + id + '/scan-result', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-MarkChat-Scan-Timestamp': timestamp,
+            'X-MarkChat-Scan-Signature': 'sha256=' + signature,
+          },
+          body,
+        }),
+      },
+      id
+    );
+  }
+  return { env, objects, sql, request, admin, signedScan };
 }
 
 test('durable apply, authenticated listing, status and attachment', async (t) => {
@@ -130,7 +168,8 @@ test('durable apply, authenticated listing, status and attachment', async (t) =>
   const data = await (await list(f.admin('/api/careers/applications?search=tester'))).json();
   assert.equal(data.total, 1);
   assert.equal(data.applications[0].notificationSent, true);
-  assert.equal(data.applications[0].hasCv, true);
+  assert.equal(data.applications[0].hasCv, false);
+  assert.equal(data.applications[0].scanStatus, 'pending');
   assert.ok(!Object.keys(data.applications[0]).some((k) => /key/i.test(k)));
   assert.notEqual(data.applications[0].careerTitle, 'Forged');
   assert.equal(
@@ -146,10 +185,125 @@ test('durable apply, authenticated listing, status and attachment', async (t) =>
     ).status,
     200
   );
+  assert.equal((await download(f.admin('/api/careers/cv/' + id), id)).status, 423);
+  const pendingRow = f.sql.prepare(
+    'SELECT cv_key, scan_status FROM markchat_career_applications WHERE id=?'
+  ).get(id);
+  assert.equal(pendingRow.scan_status, 'pending');
+  assert.match(pendingRow.cv_key, /^quarantine\/applications\//);
+
+  const scanned = await f.signedScan(id, 'clean');
+  assert.equal(scanned.status, 200);
+  const released = f.sql.prepare(
+    'SELECT cv_key, scan_status FROM markchat_career_applications WHERE id=?'
+  ).get(id);
+  assert.equal(released.scan_status, 'clean');
+  assert.equal(released.cv_key, 'clean/applications/' + id + '/cv.pdf');
+  assert.equal(f.objects.has(pendingRow.cv_key), false);
+  assert.equal(f.objects.has(released.cv_key), true);
+
+  const ready = await (await list(f.admin('/api/careers/applications'))).json();
+  assert.equal(ready.applications[0].hasCv, true);
   const cv = await download(f.admin('/api/careers/cv/' + id), id);
   assert.match(cv.headers.get('Content-Disposition'), /^attachment/);
   assert.match(cv.headers.get('Content-Security-Policy'), /sandbox/);
   assert.deepEqual(Buffer.from(await cv.arrayBuffer()), pdf);
+});
+
+test('unsigned, tampered, expired and wrong-digest scanner verdicts never release CVs', async (t) => {
+  const f = fixture();
+  t.mock.method(globalThis, 'fetch', async () => Response.json([]));
+  const submitted = await onRequestPost(f.request());
+  assert.equal(submitted.status, 201);
+  const { id } = await submitted.json();
+  const path = '/api/careers/cv/' + id + '/scan-result';
+
+  const noAuth = await scanResult({
+    env: f.env,
+    request: new Request(origin + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'clean', sha256: '0'.repeat(64) }),
+    }),
+  }, id);
+  assert.equal(noAuth.status, 401);
+
+  const wrongDigest = await f.signedScan(id, 'clean', Buffer.from('other file'));
+  assert.equal(wrongDigest.status, 409);
+  assert.equal((await download(f.admin('/api/careers/cv/' + id), id)).status, 423);
+
+  const wrongSignature = new Request(origin + path, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-MarkChat-Scan-Timestamp': String(Math.floor(Date.now() / 1000)),
+      'X-MarkChat-Scan-Signature': 'sha256=' + '0'.repeat(64),
+    },
+    body: JSON.stringify({ status: 'clean', sha256: createHash('sha256').update(pdf).digest('hex') }),
+  });
+  assert.equal((await scanResult({ env: f.env, request: wrongSignature }, id)).status, 401);
+
+  const staleTimestamp = String(Math.floor(Date.now() / 1000) - 3600);
+  const body = JSON.stringify({ status: 'clean', sha256: createHash('sha256').update(pdf).digest('hex') });
+  const staleSignature = createHmac('sha256', f.env.CAREERS_SCAN_WEBHOOK_SECRET)
+    .update(staleTimestamp + '\n' + id + '\n' + body).digest('hex');
+  assert.equal((await scanResult({
+    env: f.env,
+    request: new Request(origin + path, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-MarkChat-Scan-Timestamp': staleTimestamp,
+        'X-MarkChat-Scan-Signature': 'sha256=' + staleSignature,
+      },
+      body,
+    }),
+  }, id)).status, 401);
+
+  assert.equal((await f.signedScan(id, 'clean')).status, 200);
+  assert.equal((await f.signedScan(id, 'clean')).status, 409, 'replayed verdict is not accepted');
+});
+
+test('infected and scan_failed verdicts remain quarantined without recruiter download', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => Response.json([]));
+  for (const status of ['infected', 'scan_failed']) {
+    const f = fixture();
+    const created = await onRequestPost(f.request());
+    const { id } = await created.json();
+    assert.equal((await f.signedScan(id, status)).status, 200);
+    const row = f.sql.prepare(
+      'SELECT cv_key, scan_status FROM markchat_career_applications WHERE id=?'
+    ).get(id);
+    assert.equal(row.scan_status, status);
+    assert.match(row.cv_key, /^quarantine\/applications\//);
+    assert.equal(f.objects.has(row.cv_key), true);
+    assert.equal((await download(f.admin('/api/careers/cv/' + id), id)).status, 423);
+    assert.equal((await f.signedScan(id, 'clean')).status, 409);
+  }
+});
+
+test('unconfirmed release copy or D1 transition fails closed', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => Response.json([]));
+  for (const failure of ['put', 'transition']) {
+    const f = fixture();
+    const created = await onRequestPost(f.request());
+    const { id } = await created.json();
+    if (failure === 'put') {
+      const put = f.env.MARKCHAT_CAREERS_BUCKET.put;
+      f.env.MARKCHAT_CAREERS_BUCKET.put = async (key, data) =>
+        key.startsWith('clean/') ? null : put(key, data);
+    } else {
+      const prepare = f.env.MARKCHAT_RATE_DB.prepare;
+      f.env.MARKCHAT_RATE_DB.prepare = (sql) =>
+        sql.startsWith('UPDATE markchat_career_applications SET scan_status')
+          ? { bind: () => ({ run: async () => ({ success: true, meta: { changes: 0 } }) }) }
+          : prepare(sql);
+    }
+    assert.equal((await f.signedScan(id, 'clean')).status, 503);
+    assert.equal((await download(f.admin('/api/careers/cv/' + id), id)).status, 423);
+    const state = f.sql.prepare('SELECT scan_status FROM markchat_career_applications WHERE id=?').get(id);
+    assert.equal(state.scan_status, 'pending');
+  }
 });
 
 test('invalid form, origin, throttling, rollback and auth failures', async (t) => {
