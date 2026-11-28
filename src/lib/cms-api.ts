@@ -2728,7 +2728,9 @@ export async function fetchCareerApplications(): Promise<CareerApplication[]> {
   } catch {
     // Fallback
   }
-  return getLocalItem<CareerApplication[]>(STORAGE_KEYS.applications, DEFAULT_CAREER_APPLICATIONS);
+  // No locally generated or demo candidates in the production applicant inbox.
+  // The recruiter must see only records returned by the authorized server.
+  return [];
 }
 
 /**
