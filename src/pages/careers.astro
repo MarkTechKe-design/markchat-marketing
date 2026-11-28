@@ -16,6 +16,7 @@ import { siteConfig } from '@/config';
 import { fetchCareersContent, type Career } from '@/lib/cms-api';
 import CareersEditorialHero from '@/components/careers/CareersEditorialHero.astro';
 import CareerApplicationNotice from '@/components/careers/CareerApplicationNotice.astro';
+import CareersApplicationForm from '@/components/careers/CareersApplicationForm.astro';
 
 // Static builds cannot establish current recruitment authorization. Never publish
 // bundled or cached roles as actual vacancies without a trusted runtime feed.
@@ -381,7 +382,13 @@ const defaultDeptAccent = {
         <div
           class="min-w-0 rounded-2xl border border-blue-700/15 bg-white p-4 text-slate-900 shadow-lg shadow-blue-950/20 dark:border-slate-800 dark:bg-surface dark:text-white sm:p-6 lg:col-span-8"
         >
-          <CareerApplicationNotice kind="talent" />
+          <div id="talent-application-closed">
+            <CareerApplicationNotice kind="talent" />
+          </div>
+          <div id="talent-application-open" hidden>
+            <h3 class="mb-5 text-lg font-bold">Join our Talent Pool</h3>
+            <CareersApplicationForm kind="talent_pool" />
+          </div>
         </div>
       </section>
     </div>
@@ -493,6 +500,22 @@ const defaultDeptAccent = {
       });
     } catch {
       return;
+    }
+    // Talent Pool has its own persisted policy and uses the same scanned-CV service.
+    try {
+      const stateResponse = await fetch('/api/careers/availability', { cache: 'no-store' });
+      const state = stateResponse.ok ? await stateResponse.json() : null;
+      if (state?.acceptingApplications === true && state?.acceptingTalentPool === true &&
+          state?.portalReady === true) {
+        const closed = document.getElementById('talent-application-closed');
+        const open = document.getElementById('talent-application-open');
+        if (closed && open) {
+          closed.hidden = true;
+          open.hidden = false;
+        }
+      }
+    } catch {
+      // Safe default is the closed recruitment notice.
     }
     if (roles.length === 0) return;
 
