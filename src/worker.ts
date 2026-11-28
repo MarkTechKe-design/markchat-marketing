@@ -1,5 +1,6 @@
 import type { EdgeEnv } from './lib/server/edge-security';
 import { onRequestPost as handleLeadPost } from '../functions/api/leads';
+import { onRequestGet as handleCareersAvailabilityGet } from '../functions/api/careers-availability';
 import {
   onRequestGet as handleMarkcopilotGet,
   onRequestPost as handleMarkcopilotPost,
@@ -33,6 +34,11 @@ export default {
       if (request.method === 'GET') return handleMarkcopilotGet(context);
       if (request.method === 'POST') return handleMarkcopilotPost(context);
       return methodNotAllowed('GET, POST');
+    }
+
+    if (pathname === '/api/careers/availability') {
+      if (request.method === 'GET') return handleCareersAvailabilityGet(context);
+      return methodNotAllowed('GET');
     }
 
     if (pathname === '/api/leads') {
