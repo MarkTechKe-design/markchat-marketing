@@ -36,7 +36,8 @@ async function authenticatedPayload(
     !signature ||
     !/^sha256=[a-f0-9]{64}$/i.test(signature) ||
     !/^application\/json(?:;|$)/i.test(context.request.headers.get('Content-Type') || '')
-  ) return null;
+  )
+    return null;
   const epoch = Number(timestamp);
   if (Math.abs(Math.floor(Date.now() / 1000) - epoch) > 300) return null;
   let raw: Uint8Array;
@@ -80,7 +81,8 @@ async function authenticatedPayload(
     !['clean', 'infected', 'scan_failed'].includes(String(fields.status)) ||
     typeof fields.sha256 !== 'string' ||
     !/^[a-f0-9]{64}$/i.test(fields.sha256)
-  ) return null;
+  )
+    return null;
   return { status: fields.status as ScanVerdict, sha256: fields.sha256.toLowerCase() };
 }
 
@@ -92,7 +94,10 @@ async function authenticatedPayload(
 export async function onRequestPost(context: EdgeContext, id: string): Promise<Response> {
   if (!applicationId.test(id)) return invalid();
   // Fail closed when scanner integration has not been provisioned.
-  if (!context.env.CAREERS_SCAN_WEBHOOK_SECRET || context.env.CAREERS_SCAN_WEBHOOK_SECRET.length < 32) {
+  if (
+    !context.env.CAREERS_SCAN_WEBHOOK_SECRET ||
+    context.env.CAREERS_SCAN_WEBHOOK_SECRET.length < 32
+  ) {
     return unavailable();
   }
   const verdict = await authenticatedPayload(context, id);
@@ -101,9 +106,10 @@ export async function onRequestPost(context: EdgeContext, id: string): Promise<R
   const bucket = context.env.MARKCHAT_CAREERS_BUCKET;
   if (!db || !bucket) return unavailable();
   try {
-    const row = await db.prepare(
-      'SELECT cv_key, cv_size, scan_status FROM markchat_career_applications WHERE id=?'
-    ).bind(id).first<PendingCv>();
+    const row = await db
+      .prepare('SELECT cv_key, cv_size, scan_status FROM markchat_career_applications WHERE id=?')
+      .bind(id)
+      .first<PendingCv>();
     if (!row) return missing();
     if (row.scan_status !== 'pending') {
       return httpJson({ success: false, error: 'Scan verdict already finalized.' }, 409);
@@ -112,15 +118,15 @@ export async function onRequestPost(context: EdgeContext, id: string): Promise<R
       !Number.isSafeInteger(row.cv_size) ||
       row.cv_size < 1 ||
       row.cv_size > MAX_CV_BYTES ||
-      !new RegExp('^(?:quarantine/)?applications/' + id + '/cv\\.(?:pdf|doc|docx)$', 'i').test(row.cv_key)
-    ) return unavailable();
+      !new RegExp('^(?:quarantine/)?applications/' + id + '/cv\\.(?:pdf|doc|docx)$', 'i').test(
+        row.cv_key
+      )
+    )
+      return unavailable();
 
     const file = await bucket.get(row.cv_key);
     if (!file) return unavailable();
-    const bytes = await readBoundedBytes(
-      { headers: new Headers(), body: file.body },
-      MAX_CV_BYTES
-    );
+    const bytes = await readBoundedBytes({ headers: new Headers(), body: file.body }, MAX_CV_BYTES);
     if (bytes.byteLength !== row.cv_size) return unavailable();
     const digest = bytesHex(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)));
     if (digest !== verdict.sha256) {
@@ -141,9 +147,12 @@ export async function onRequestPost(context: EdgeContext, id: string): Promise<R
     }
 
     const targetKey = releasedKey || row.cv_key;
-    const update = await db.prepare(
-      "UPDATE markchat_career_applications SET scan_status=?, cv_key=? WHERE id=? AND scan_status='pending' AND cv_key=?"
-    ).bind(verdict.status, targetKey, id, row.cv_key).run();
+    const update = await db
+      .prepare(
+        "UPDATE markchat_career_applications SET scan_status=?, cv_key=? WHERE id=? AND scan_status='pending' AND cv_key=?"
+      )
+      .bind(verdict.status, targetKey, id, row.cv_key)
+      .run();
     if (update.success !== true || update.meta?.changes !== 1) {
       // Keep all objects when the database acknowledgement is ambiguous.
       // The clean copy cannot be downloaded without the exact D1 transition.

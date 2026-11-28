@@ -186,17 +186,17 @@ test('durable apply, authenticated listing, status and attachment', async (t) =>
     200
   );
   assert.equal((await download(f.admin('/api/careers/cv/' + id), id)).status, 423);
-  const pendingRow = f.sql.prepare(
-    'SELECT cv_key, scan_status FROM markchat_career_applications WHERE id=?'
-  ).get(id);
+  const pendingRow = f.sql
+    .prepare('SELECT cv_key, scan_status FROM markchat_career_applications WHERE id=?')
+    .get(id);
   assert.equal(pendingRow.scan_status, 'pending');
   assert.match(pendingRow.cv_key, /^quarantine\/applications\//);
 
   const scanned = await f.signedScan(id, 'clean');
   assert.equal(scanned.status, 200);
-  const released = f.sql.prepare(
-    'SELECT cv_key, scan_status FROM markchat_career_applications WHERE id=?'
-  ).get(id);
+  const released = f.sql
+    .prepare('SELECT cv_key, scan_status FROM markchat_career_applications WHERE id=?')
+    .get(id);
   assert.equal(released.scan_status, 'clean');
   assert.equal(released.cv_key, 'clean/applications/' + id + '/cv.pdf');
   assert.equal(f.objects.has(pendingRow.cv_key), false);
@@ -218,14 +218,17 @@ test('unsigned, tampered, expired and wrong-digest scanner verdicts never releas
   const { id } = await submitted.json();
   const path = '/api/careers/cv/' + id + '/scan-result';
 
-  const noAuth = await scanResult({
-    env: f.env,
-    request: new Request(origin + path, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'clean', sha256: '0'.repeat(64) }),
-    }),
-  }, id);
+  const noAuth = await scanResult(
+    {
+      env: f.env,
+      request: new Request(origin + path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'clean', sha256: '0'.repeat(64) }),
+      }),
+    },
+    id
+  );
   assert.equal(noAuth.status, 401);
 
   const wrongDigest = await f.signedScan(id, 'clean', Buffer.from('other file'));
@@ -239,26 +242,41 @@ test('unsigned, tampered, expired and wrong-digest scanner verdicts never releas
       'X-MarkChat-Scan-Timestamp': String(Math.floor(Date.now() / 1000)),
       'X-MarkChat-Scan-Signature': 'sha256=' + '0'.repeat(64),
     },
-    body: JSON.stringify({ status: 'clean', sha256: createHash('sha256').update(pdf).digest('hex') }),
+    body: JSON.stringify({
+      status: 'clean',
+      sha256: createHash('sha256').update(pdf).digest('hex'),
+    }),
   });
   assert.equal((await scanResult({ env: f.env, request: wrongSignature }, id)).status, 401);
 
   const staleTimestamp = String(Math.floor(Date.now() / 1000) - 3600);
-  const body = JSON.stringify({ status: 'clean', sha256: createHash('sha256').update(pdf).digest('hex') });
+  const body = JSON.stringify({
+    status: 'clean',
+    sha256: createHash('sha256').update(pdf).digest('hex'),
+  });
   const staleSignature = createHmac('sha256', f.env.CAREERS_SCAN_WEBHOOK_SECRET)
-    .update(staleTimestamp + '\n' + id + '\n' + body).digest('hex');
-  assert.equal((await scanResult({
-    env: f.env,
-    request: new Request(origin + path, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-MarkChat-Scan-Timestamp': staleTimestamp,
-        'X-MarkChat-Scan-Signature': 'sha256=' + staleSignature,
-      },
-      body,
-    }),
-  }, id)).status, 401);
+    .update(staleTimestamp + '\n' + id + '\n' + body)
+    .digest('hex');
+  assert.equal(
+    (
+      await scanResult(
+        {
+          env: f.env,
+          request: new Request(origin + path, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-MarkChat-Scan-Timestamp': staleTimestamp,
+              'X-MarkChat-Scan-Signature': 'sha256=' + staleSignature,
+            },
+            body,
+          }),
+        },
+        id
+      )
+    ).status,
+    401
+  );
 
   assert.equal((await f.signedScan(id, 'clean')).status, 200);
   assert.equal((await f.signedScan(id, 'clean')).status, 409, 'replayed verdict is not accepted');
@@ -271,9 +289,9 @@ test('infected and scan_failed verdicts remain quarantined without recruiter dow
     const created = await onRequestPost(f.request());
     const { id } = await created.json();
     assert.equal((await f.signedScan(id, status)).status, 200);
-    const row = f.sql.prepare(
-      'SELECT cv_key, scan_status FROM markchat_career_applications WHERE id=?'
-    ).get(id);
+    const row = f.sql
+      .prepare('SELECT cv_key, scan_status FROM markchat_career_applications WHERE id=?')
+      .get(id);
     assert.equal(row.scan_status, status);
     assert.match(row.cv_key, /^quarantine\/applications\//);
     assert.equal(f.objects.has(row.cv_key), true);
@@ -301,7 +319,9 @@ test('unconfirmed release copy or D1 transition fails closed', async (t) => {
     }
     assert.equal((await f.signedScan(id, 'clean')).status, 503);
     assert.equal((await download(f.admin('/api/careers/cv/' + id), id)).status, 423);
-    const state = f.sql.prepare('SELECT scan_status FROM markchat_career_applications WHERE id=?').get(id);
+    const state = f.sql
+      .prepare('SELECT scan_status FROM markchat_career_applications WHERE id=?')
+      .get(id);
     assert.equal(state.scan_status, 'pending');
   }
 });

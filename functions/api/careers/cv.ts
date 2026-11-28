@@ -22,9 +22,7 @@ export async function onRequestGet(context: EdgeContext, id: string): Promise<Re
       .bind(id)
       .first<{ cv_key: string; cv_filename: string; cv_mime: string; scan_status: string }>();
     if (!row) return missing();
-    const releasedKey = /^clean\/applications\/[0-9a-f-]+\/cv\.(?:pdf|doc|docx)$/i.test(
-      row.cv_key
-    );
+    const releasedKey = /^clean\/applications\/[0-9a-f-]+\/cv\.(?:pdf|doc|docx)$/i.test(row.cv_key);
     if (
       row.scan_status !== 'clean' ||
       !releasedKey ||

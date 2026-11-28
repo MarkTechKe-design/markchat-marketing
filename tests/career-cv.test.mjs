@@ -154,9 +154,17 @@ test('rejects CFB magic with fake WordDocument text instead of a real directory 
 test('rejects active PDF tokens including hexadecimal escapes', async () => {
   const original = fixture('pdf').toString('latin1');
   for (const token of [
-    '/JavaScript', '/JS', '/OpenAction', '/AA',
-    '/Launch', '/EmbeddedFile', '/RichMedia', '/XFA',
-    '/J#53', '/Open#41ction', '/Embedded#46ile',
+    '/JavaScript',
+    '/JS',
+    '/OpenAction',
+    '/AA',
+    '/Launch',
+    '/EmbeddedFile',
+    '/RichMedia',
+    '/XFA',
+    '/J#53',
+    '/Open#41ction',
+    '/Embedded#46ile',
   ]) {
     const malicious = original.replace('/Root ', token + ' /Root ');
     assert.equal(
