@@ -46,7 +46,7 @@ export default {
       if (request.method === 'GET') return listPublicRoles(context);
       return methodNotAllowed('GET');
     }
-    const rolePath = pathname.match(/^\\/api\\/careers\\/roles\\/([a-z0-9-]+)$/);
+    const rolePath = pathname.match(new RegExp('^/api/careers/roles/([a-z0-9-]+)$'));
     if (rolePath) {
       if (request.method === 'GET') return getPublicRole(context, rolePath[1]);
       return methodNotAllowed('GET');
@@ -63,7 +63,7 @@ export default {
 
     // Runtime role URLs are only served when the authoritative backend confirms
     // an active, published vacancy. Never resurrect seeded static JobPosting pages.
-    const publicJobPath = pathname.match(/^\\/careers\\/([a-z0-9-]+)$/);
+    const publicJobPath = pathname.match(new RegExp('^/careers/([a-z0-9-]+)$'));
     if (publicJobPath && publicJobPath[1] !== 'position') {
       if (request.method !== 'GET' && request.method !== 'HEAD') {
         return methodNotAllowed('GET, HEAD');
@@ -113,8 +113,8 @@ export default {
       const jobPostingScript = '<script type="application/ld+json">' +
         JSON.stringify(schema).replace(/</g, '\\u003c') + '</script>';
       let html = await template.text();
-      html = html.replace(/<title>[^<]*<\\/title>/i, '<title>' + title + '</title>');
-      html = html.replace(/<meta\\s+name="robots"[^>]*>/i, '');
+      html = html.replace(new RegExp('<title>[^<]*</title>', 'i'), '<title>' + title + '</title>');
+      html = html.replace(new RegExp('<meta\\s+name="robots"[^>]*>', 'i'), '');
       html = html.replace('</head>', jobPostingScript + '</head>');
       const headers = new Headers(template.headers);
       headers.set('Content-Type', 'text/html; charset=utf-8');
