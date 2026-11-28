@@ -190,6 +190,36 @@ test('pending attempts without a hosted URL and successful payments never create
   }
 });
 
+test('received registration payments needing reconciliation preserve proof and never initialize or promise activation', async () => {
+  const store = storage();
+  savePayment(store);
+  const requests = [];
+  const result = await prepareRegistrationPayment(apiUrl, registration, purpose, {
+    storage: store,
+    allowRetry: true,
+    fetcher: async (url, init) => {
+      requests.push({ url, method: init.method });
+      assert.notEqual(init.method, 'POST');
+      return envelope(
+        payment('success', {
+          requiresReconciliation: true,
+          reconciliationReason: 'subscription_changed',
+        })
+      );
+    },
+  });
+  assert.equal(result.kind, 'waiting');
+  assert.equal(result.payment.status, 'success');
+  assert.equal(result.payment.requiresReconciliation, true);
+  assert.equal(result.payment.reconciliationReason, 'subscription_changed');
+  assert.equal(result.payment.retryAllowed, false);
+  assert.equal(result.payment.authorizationUrl, null);
+  assert.match(result.message, /received.*support.*reconcil/i);
+  assert.doesNotMatch(result.message, /activation is still processing|awaiting confirmation/i);
+  assert.equal(readPendingRegistrationPayment(store).reference, 'reference-original');
+  assert.equal(requests.length, 1);
+});
+
 test('discovery recovers an initialization response lost before the browser saved its reference', async () => {
   const store = storage();
   const result = await prepareRegistrationPayment(apiUrl, registration, 'account_verification', {

@@ -1,168 +1,282 @@
 ---
-/**
- * MarkChat Payment Return & Verification Handler
- *
- * Consumes Paystack redirect parameters (?reference=...&trxref=...),
- * verifies transaction settlement, and provides one-click Chatwoot SSO launch.
- */
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import BillingBrand from '@/components/billing/BillingBrand.astro';
+import ThemeToggle from '@/components/ui/ThemeToggle.astro';
+import { Icon } from 'astro-icon/components';
+import { primaryCtaClasses } from '@/lib/cta-classes';
 import { siteConfig } from '@/config';
 
 const controlPlaneUrl =
   import.meta.env.PUBLIC_CONTROL_PLANE_URL ||
   import.meta.env.PUBLIC_CONTROL_PLANE_API_URL ||
   'http://localhost:5000';
+const steps = [
+  {
+    id: 'payment',
+    title: 'Payment verified',
+    note: 'Waiting for confirmation from the payment service.',
+  },
+  {
+    id: 'entitlements',
+    title: 'Workspace entitlements synced',
+    note: 'Your plan and access are applied to your workspace.',
+  },
+  {
+    id: 'workspace',
+    title: 'Ready to launch',
+    note: 'A secure workspace destination is confirmed.',
+  },
+];
 ---
 
 <BaseLayout
   title={`Payment Settlement — ${siteConfig.name} Kenya`}
-  description="Verification and settlement status for your MarkChat subscription payment."
+  description="Follow your payment confirmation, workspace synchronization, and secure launch."
+  noindex={true}
 >
   <div
-    class="min-h-screen w-full flex items-center justify-center bg-surface dark:bg-background relative overflow-hidden px-4 py-12 transition-colors duration-200"
-    data-api-url={controlPlaneUrl}
     id="return-container"
+    data-api-url={controlPlaneUrl}
+    class="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0B1120] dark:text-slate-100"
   >
-    <div class="w-full max-w-lg relative z-10">
-      <div
-        class="p-8 rounded-xl border border-border bg-background dark:bg-surface shadow-none text-center"
-      >
-        <!-- Brand Emblem -->
-        <div
-          class="mx-auto w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white font-extrabold text-lg shadow-none mb-6"
-        >
-          M
-        </div>
-
-        <!-- 1. Verification In Progress State -->
-        <div id="state-verifying" class="space-y-4">
-          <div
-            class="w-12 h-12 mx-auto border-4 border-primary/20 border-t-primary rounded-full animate-spin"
-          >
-          </div>
-          <h1 class="text-2xl font-bold text-text">Verifying Transaction...</h1>
-          <p class="text-sm text-text-muted">
-            Reconciling your payment with Paystack & Safaricom M-Pesa. Please keep this window open.
-          </p>
-        </div>
-
-        <!-- 2. Success State -->
-        <div id="state-success" class="hidden space-y-6">
-          <div
-            class="w-16 h-16 mx-auto rounded-full bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 flex items-center justify-center text-emerald-600 dark:text-emerald-400"
-          >
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2.5"
-                d="M5 13l4 4L19 7"></path>
-            </svg>
-          </div>
-          <div>
-            <h1 class="text-2xl font-extrabold text-text">Payment Settled!</h1>
-            <p id="settlement-success-message" class="text-sm text-text-muted mt-1">
-              Payment confirmed by the Control Plane. Workspace provisioning and access may still be
-              finishing.
-            </p>
-          </div>
-
-          <!-- Receipt Details -->
-          <div
-            id="payment-receipt"
-            class="hidden p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-left text-xs space-y-2"
-          >
-            <div class="flex justify-between">
-              <span class="text-slate-500">Transaction Reference:</span>
-              <span id="receipt-ref" class="font-mono font-bold text-slate-800 dark:text-slate-200"
-              ></span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-slate-500">Amount Paid:</span>
-              <span id="receipt-amount" class="font-bold text-slate-800 dark:text-slate-200"></span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-slate-500">Payment Status:</span>
-              <span class="font-bold text-emerald-600 dark:text-emerald-400 uppercase"
-                >Payment confirmed</span
-              >
-            </div>
-          </div>
-
-          <a
-            href="/"
-            id="launch-workspace-btn"
-            class="block w-full py-3.5 px-6 rounded-xl bg-primary text-white font-bold hover:bg-primary-hover transition-colors shadow-none text-sm"
-          >
-            Launch MarkChat Workspace &rarr;
-          </a>
-        </div>
-
-        <div id="state-pending" class="hidden space-y-4" role="status">
-          <h1 id="pending-title" class="text-2xl font-bold text-text">
-            Confirmation is still processing
-          </h1>
-          <p id="pending-reason" class="text-sm text-text-muted">
-            Your payment has not yet been confirmed. We will not activate your workspace until the
-            Control Plane confirms it.
-          </p>
-          <button
-            id="continue-registration-payment"
-            type="button"
-            class="hidden w-full py-3 px-4 rounded-xl bg-primary text-white text-sm font-semibold disabled:opacity-50 cursor-pointer"
-            >Continue to subscription payment</button
-          >
-          <a id="pending-resume" href="/register" class="inline-block text-primary underline"
-            >Return to registration</a
-          >
-        </div>
-
-        <!-- 3. Failed / Abandoned State -->
-        <div id="state-failed" class="hidden space-y-6">
-          <div
-            class="w-16 h-16 mx-auto rounded-full bg-rose-100 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-700 flex items-center justify-center text-rose-600 dark:text-rose-400"
-          >
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2.5"
-                d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </div>
-          <div>
-            <h1 class="text-2xl font-extrabold text-text">Payment Incomplete</h1>
-            <p id="failed-reason" class="text-sm text-text-muted mt-1">
-              Your payment could not be confirmed or was cancelled.
-            </p>
-          </div>
-
-          <div class="flex gap-3">
-            <a
-              href="/billing"
-              class="flex-1 py-3 px-4 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-hover transition-colors"
-            >
-              Retry Payment
-            </a>
-            <a
-              href="/login"
-              class="flex-1 py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              Go to Workspace
-            </a>
-          </div>
-        </div>
+    <header class="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <div class="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <BillingBrand /><ThemeToggle />
       </div>
-    </div>
+    </header>
+    <main id="main-content" class="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-16">
+      <div
+        class="mb-6 flex items-center justify-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400"
+      >
+        <Icon
+          name="lucide:shield-check"
+          class="h-4 w-4 text-blue-600 dark:text-blue-400"
+          aria-hidden="true"
+        /> Secure payment confirmation
+      </div>
+      <section
+        class="overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+        aria-label="Payment and workspace progress"
+      >
+        <div
+          class="border-b border-slate-200 p-6 text-center sm:p-8 dark:border-slate-800"
+          aria-live="polite"
+        >
+          <div id="state-verifying" class="space-y-3">
+            <div
+              class="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
+            >
+              <Icon
+                name="lucide:loader-circle"
+                class="h-6 w-6 animate-spin motion-reduce:animate-none"
+                aria-hidden="true"
+              />
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">
+              Bringing everything together.
+            </h1>
+            <p
+              id="verifying-message"
+              class="text-sm leading-relaxed text-slate-500 dark:text-slate-400"
+            >
+              We are checking your payment and workspace. This page will update as each step is
+              confirmed.
+            </p>
+          </div>
+          <div id="state-success" class="hidden space-y-3">
+            <div
+              class="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400"
+            >
+              <Icon name="lucide:check" class="h-6 w-6" aria-hidden="true" />
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Your workspace is ready.</h1>
+            <p
+              id="settlement-success-message"
+              class="text-sm leading-relaxed text-slate-500 dark:text-slate-400"
+            >
+              Payment is verified, your workspace is synchronized, and your secure launch is ready.
+            </p>
+          </div>
+          <div id="state-pending" class="hidden space-y-3" role="status">
+            <div
+              class="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400"
+            >
+              <Icon name="lucide:clock-3" class="h-6 w-6" aria-hidden="true" />
+            </div>
+            <h1 id="pending-title" class="text-2xl font-bold tracking-tight sm:text-3xl">
+              Confirmation is still processing
+            </h1>
+            <p
+              id="pending-reason"
+              class="text-sm leading-relaxed text-slate-500 dark:text-slate-400"
+            >
+              Please check again before making another payment.
+            </p>
+          </div>
+          <div id="state-reconciliation" class="hidden space-y-3" role="status">
+            <div
+              class="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400"
+            >
+              <Icon name="lucide:clipboard-check" class="h-6 w-6" aria-hidden="true" />
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">
+              Payment received. Plan review needed.
+            </h1>
+            <p
+              id="reconciliation-reason"
+              class="text-sm leading-relaxed text-slate-500 dark:text-slate-400"
+            >
+              Your payment has been received and needs support reconciliation before it can be
+              applied to your workspace. Please share the reference below with MarkChat support and
+              do not pay again.
+            </p>
+          </div>
+          <div id="state-failed" class="hidden space-y-3" role="alert">
+            <div
+              class="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400"
+            >
+              <Icon name="lucide:circle-alert" class="h-6 w-6" aria-hidden="true" />
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Payment is incomplete.</h1>
+            <p
+              id="failed-reason"
+              class="text-sm leading-relaxed text-slate-500 dark:text-slate-400"
+            >
+              Your payment could not be confirmed.
+            </p>
+          </div>
+        </div>
+        <div class="p-6 sm:p-8">
+          <ol class="space-y-5" aria-label="Workspace activation steps" aria-live="polite">
+            {
+              steps.map((step, index) => (
+                <li
+                  id={`step-${step.id}`}
+                  data-state={index === 0 ? 'current' : 'waiting'}
+                  class="group flex items-start gap-4"
+                >
+                  <span
+                    data-step-marker
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-400 group-data-[state=current]:border-blue-600 group-data-[state=current]:bg-blue-50 group-data-[state=current]:text-blue-600 group-data-[state=complete]:border-emerald-600 group-data-[state=complete]:bg-emerald-600 group-data-[state=complete]:text-white dark:border-slate-700 dark:bg-slate-800 dark:group-data-[state=current]:border-blue-400 dark:group-data-[state=current]:bg-blue-950 dark:group-data-[state=current]:text-blue-300 dark:group-data-[state=complete]:border-emerald-500 dark:group-data-[state=complete]:bg-emerald-500 dark:group-data-[state=complete]:text-slate-950"
+                    aria-hidden="true"
+                  >
+                    {index + 1}
+                  </span>
+                  <div class="min-w-0 flex-1 pt-0.5">
+                    <>
+                      <div class="flex flex-wrap items-center justify-between gap-2">
+                        <>
+                          <h2 class="text-sm font-semibold">{step.title}</h2>
+                          <span
+                            data-step-status
+                            class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 group-data-[state=current]:text-blue-600 group-data-[state=complete]:text-emerald-700 dark:group-data-[state=current]:text-blue-400 dark:group-data-[state=complete]:text-emerald-400"
+                          >
+                            {index === 0 ? 'Checking' : 'Waiting'}
+                          </span>
+                        </>
+                      </div>
+                      <p
+                        id={`step-${step.id}-note`}
+                        class="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400"
+                      >
+                        {step.note}
+                      </p>
+                    </>
+                  </div>
+                </li>
+              ))
+            }
+          </ol>
+          <dl
+            id="payment-receipt"
+            class="mt-7 hidden space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs dark:border-slate-700 dark:bg-slate-800/50"
+          >
+            <div class="flex flex-wrap justify-between gap-2">
+              <dt class="text-slate-500 dark:text-slate-400">Payment reference</dt><dd
+                id="receipt-ref"
+                class="max-w-full break-all font-mono font-medium"
+              >
+              </dd>
+            </div><div class="flex justify-between gap-3">
+              <dt class="text-slate-500 dark:text-slate-400">Confirmed amount</dt><dd
+                id="receipt-amount"
+                class="font-semibold"
+              >
+              </dd>
+            </div>
+          </dl>
+          <div class="mt-7 space-y-3">
+            <a
+              id="launch-workspace-btn"
+              role="link"
+              aria-disabled="true"
+              tabindex="-1"
+              class={primaryCtaClasses +
+                ' pointer-events-none flex w-full items-center justify-center gap-2 rounded-xl px-5 py-4 text-sm font-semibold opacity-50'}
+              >Launch MarkChat workspace <Icon
+                name="lucide:arrow-up-right"
+                class="h-4 w-4"
+                aria-hidden="true"
+              /></a
+            >
+            <button
+              id="continue-registration-payment"
+              type="button"
+              class={primaryCtaClasses +
+                ' hidden w-full cursor-pointer rounded-xl px-4 py-3 text-sm font-semibold'}
+              >Continue to subscription payment</button
+            >
+            <button
+              id="retry-status-btn"
+              type="button"
+              class="hidden w-full cursor-pointer rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800"
+              >Check status again</button
+            >
+            <p
+              id="launch-note"
+              class="text-center text-xs leading-relaxed text-slate-500 dark:text-slate-400"
+            >
+              Launch becomes available only after all three checks are complete.
+            </p>
+          </div>
+        </div>
+      </section>
+      <div class="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-xs">
+        <a
+          id="pending-resume"
+          href="/billing"
+          class="rounded font-semibold text-blue-600 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-blue-400"
+          >Return to billing</a
+        ><span class="text-slate-300 dark:text-slate-700" aria-hidden="true">·</span><a
+          href="mailto:hello@markchat.co.ke"
+          class="rounded text-slate-500 underline-offset-4 hover:underline dark:text-slate-400"
+          >Contact support</a
+        >
+      </div>
+      <noscript
+        ><p class="mt-6 rounded-xl border border-amber-300 p-4 text-sm">
+          Enable JavaScript to verify this payment. A returned payment reference alone does not
+          confirm payment or workspace access.
+        </p></noscript
+      >
+    </main>
   </div>
 </BaseLayout>
 
 <script>
   import {
-    customerDestination,
     persistCustomerSession,
     readCustomerSession,
+    safeSsoRedirect,
   } from '@/lib/customer-session';
+  import { fetchBillingSubscription, prepareWorkspaceLaunch } from '@/lib/billing-client';
+  import { clearBillingCheckoutIntent } from '@/lib/billing-checkout-intent';
+  import {
+    billingLoginDestination,
+    formatKes,
+    subscriptionSettlement,
+    registrationSettlement,
+  } from '@/lib/billing-state';
   import {
     RegistrationError,
     clearPendingRegistrationPayment,
@@ -188,6 +302,7 @@ const controlPlaneUrl =
   const stateSuccess = document.getElementById('state-success');
   const stateFailed = document.getElementById('state-failed');
   const statePending = document.getElementById('state-pending');
+  const stateReconciliation = document.getElementById('state-reconciliation');
   const pendingReason = document.getElementById('pending-reason');
   const pendingTitle = document.getElementById('pending-title');
   const pendingResume = document.getElementById('pending-resume') as HTMLAnchorElement;
@@ -196,31 +311,118 @@ const controlPlaneUrl =
   const continuePayment = document.getElementById(
     'continue-registration-payment'
   ) as HTMLButtonElement;
+  const retryStatus = document.getElementById('retry-status-btn') as HTMLButtonElement;
   let pending = readPendingRegistrationPayment();
   const registration = readRegistrationResume();
   const urlParams = new URLSearchParams(window.location.search);
+  const completedRegistrationId = urlParams.get('registration');
   const reference =
     urlParams.get('reference') || urlParams.get('trxref') || pending?.reference || null;
   let nextPayment: RegistrationPaymentPurpose | null = null;
   let nextAction: 'continue' | 'retry' = 'continue';
+  let checking = false;
+  let verifiedRegistrationToken: string | null = null;
+  let launchWorkspace: (() => Promise<string>) | null = null;
+  let receivedPaymentNeedsReconciliation = false;
+  let receiptReconciliationReason: string | null = null;
 
-  function reveal(which: 'success' | 'failed' | 'pending') {
-    stateVerifying?.classList.add('hidden');
+  function setSteps(payment: boolean, entitlements: boolean, destination?: string | null) {
+    const safeDestination = payment && entitlements ? safeSsoRedirect(destination) : null;
+    const completed = [payment, payment && entitlements, !!safeDestination];
+    ['payment', 'entitlements', 'workspace'].forEach((id, index) => {
+      const step = document.getElementById('step-' + id);
+      if (!step) return;
+      const current = !completed[index] && (index === 0 || completed[index - 1]);
+      step.dataset.state = completed[index] ? 'complete' : current ? 'current' : 'waiting';
+      const status = step.querySelector('[data-step-status]');
+      const marker = step.querySelector('[data-step-marker]');
+      if (status)
+        status.textContent = completed[index] ? 'Complete' : current ? 'Checking' : 'Waiting';
+      if (marker) marker.textContent = completed[index] ? '✓' : String(index + 1);
+      if (current) step.setAttribute('aria-current', 'step');
+      else step.removeAttribute('aria-current');
+    });
+    launchBtn.classList.toggle('pointer-events-none', !safeDestination);
+    launchBtn.classList.toggle('opacity-50', !safeDestination);
+    launchBtn.setAttribute('aria-disabled', String(!safeDestination));
+    launchBtn.tabIndex = safeDestination ? 0 : -1;
+    if (safeDestination) launchBtn.href = safeDestination;
+    else {
+      launchBtn.removeAttribute('href');
+      launchWorkspace = null;
+    }
+    const note = document.getElementById('launch-note');
+    if (note)
+      note.textContent = safeDestination
+        ? 'Your secure workspace session is ready.'
+        : 'Launch becomes available only after all three checks are complete.';
+    const entitlementNote = document.getElementById('step-entitlements-note');
+    const workspaceNote = document.getElementById('step-workspace-note');
+    if (entitlementNote)
+      entitlementNote.textContent = entitlements
+        ? 'The plan and workspace access for this payment are synchronized.'
+        : 'Waiting for the plan and workspace access to synchronize.';
+    if (workspaceNote)
+      workspaceNote.textContent = safeDestination
+        ? 'Your secure workspace destination has been confirmed.'
+        : 'A secure workspace destination must be confirmed before launch.';
+  }
+
+  function reveal(which: 'success' | 'failed' | 'pending' | 'reconciliation' | 'verifying') {
+    stateVerifying?.classList.toggle('hidden', which !== 'verifying');
     stateSuccess?.classList.toggle('hidden', which !== 'success');
     stateFailed?.classList.toggle('hidden', which !== 'failed');
     statePending?.classList.toggle('hidden', which !== 'pending');
+    stateReconciliation?.classList.toggle('hidden', which !== 'reconciliation');
   }
   function showPending(message: string) {
+    if (receivedPaymentNeedsReconciliation) {
+      showReconciliation(receiptReconciliationReason, message);
+      return;
+    }
     continuePayment?.classList.add('hidden');
     if (pendingTitle) pendingTitle.textContent = 'Confirmation is still processing';
     if (pendingReason) pendingReason.textContent = message;
     if (pendingResume) {
-      pendingResume.href = registration ? '/register' : '/login?redirect=%2Fbilling';
-      pendingResume.textContent = registration
-        ? 'Return to workspace setup'
-        : 'Sign in to your workspace';
+      pendingResume.href = registration && !verifiedRegistrationToken ? '/register' : '/billing';
+      pendingResume.textContent =
+        registration && !verifiedRegistrationToken
+          ? 'Return to workspace setup'
+          : 'Return to billing';
     }
+    retryStatus.classList.remove('hidden');
+    retryStatus.textContent = 'Check status again';
     reveal('pending');
+  }
+  function showReconciliation(reason: string | null, additionalMessage = '') {
+    setSteps(true, false);
+    continuePayment.classList.add('hidden');
+    const explanation = document.getElementById('reconciliation-reason');
+    if (explanation)
+      explanation.textContent =
+        (reason === 'subscription_changed'
+          ? 'Your workspace plan changed after this payment was started. Your payment has been received and MarkChat support needs to reconcile it with the correct plan.'
+          : 'Your payment has been received and MarkChat support needs to reconcile it with your workspace plan.') +
+        ' Please share the reference below with support and do not pay again.' +
+        (additionalMessage ? ' ' + additionalMessage : '');
+    const status = document.querySelector('#step-entitlements [data-step-status]');
+    if (status) status.textContent = 'Needs review';
+    const note = document.getElementById('step-entitlements-note');
+    if (note)
+      note.textContent =
+        'Support must reconcile the received payment before its plan can be applied.';
+    const launchNote = document.getElementById('launch-note');
+    if (launchNote)
+      launchNote.textContent =
+        'Launch is unavailable for this receipt until payment reconciliation is complete.';
+    pendingResume.href = registration && !verifiedRegistrationToken ? '/register' : '/billing';
+    pendingResume.textContent =
+      registration && !verifiedRegistrationToken
+        ? 'Resume saved workspace setup'
+        : 'Review billing and payment recovery';
+    retryStatus.classList.remove('hidden');
+    retryStatus.textContent = 'Check reconciliation status';
+    reveal('reconciliation');
   }
   function showFailed(message: string) {
     if (failedReason) failedReason.textContent = message;
@@ -231,6 +433,24 @@ const controlPlaneUrl =
     progress: RegistrationPaymentProgress,
     purpose: RegistrationPaymentPurpose
   ) {
+    if ('payment' in progress && progress.payment?.status === 'success') {
+      setSteps(true, false);
+      receivedPaymentNeedsReconciliation = progress.payment.requiresReconciliation;
+      receiptReconciliationReason = progress.payment.reconciliationReason || null;
+      if (receivedPaymentNeedsReconciliation) {
+        const receiptRef = document.getElementById('receipt-ref');
+        const receiptAmount = document.getElementById('receipt-amount');
+        if (receiptRef) receiptRef.textContent = progress.payment.reference;
+        if (receiptAmount) receiptAmount.textContent = formatKes(progress.payment.amountKesCents);
+        document.getElementById('payment-receipt')?.classList.remove('hidden');
+        const paymentNote = document.getElementById('step-payment-note');
+        if (paymentNote)
+          paymentNote.textContent =
+            'This workspace setup payment has been received. Its plan application requires support review.';
+        showReconciliation(receiptReconciliationReason);
+        return;
+      }
+    }
     let message: string;
     let label: string;
     nextPayment = purpose;
@@ -276,6 +496,10 @@ const controlPlaneUrl =
   // Initial registration has no customer JWT yet. Only server registration progress
   // decides which gates remain; a payment URL/reference never proves identity.
   async function checkRegistration() {
+    if (verifiedRegistrationToken) {
+      await finishRegistration(verifiedRegistrationToken);
+      return;
+    }
     if (!registration || (pending && registration.registrationId !== pending.registrationId)) {
       showPending(
         'Your secure setup session expired. Sign in or contact support to resume this workspace. Do not pay again.'
@@ -294,6 +518,22 @@ const controlPlaneUrl =
           await recoverRegistrationPaymentReference(apiUrl, registration, reference);
           pending = readPendingRegistrationPayment();
         }
+        let recordedProgress: RegistrationPaymentProgress | null = null;
+        if (pending) {
+          recordedProgress = await getRegistrationPaymentProgress(
+            apiUrl,
+            registration,
+            pending.purpose
+          );
+          if ('payment' in recordedProgress && recordedProgress.payment?.status === 'success') {
+            receivedPaymentNeedsReconciliation = recordedProgress.payment.requiresReconciliation;
+            receiptReconciliationReason = recordedProgress.payment.reconciliationReason || null;
+            if (receivedPaymentNeedsReconciliation) {
+              showPaymentProgress(recordedProgress, pending.purpose);
+              return;
+            }
+          }
+        }
         const statusData = await registrationRequest(
           apiUrl,
           `/api/v1/registration/${encodeURIComponent(registration.registrationId)}`
@@ -301,22 +541,20 @@ const controlPlaneUrl =
         if (statusData.status === 'completed') {
           const handoff = await exchangeRegistrationSession(apiUrl, registration);
           persistCustomerSession(handoff.token);
+          verifiedRegistrationToken = handoff.token;
           clearRegistrationResume();
           clearPendingRegistrationPayment();
+          window.history.replaceState(
+            null,
+            '',
+            '/billing/return?registration=' + encodeURIComponent(registration.registrationId)
+          );
           try {
             sessionStorage.removeItem('markchat_reg_idempotency_key');
           } catch {
             /* The server has completed this registration. */
           }
-          const heading = document.querySelector('#state-success h1');
-          if (heading) heading.textContent = 'Your workspace is ready';
-          const message = document.getElementById('settlement-success-message');
-          if (message) message.textContent = 'Workspace setup is complete. Opening your account...';
-          // No receipt or SSO secret is trusted from an unauthenticated transaction lookup.
-          const destination = customerDestination(handoff.ssoUrl, registration.redirectTarget);
-          if (launchBtn) launchBtn.href = destination;
-          reveal('success');
-          window.location.assign(destination);
+          await finishRegistration(handoff.token);
           return;
         }
         if (statusData.status === 'failed') {
@@ -327,7 +565,10 @@ const controlPlaneUrl =
         }
         const required = registrationPaymentRequired(statusData.paymentRequirements);
         if (required) {
-          const progress = await getRegistrationPaymentProgress(apiUrl, registration, required);
+          const progress =
+            recordedProgress && pending?.purpose === required
+              ? recordedProgress
+              : await getRegistrationPaymentProgress(apiUrl, registration, required);
           lastProgress = progress;
           lastRequired = required;
           if (
@@ -374,6 +615,49 @@ const controlPlaneUrl =
     );
   }
 
+  async function finishRegistration(token: string) {
+    try {
+      const registrationId = registration?.registrationId || completedRegistrationId;
+      if (!registrationId || !/^[a-zA-Z0-9_-]{1,100}$/.test(registrationId))
+        throw new Error('The completed workspace setup reference could not be verified.');
+      const [statusData, overview] = await Promise.all([
+        registrationRequest(apiUrl, '/api/v1/registration/' + encodeURIComponent(registrationId)),
+        fetchBillingSubscription(apiUrl, token),
+      ]);
+      const progress = registrationSettlement(statusData, overview);
+      verifiedRegistrationToken = token;
+      const paymentNote = document.getElementById('step-payment-note');
+      if (paymentNote)
+        paymentNote.textContent =
+          'The server confirmed that all workspace setup payment requirements are satisfied.';
+      setSteps(progress.paymentVerified, progress.entitlementsSynced);
+      if (!progress.entitlementsSynced) {
+        showPending(
+          'Your setup is saved and payment requirements are complete. Workspace synchronization is still processing; do not pay again.'
+        );
+        return;
+      }
+      const prepared = await prepareWorkspaceLaunch(apiUrl, token);
+      setSteps(true, true, prepared.url);
+      launchWorkspace = prepared.launch;
+      retryStatus.classList.add('hidden');
+      continuePayment.classList.add('hidden');
+      reveal('success');
+    } catch (error) {
+      if (error instanceof RegistrationError && error.status === 401) {
+        window.location.assign(
+          billingLoginDestination(window.location.pathname + window.location.search)
+        );
+        return;
+      }
+      showPending(
+        error instanceof Error
+          ? error.message
+          : 'Workspace setup is complete. Check again to confirm secure access.'
+      );
+    }
+  }
+
   continuePayment?.addEventListener('click', async () => {
     if (!registration || !nextPayment || continuePayment.disabled) return;
     continuePayment.disabled = true;
@@ -415,65 +699,145 @@ const controlPlaneUrl =
   async function checkSubscriptionReceipt() {
     const token = readCustomerSession();
     if (!token) {
-      showPending('Sign in to confirm this subscription payment for your workspace.');
+      window.location.assign(
+        billingLoginDestination(window.location.pathname + window.location.search)
+      );
       return;
     }
+    let paymentConfirmed = false;
     for (let attempt = 0; attempt < 20; attempt++) {
       try {
         const body = await registrationRequest(
           apiUrl,
           `/api/v1/billing/status/${encodeURIComponent(reference!)}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        const tx = body.transaction as
-          | { status?: string; purpose?: string; reference?: string; amountKesCents?: number }
-          | undefined;
-        if (tx && (tx.status === 'success' || tx.status === 'settled')) {
-          if (
-            tx.purpose !== 'subscription' ||
-            tx.reference !== reference ||
-            !Number.isSafeInteger(tx.amountKesCents) ||
-            Number(tx.amountKesCents) <= 0
-          ) {
-            showFailed('The payment receipt could not be validated for this subscription.');
-            return;
-          }
-          const receiptRef = document.getElementById('receipt-ref');
-          const receiptAmount = document.getElementById('receipt-amount');
-          if (receiptRef) receiptRef.textContent = tx.reference;
-          if (receiptAmount)
-            receiptAmount.textContent = new Intl.NumberFormat('en-KE', {
-              style: 'currency',
-              currency: 'KES',
-            }).format(Number(tx.amountKesCents) / 100);
-          document.getElementById('payment-receipt')?.classList.remove('hidden');
-          if (launchBtn) {
-            launchBtn.href = '/billing';
-            launchBtn.textContent = 'Continue to billing';
-          }
-          reveal('success');
-          return;
-        }
-        if (tx && (tx.status === 'failed' || tx.status === 'abandoned')) {
+        const tx = body.transaction as Record<string, unknown> | undefined;
+        // The helper rejects receipts for a different reference or payment purpose.
+        let progress = subscriptionSettlement(tx, reference!);
+        const wasReconciling = receivedPaymentNeedsReconciliation;
+        receivedPaymentNeedsReconciliation =
+          progress.paymentVerified && progress.requiresReconciliation;
+        receiptReconciliationReason = progress.reconciliationReason;
+        if (wasReconciling && !receivedPaymentNeedsReconciliation) reveal('verifying');
+        paymentConfirmed = progress.paymentVerified;
+        setSteps(progress.paymentVerified, progress.entitlementsSynced);
+        if (progress.failed) {
+          clearBillingCheckoutIntent(progress.reference);
           showFailed(
-            'This payment was not completed. No subscription activation has been confirmed.'
+            'The provider confirmed that this payment failed or was abandoned. No subscription activation was confirmed.'
           );
           return;
         }
+        if (progress.paymentVerified) {
+          if (!progress.requiresReconciliation) clearBillingCheckoutIntent(progress.reference);
+          const receiptRef = document.getElementById('receipt-ref');
+          const receiptAmount = document.getElementById('receipt-amount');
+          if (receiptRef) receiptRef.textContent = progress.reference;
+          if (receiptAmount) receiptAmount.textContent = formatKes(progress.amountKesCents);
+          document.getElementById('payment-receipt')?.classList.remove('hidden');
+          const paymentNote = document.getElementById('step-payment-note');
+          if (paymentNote)
+            paymentNote.textContent =
+              'The payment service confirmed this subscription payment for your workspace.';
+          const message = document.getElementById('verifying-message');
+          if (message)
+            message.textContent =
+              'Your payment is confirmed. We are checking that your workspace plan and access have synchronized.';
+        }
+        if (receivedPaymentNeedsReconciliation) {
+          showReconciliation(progress.reconciliationReason);
+          return;
+        }
+        if (progress.entitlementsSynced) {
+          // A receipt never supplies the launch link. Request it using the authenticated customer session.
+          const prepared = await prepareWorkspaceLaunch(apiUrl, token);
+          progress = subscriptionSettlement(tx, reference!, prepared.url);
+          setSteps(progress.paymentVerified, progress.entitlementsSynced, progress.launchUrl);
+          if (progress.workspaceReady) {
+            launchWorkspace = prepared.launch;
+            retryStatus.classList.add('hidden');
+            reveal('success');
+            return;
+          }
+        }
       } catch (error) {
-        if (error instanceof RegistrationError && [401, 403].includes(error.status)) {
-          showPending('Sign in to confirm this payment for your workspace.');
+        if (error instanceof RegistrationError && error.status === 401) {
+          window.location.assign(
+            billingLoginDestination(window.location.pathname + window.location.search)
+          );
+          return;
+        }
+        if (error instanceof RegistrationError && error.status === 403) {
+          showPending(
+            'This payment is not accessible in the signed-in workspace. Sign in with the correct workspace administrator account; do not pay again.'
+          );
+          pendingResume.href = billingLoginDestination(
+            window.location.pathname + window.location.search
+          );
+          pendingResume.textContent = 'Sign in to the correct workspace';
+          return;
+        }
+        if (error instanceof Error && /receipt|destination/.test(error.message)) {
+          showPending(error.message + ' No new payment is needed to retry this check.');
           return;
         }
       }
       await new Promise((resolve) => setTimeout(resolve, 1500));
     }
+    if (receivedPaymentNeedsReconciliation) {
+      showReconciliation(receiptReconciliationReason);
+      return;
+    }
     showPending(
-      'Payment confirmation is taking longer than expected. Do not pay twice; revisit this page to check the reference.'
+      paymentConfirmed
+        ? 'Your payment is confirmed. Workspace synchronization is still processing. Check again before making any new payment.'
+        : 'Payment confirmation is taking longer than expected. Do not pay twice; check this reference again.'
     );
   }
+
+  retryStatus.addEventListener('click', async () => {
+    if (checking) return;
+    checking = true;
+    retryStatus.disabled = true;
+    try {
+      if (registration || verifiedRegistrationToken) await checkRegistration();
+      else if (completedRegistrationId) {
+        const token = readCustomerSession();
+        if (token) await finishRegistration(token);
+        else
+          window.location.assign(
+            billingLoginDestination(window.location.pathname + window.location.search)
+          );
+      } else if (reference) await checkSubscriptionReceipt();
+    } finally {
+      checking = false;
+      retryStatus.disabled = false;
+    }
+  });
+
+  launchBtn.addEventListener('click', async (event) => {
+    event.preventDefault();
+    if (launchBtn.getAttribute('aria-disabled') === 'true' || !launchWorkspace) return;
+    const launch = launchWorkspace;
+    launchBtn.setAttribute('aria-disabled', 'true');
+    try {
+      window.location.assign(await launch());
+    } catch (error) {
+      setSteps(true, true);
+      if (error instanceof RegistrationError && error.status === 401) {
+        window.location.assign(
+          billingLoginDestination(window.location.pathname + window.location.search)
+        );
+        return;
+      }
+      showPending(
+        error instanceof Error
+          ? error.message
+          : 'Secure workspace launch could not be confirmed. Check again.'
+      );
+    }
+  });
 
   if (reference && !/^[a-zA-Z0-9_-]{8,100}$/.test(reference)) {
     showFailed('No valid payment reference was found. Return to workspace setup or billing.');
@@ -485,6 +849,13 @@ const controlPlaneUrl =
     else void checkRegistration();
   } else if (registration) {
     void checkRegistration();
+  } else if (completedRegistrationId) {
+    const token = readCustomerSession();
+    if (token) void finishRegistration(token);
+    else
+      window.location.assign(
+        billingLoginDestination(window.location.pathname + window.location.search)
+      );
   } else if (reference) {
     void checkSubscriptionReceipt();
   } else {

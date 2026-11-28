@@ -49,7 +49,12 @@ function updateConsent() {
   window.gtag('config', validId, { anonymize_ip: true, send_page_view: true });
 }
 
-if (typeof window !== 'undefined' && validId) {
+// Billing URLs can carry payment references or a one-use Core handoff fragment.
+// Keep these pages private even when analytics was accepted on a public page.
+const privateBillingPage =
+  typeof window !== 'undefined' && /^\/billing(?:\/|$)/.test(window.location.pathname);
+
+if (typeof window !== 'undefined' && validId && !privateBillingPage) {
   initializeQueue();
   updateConsent();
   window.addEventListener('markchat:consent-updated', updateConsent);
