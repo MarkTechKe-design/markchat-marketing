@@ -8,7 +8,7 @@ The acquisition, content, pricing, documentation and signup experience for MarkC
 
 - **MarkChat Core**: recurring workspace subscriptions (Starter/Growth/Scale, KES prices from Control Plane); channel availability and AI/M-Pesa features depend on actual merchant and Core provisioning.
 - **MarkChat SMS Studio**: separate prepaid KES credit wallet, eligible Sender ID review, promotional 07:00–19:00 EAT and transactional route rules. Core subscription does **not** automatically include an SMS top-up.
-- **Control Plane**: the only authority for tenant registration, approved plan catalog, 72-hour trial policy, subscription state, verified Paystack checkout and service entitlements. Annual paid billing is **not yet implemented**.
+- **Control Plane**: the only authority for tenant registration, approved plan catalog, configurable trial policy (720 hours by default), subscription state, verified Paystack checkout and service entitlements. Annual paid billing is **not yet implemented**.
 - **MarkChat Core**: intentionally inaccessible and unlinked in the current phase. Do not represent an illustrative client workflow as a deployed production feature.
 
 ## Local setup
@@ -27,7 +27,17 @@ The website uses `PUBLIC_CONTROL_PLANE_URL` for signup, Google OAuth and billing
 
 ## Customer flow
 
-Pricing CTAs select a canonical monthly plan: `/register?plan=starter|growth|scale&interval=monthly`. Email/password and Google OAuth hand registration to `/api/v1/registration` / `/api/v1/auth/google/start`. Registration itself is **not** a verified login session; users proceed through login/Google callback and then `/billing?plan=...&interval=...`. Billing reads approved catalog prices and returns the verified Paystack `authorizationUrl`; the browser redirect is not payment proof.
+Pricing CTAs select a canonical monthly plan: `/register?plan=starter|growth|scale&interval=monthly`. Registration reads the live Control Plane `/api/v1/registration/options` policy. The server defaults to a 720-hour (30-day) trial with payment verification disabled; an explicit `trialHours: 0` means no free trial. If settings cannot be read, signup is unavailable until the user retries. The static page never guesses a free policy.
+
+Email signup requires a six-digit code from `POST /api/v1/registration/otp/send` and verification at `/otp/verify`. The signed `otpVerificationToken` is bound to the normalized email and accompanies `POST /api/v1/registration`. Editing the email invalidates the browser's verification state. Existing customers retain the browser-bound Google OAuth ticket exchange; new Google signup is directed to this verified-email flow.
+
+Registration returns a short-lived, single-use `sessionToken`. The browser keeps this capability, the registration ID, optional checkout capability, and safe billing intent only in `sessionStorage`; it never persists the password or OTP proof. Public status is used only to track provisioning and outstanding payment gates. After provisioning completes, `POST /api/v1/registration/:id/session` exchanges the capability for the authenticated customer session, which is written to both `localStorage` and `sessionStorage` as `markchat_cp_token`.
+
+The normal free-trial path never opens a payment checkout. If the server explicitly requires payment verification, its capability-protected verification checkout is used. With zero trial hours, the initial subscription checkout must settle before provisioning; when both gates are enabled, verification is followed by subscription payment. Returning from checkout resumes the same registration and session exchange. An expired setup capability requires sign-in or support; it never justifies storing credentials for the return journey.
+
+Payment recovery checks the saved reference or discovers the registration's latest attempt using the checkout capability. Existing pending Paystack checkouts can be resumed, confirmed failed or abandoned attempts offer an explicit retry, and unknown outcomes remain awaiting confirmation or support. A session-only initialization intent prevents automatic repeat requests after a lost response. If the server confirms that no new attempt was recorded, the user can explicitly retry the connection; the backend serializes competing initialization requests before contacting the provider.
+
+A successful authenticated handoff can open only the established Core origin and an `/app/` path, with raw and encoded traversal rejected. Missing or rejected SSO falls back to the safe billing route while preserving plan intent. Payment references and public status never establish identity or authorize an SSO handoff. See [authentication and onboarding](docs/08-authentication.md) for the API contract and validation limits.
 
 When `interval=annual` is supplied, checkout is intentionally blocked until Control Plane adds an approved annual price and billing period. The site no longer advertises unsupported annual discount collection.
 

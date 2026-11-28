@@ -89,6 +89,12 @@ const controlPlaneUrl =
 </AuthLayout>
 
 <script>
+  import {
+    customerDestination,
+    persistCustomerSession,
+    safeLocalRedirect,
+  } from '@/lib/customer-session';
+
   (async function redeemGoogleSession() {
     const loading = document.getElementById('oauth-loading-state');
     const errorPanel = document.getElementById('oauth-error-state');
@@ -126,31 +132,12 @@ const controlPlaneUrl =
       const payload = (await response.json()).data;
       if (typeof payload?.token !== 'string' || payload.token.split('.').length !== 3)
         throw new Error('Missing verified session');
-      const redirect = payload.redirect;
-      const safeRedirect =
-        typeof redirect === 'string' &&
-        redirect.length <= 512 &&
-        /^\/(?![/\\])/.test(redirect) &&
-        !Array.from(redirect).some(
-          (char) => char === '\\' || char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127
-        ) &&
-        !/%(?:2f|5c|2e|25)/i.test(redirect) &&
-        !redirect.includes(':') &&
-        !redirect.includes('#')
-          ? redirect
-          : '/billing';
-      localStorage.setItem('markchat_cp_token', payload.token);
-      let destination = safeRedirect;
-      if (typeof payload.ssoUrl === 'string' && !payload.isNewUser) {
-        const link = new URL(payload.ssoUrl);
-        const allowed = new Set([
-          'https://app.markchat.co.ke',
-          'http://localhost:3000',
-          'http://127.0.0.1:3000',
-        ]);
-        if (allowed.has(link.origin) && link.pathname.startsWith('/app/'))
-          destination = link.toString();
-      }
+      const safeRedirect = safeLocalRedirect(payload.redirect);
+      persistCustomerSession(payload.token);
+      const destination = customerDestination(
+        payload.isNewUser ? null : payload.ssoUrl,
+        safeRedirect
+      );
       window.location.replace(destination);
     } catch {
       fail();

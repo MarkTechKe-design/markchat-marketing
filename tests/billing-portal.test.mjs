@@ -49,21 +49,18 @@ describe('Batch 9: Paystack Billing Portal & Payment Return Integration', () => 
     assert.ok(src.includes('Upgrade to '));
   });
 
-  test('KES 82 verification return waits for provisioning before showing success', () => {
+  test('registration payment return uses server gates and authenticated session exchange', () => {
     const src = fs.readFileSync(returnPagePath, 'utf8');
-    assert.ok(src.includes('markchat_verification_pending'));
-    assert.ok(src.includes("tx.purpose !== 'account_verification'"));
-    assert.ok(src.includes('tx.amountKesCents !== 8200'));
-    assert.ok(src.includes("statusData?.status === 'completed'"));
-    assert.ok(src.includes("statusData?.status === 'failed'"));
-    assert.ok(src.includes('state-pending'));
+    assert.ok(src.includes('readPendingRegistrationPayment()'));
+    assert.ok(src.includes('registrationPaymentRequired(statusData.paymentRequirements)'));
+    assert.ok(src.includes("statusData.status === 'completed'"));
+    assert.ok(src.includes("statusData.status === 'failed'"));
+    assert.ok(src.includes('exchangeRegistrationSession(apiUrl, registration)'));
+    assert.ok(src.includes('persistCustomerSession(handoff.token)'));
+    assert.ok(src.includes('readCustomerSession()'));
+    assert.ok(src.includes('continue-registration-payment'));
     assert.ok(src.includes("tx.purpose !== 'subscription'"));
     assert.ok(!src.includes('launchBtn.href = tx.ssoUrl'));
-    assert.ok(
-      !src.includes(
-        "stateSuccess?.classList.remove('hidden');\n        if (receiptRef) receiptRef.textContent = reference"
-      )
-    );
   });
 
   test('Payment return page verifies reference and facilitates Chatwoot launch', () => {
@@ -74,11 +71,25 @@ describe('Batch 9: Paystack Billing Portal & Payment Return Integration', () => 
     assert.match(src, /urlParams\.get\(['"]trxref['"]\)/, 'Must extract trxref from URL');
 
     // Verification endpoint
-    assert.match(src, /\/api\/v1\/billing\/status\/\$\{reference\}/, 'Must query status endpoint');
+    assert.match(src, /\/api\/v1\/billing\/status\//, 'Must query status endpoint');
 
     // Success and handoff
     assert.match(src, /id="state-success"/, 'Must include success receipt state');
     assert.match(src, /id="launch-workspace-btn"/, 'Must include button to launch workspace');
     assert.match(src, /id="state-failed"/, 'Must include failed transaction state');
+  });
+
+  test('signup payment return discovers lost references and offers only server-authorized recovery', () => {
+    const src = fs.readFileSync(returnPagePath, 'utf8');
+    assert.ok(src.includes('getRegistrationPaymentProgress(apiUrl, registration, required)'));
+    assert.ok(src.includes('prepareRegistrationPayment(apiUrl, registration, required,'));
+    assert.ok(src.includes("progress.kind === 'retry'"));
+    assert.ok(src.includes("progress.kind === 'connection_retry'"));
+    assert.ok(src.includes("allowRetry: nextAction === 'retry'"));
+    assert.ok(src.includes('else if (registration)'));
+    assert.ok(src.includes('recoverRegistrationPaymentReference(apiUrl, registration, reference)'));
+    assert.ok(!src.includes('startRegistrationCheckout('));
+    assert.ok(!src.includes('savePendingRegistrationPayment('));
+    assert.ok(!src.includes('required === pending?.purpose'));
   });
 });

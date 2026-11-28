@@ -223,6 +223,12 @@ const controlPlaneUrl =
 </div>
 
 <script>
+  import {
+    customerDestination,
+    persistCustomerSession,
+    safeLocalRedirect,
+  } from '@/lib/customer-session';
+
   const form = document.getElementById('login-form') as HTMLFormElement;
   const submitButton = document.getElementById('login-submit-button') as HTMLButtonElement;
   const buttonText = document.getElementById('login-button-text');
@@ -254,26 +260,6 @@ const controlPlaneUrl =
     const cleanUrl =
       window.location.pathname + (cleanSearch ? `?${cleanSearch}` : '') + window.location.hash;
     window.history.replaceState({}, document.title, cleanUrl);
-  }
-
-  // Open-Redirect Protection Helper (CWE-601)
-  function getSafeRedirect(
-    targetUrl: string | null | undefined,
-    fallback: string = '/billing'
-  ): string {
-    if (!targetUrl || typeof targetUrl !== 'string') return fallback;
-    if (
-      /^\/(?![/\\])/.test(targetUrl) &&
-      !targetUrl.includes('\\') &&
-      !targetUrl.includes(':') &&
-      !Array.from(targetUrl).some((char) => char.charCodeAt(0) < 32) &&
-      !/%(?:0[0-9a-f]|2e|2f|5c|25)/i.test(targetUrl) &&
-      !targetUrl.includes('#') &&
-      targetUrl.length <= 512
-    ) {
-      return targetUrl;
-    }
-    return fallback;
   }
 
   // Password visibility toggle with accessible aria state
@@ -396,7 +382,9 @@ const controlPlaneUrl =
 
       const urlParams = new URLSearchParams(window.location.search);
       const queryRedirect = urlParams.get('redirect');
-      const targetRedirect = getSafeRedirect(queryRedirect || form.dataset.redirect || '/billing');
+      const targetRedirect = safeLocalRedirect(
+        queryRedirect || form.dataset.redirect || '/billing'
+      );
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -442,33 +430,12 @@ const controlPlaneUrl =
         const data = await response.json();
         const payload = data.data || data;
 
-        if (payload.token) {
-          try {
-            localStorage.setItem('markchat_cp_token', payload.token);
-          } catch {
-            // Storage unavailable or quota exceeded
-          }
-        }
+        persistCustomerSession(payload.token);
 
         formStatus?.classList.remove('hidden');
         formSuccess?.classList.remove('hidden');
 
-        // A successful login API response cannot redirect to arbitrary origins.
-        let destination = targetRedirect;
-        if (typeof payload.ssoUrl === 'string') {
-          try {
-            const candidate = new URL(payload.ssoUrl);
-            const allowed = [
-              'https://app.markchat.co.ke',
-              'http://localhost:3000',
-              'http://127.0.0.1:3000',
-            ];
-            if (allowed.includes(candidate.origin) && candidate.pathname.startsWith('/app/'))
-              destination = candidate.href;
-          } catch {
-            destination = targetRedirect;
-          }
-        }
+        const destination = customerDestination(payload.ssoUrl, targetRedirect);
         setTimeout(() => {
           window.location.href = destination;
         }, 800);

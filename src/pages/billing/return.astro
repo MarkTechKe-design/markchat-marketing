@@ -61,7 +61,7 @@ const controlPlaneUrl =
           </div>
           <div>
             <h1 class="text-2xl font-extrabold text-text">Payment Settled!</h1>
-            <p class="text-sm text-text-muted mt-1">
+            <p id="settlement-success-message" class="text-sm text-text-muted mt-1">
               Payment confirmed by the Control Plane. Workspace provisioning and access may still be
               finishing.
             </p>
@@ -69,7 +69,8 @@ const controlPlaneUrl =
 
           <!-- Receipt Details -->
           <div
-            class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-left text-xs space-y-2"
+            id="payment-receipt"
+            class="hidden p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-left text-xs space-y-2"
           >
             <div class="flex justify-between">
               <span class="text-slate-500">Transaction Reference:</span>
@@ -98,11 +99,19 @@ const controlPlaneUrl =
         </div>
 
         <div id="state-pending" class="hidden space-y-4" role="status">
-          <h1 class="text-2xl font-bold text-text">Confirmation is still processing</h1>
+          <h1 id="pending-title" class="text-2xl font-bold text-text">
+            Confirmation is still processing
+          </h1>
           <p id="pending-reason" class="text-sm text-text-muted">
             Your payment has not yet been confirmed. We will not activate your workspace until the
             Control Plane confirms it.
           </p>
+          <button
+            id="continue-registration-payment"
+            type="button"
+            class="hidden w-full py-3 px-4 rounded-xl bg-primary text-white text-sm font-semibold disabled:opacity-50 cursor-pointer"
+            >Continue to subscription payment</button
+          >
           <a id="pending-resume" href="/register" class="inline-block text-primary underline"
             >Return to registration</a
           >
@@ -149,6 +158,30 @@ const controlPlaneUrl =
 </BaseLayout>
 
 <script>
+  import {
+    customerDestination,
+    persistCustomerSession,
+    readCustomerSession,
+  } from '@/lib/customer-session';
+  import {
+    RegistrationError,
+    clearPendingRegistrationPayment,
+    clearRegistrationResume,
+    exchangeRegistrationSession,
+    readPendingRegistrationPayment,
+    readRegistrationResume,
+    registrationPaymentRequired,
+    registrationSessionExpired,
+    registrationRequest,
+    type RegistrationPaymentPurpose,
+  } from '@/lib/registration-client';
+  import {
+    getRegistrationPaymentProgress,
+    prepareRegistrationPayment,
+    recoverRegistrationPaymentReference,
+    type RegistrationPaymentProgress,
+  } from '@/lib/registration-payment';
+
   const container = document.getElementById('return-container');
   const apiUrl = container?.dataset.apiUrl || 'http://localhost:5000';
   const stateVerifying = document.getElementById('state-verifying');
@@ -156,33 +189,20 @@ const controlPlaneUrl =
   const stateFailed = document.getElementById('state-failed');
   const statePending = document.getElementById('state-pending');
   const pendingReason = document.getElementById('pending-reason');
-  const receiptRef = document.getElementById('receipt-ref');
-  const receiptAmount = document.getElementById('receipt-amount');
-  const launchBtn = document.getElementById('launch-workspace-btn') as HTMLAnchorElement;
-  const failedReason = document.getElementById('failed-reason');
+  const pendingTitle = document.getElementById('pending-title');
   const pendingResume = document.getElementById('pending-resume') as HTMLAnchorElement;
+  const failedReason = document.getElementById('failed-reason');
+  const launchBtn = document.getElementById('launch-workspace-btn') as HTMLAnchorElement;
+  const continuePayment = document.getElementById(
+    'continue-registration-payment'
+  ) as HTMLButtonElement;
+  let pending = readPendingRegistrationPayment();
+  const registration = readRegistrationResume();
   const urlParams = new URLSearchParams(window.location.search);
-  const pendingRaw = sessionStorage.getItem('markchat_verification_pending');
-  let pending: { registrationId: string; reference: string; createdAt: number } | null = null;
-  try {
-    const saved = pendingRaw ? JSON.parse(pendingRaw) : null;
-    if (
-      saved &&
-      typeof saved.registrationId === 'string' &&
-      typeof saved.reference === 'string' &&
-      Number.isFinite(saved.createdAt) &&
-      Date.now() - saved.createdAt < 24 * 60 * 60 * 1000
-    ) {
-      pending = saved;
-    }
-  } catch {
-    sessionStorage.removeItem('markchat_verification_pending');
-  }
-  // Paystack returns reference or trxref. A stored reference supports a manual check
-  // after a callback URL is missing; URL values never authorize Core access.
   const reference =
     urlParams.get('reference') || urlParams.get('trxref') || pending?.reference || null;
-  const isVerification = !!pending && pending.reference === reference;
+  let nextPayment: RegistrationPaymentPurpose | null = null;
+  let nextAction: 'continue' | 'retry' = 'continue';
 
   function reveal(which: 'success' | 'failed' | 'pending') {
     stateVerifying?.classList.add('hidden');
@@ -191,112 +211,283 @@ const controlPlaneUrl =
     statePending?.classList.toggle('hidden', which !== 'pending');
   }
   function showPending(message: string) {
+    continuePayment?.classList.add('hidden');
+    if (pendingTitle) pendingTitle.textContent = 'Confirmation is still processing';
     if (pendingReason) pendingReason.textContent = message;
-    if (pendingResume) pendingResume.href = isVerification ? '/register' : '/billing';
+    if (pendingResume) {
+      pendingResume.href = registration ? '/register' : '/login?redirect=%2Fbilling';
+      pendingResume.textContent = registration
+        ? 'Return to workspace setup'
+        : 'Sign in to your workspace';
+    }
     reveal('pending');
   }
   function showFailed(message: string) {
     if (failedReason) failedReason.textContent = message;
     reveal('failed');
   }
-  function showConfirmed(tx: { reference: string; amountKesCents: number; purpose: string }) {
-    if (receiptRef) receiptRef.textContent = tx.reference;
-    if (receiptAmount)
-      receiptAmount.textContent = `KES ${(tx.amountKesCents / 100).toLocaleString()}`;
-    // Never navigate directly to an untrusted ssoUrl returned with a receipt.
-    if (launchBtn) launchBtn.href = '/login';
-    sessionStorage.removeItem('markchat_reg_idempotency_key');
-    if (isVerification) sessionStorage.removeItem('markchat_verification_pending');
-    const heading = document.querySelector('#state-success h1');
-    if (heading)
-      heading.textContent = isVerification
-        ? 'Account confirmation received'
-        : 'Subscription payment confirmed';
-    reveal('success');
+
+  function showPaymentProgress(
+    progress: RegistrationPaymentProgress,
+    purpose: RegistrationPaymentPurpose
+  ) {
+    let message: string;
+    let label: string;
+    nextPayment = purpose;
+    nextAction = 'continue';
+    if (progress.kind === 'waiting') {
+      showPending(progress.message);
+      return;
+    }
+    if (progress.kind === 'retry') {
+      message =
+        'The provider confirmed that the earlier payment failed or was abandoned. You can retry the payment to continue workspace setup.';
+      label = 'Retry payment';
+      nextAction = 'retry';
+    } else if (progress.kind === 'connection_retry') {
+      message =
+        'No new payment attempt was recorded. Retry the connection to continue your saved workspace setup.';
+      label = 'Retry connection';
+      nextAction = 'retry';
+    } else if (progress.kind === 'checkout') {
+      message =
+        'Your payment is still awaiting confirmation. You can resume the existing checkout or check this page again; do not create a second payment.';
+      label = 'Resume payment';
+    } else {
+      message =
+        purpose === 'subscription'
+          ? 'Your workspace requires a subscription payment before activation.'
+          : 'An account confirmation payment is required before workspace activation.';
+      label =
+        purpose === 'subscription'
+          ? 'Continue to subscription payment'
+          : 'Continue to account confirmation';
+    }
+    showPending(message);
+    if (pendingTitle)
+      pendingTitle.textContent =
+        progress.kind === 'checkout'
+          ? 'Payment is awaiting confirmation'
+          : 'Continue workspace setup';
+    continuePayment.textContent = label;
+    continuePayment.classList.remove('hidden');
   }
 
-  async function readRegistrationStatus(registrationId: string) {
-    const response = await fetch(
-      `${apiUrl}/api/v1/registration/${encodeURIComponent(registrationId)}`,
-      {
-        headers: { Accept: 'application/json' },
-        cache: 'no-store',
-      }
-    );
-    if (!response.ok) return null;
-    const payload = await response.json();
-    return payload.data || payload;
-  }
-
-  async function checkStatus() {
-    if (!reference || !/^[a-zA-Z0-9_-]{8,100}$/.test(reference)) {
-      showFailed(
-        'No valid transaction reference was found. Please return to your registration or billing page.'
+  // Initial registration has no customer JWT yet. Only server registration progress
+  // decides which gates remain; a payment URL/reference never proves identity.
+  async function checkRegistration() {
+    if (!registration || (pending && registration.registrationId !== pending.registrationId)) {
+      showPending(
+        'Your secure setup session expired. Sign in or contact support to resume this workspace. Do not pay again.'
       );
       return;
     }
-    const token = localStorage.getItem('markchat_cp_token');
-    const headers: Record<string, string> = { Accept: 'application/json' };
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const maxAttempts = 20;
-    for (let attempts = 0; attempts < maxAttempts; attempts++) {
+    continuePayment?.classList.add('hidden');
+    const deadline = Date.now() + 65000;
+    let lastProgress: RegistrationPaymentProgress | null = null;
+    let lastRequired: RegistrationPaymentPurpose | null = null;
+    for (let attempt = 0; attempt < 30 && Date.now() < deadline; attempt++) {
       try {
-        const res = await fetch(`${apiUrl}/api/v1/billing/status/${reference}`, {
-          headers,
-          cache: 'no-store',
-        });
-        if (res.ok) {
-          const body = await res.json();
-          const tx = body.transaction || body.data?.transaction;
-          if (tx && (tx.status === 'success' || tx.status === 'settled')) {
-            if (isVerification) {
-              if (tx.purpose !== 'account_verification' || tx.amountKesCents !== 8200) {
-                showFailed('The returned payment does not match the KES 82 account confirmation.');
-                return;
-              }
-              const statusData = await readRegistrationStatus(pending!.registrationId);
-              if (statusData?.status === 'completed') {
-                showConfirmed(tx);
-                return;
-              }
-              if (statusData?.status === 'failed') {
-                showPending(
-                  'Your payment was confirmed, but workspace setup needs support. Do not pay again.'
-                );
-                return;
-              }
-              if (attempts === maxAttempts - 1) {
-                showPending(
-                  'KES 82 payment confirmed. Your selected plan is being provisioned. Do not pay again; return later to check workspace setup.'
-                );
-                return;
-              }
-            } else {
-              if (tx.purpose !== 'subscription') {
-                showFailed(
-                  'This payment is not a subscription transaction associated with this billing session.'
-                );
-                return;
-              }
-              showConfirmed(tx);
-              return;
-            }
+        // A returned reference may belong to a settled earlier gate. Recover it
+        // with the registration capability before discovering the next gate.
+        if (!pending && reference) {
+          await recoverRegistrationPaymentReference(apiUrl, registration, reference);
+          pending = readPendingRegistrationPayment();
+        }
+        const statusData = await registrationRequest(
+          apiUrl,
+          `/api/v1/registration/${encodeURIComponent(registration.registrationId)}`
+        );
+        if (statusData.status === 'completed') {
+          const handoff = await exchangeRegistrationSession(apiUrl, registration);
+          persistCustomerSession(handoff.token);
+          clearRegistrationResume();
+          clearPendingRegistrationPayment();
+          try {
+            sessionStorage.removeItem('markchat_reg_idempotency_key');
+          } catch {
+            /* The server has completed this registration. */
           }
-          if (tx && (tx.status === 'failed' || tx.status === 'abandoned')) {
-            showFailed(
-              `Payment was ${tx.status}. No subscription or verification activation has been confirmed.`
-            );
+          const heading = document.querySelector('#state-success h1');
+          if (heading) heading.textContent = 'Your workspace is ready';
+          const message = document.getElementById('settlement-success-message');
+          if (message) message.textContent = 'Workspace setup is complete. Opening your account...';
+          // No receipt or SSO secret is trusted from an unauthenticated transaction lookup.
+          const destination = customerDestination(handoff.ssoUrl, registration.redirectTarget);
+          if (launchBtn) launchBtn.href = destination;
+          reveal('success');
+          window.location.assign(destination);
+          return;
+        }
+        if (statusData.status === 'failed') {
+          showPending(
+            'Workspace setup needs support. Your registration was saved; do not make another payment.'
+          );
+          return;
+        }
+        const required = registrationPaymentRequired(statusData.paymentRequirements);
+        if (required) {
+          const progress = await getRegistrationPaymentProgress(apiUrl, registration, required);
+          lastProgress = progress;
+          lastRequired = required;
+          if (
+            progress.kind === 'retry' ||
+            progress.kind === 'connection_retry' ||
+            progress.kind === 'none' ||
+            (progress.kind === 'waiting' && progress.payment.requiresReconciliation) ||
+            (pending && required !== pending.purpose)
+          ) {
+            showPaymentProgress(progress, required);
             return;
           }
         }
-      } catch {
-        // Temporary network errors are not payment confirmation.
+      } catch (error) {
+        if (registrationSessionExpired(error)) {
+          showPending(
+            'Your secure setup session expired. Sign in or contact support to continue. Do not pay again.'
+          );
+          if (pendingResume) {
+            pendingResume.href =
+              '/login?redirect=' + encodeURIComponent(registration.redirectTarget);
+            pendingResume.textContent = 'Sign in to your workspace';
+          }
+          return;
+        }
+        if (
+          error instanceof RegistrationError &&
+          error.status >= 400 &&
+          error.status < 500 &&
+          error.status !== 409
+        ) {
+          showPending(error.message);
+          return;
+        }
       }
-      await new Promise<void>((resolve) => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+    if (lastProgress && lastRequired) {
+      showPaymentProgress(lastProgress, lastRequired);
+      return;
     }
     showPending(
-      'Payment confirmation is taking longer than expected. Do not pay twice; you can revisit this page to check the reference.'
+      'Payment confirmation or workspace setup is still processing. You can check this page again; do not register or pay twice.'
     );
   }
-  void checkStatus();
+
+  continuePayment?.addEventListener('click', async () => {
+    if (!registration || !nextPayment || continuePayment.disabled) return;
+    continuePayment.disabled = true;
+    try {
+      // Re-read the server's remaining gates before creating another hosted checkout.
+      const statusData = await registrationRequest(
+        apiUrl,
+        `/api/v1/registration/${encodeURIComponent(registration.registrationId)}`
+      );
+      const required = registrationPaymentRequired(statusData.paymentRequirements);
+      if (!required || statusData.status === 'completed') {
+        await checkRegistration();
+        return;
+      }
+      if (statusData.status === 'failed')
+        throw new RegistrationError('Workspace setup needs support. Do not make another payment.');
+      if (
+        required === 'subscription' &&
+        new URLSearchParams(registration.redirectTarget.split('?')[1]).get('interval') === 'annual'
+      ) {
+        throw new RegistrationError(
+          'Annual checkout is not available. Contact sales to continue this workspace setup.'
+        );
+      }
+      const progress = await prepareRegistrationPayment(apiUrl, registration, required, {
+        allowRetry: nextAction === 'retry',
+      });
+      if (progress.kind === 'checkout') window.location.assign(progress.checkout.authorizationUrl);
+      else showPaymentProgress(progress, required);
+    } catch (error) {
+      showPending(
+        error instanceof Error ? error.message : 'Checkout could not be prepared. Please retry.'
+      );
+    } finally {
+      continuePayment.disabled = false;
+    }
+  });
+
+  async function checkSubscriptionReceipt() {
+    const token = readCustomerSession();
+    if (!token) {
+      showPending('Sign in to confirm this subscription payment for your workspace.');
+      return;
+    }
+    for (let attempt = 0; attempt < 20; attempt++) {
+      try {
+        const body = await registrationRequest(
+          apiUrl,
+          `/api/v1/billing/status/${encodeURIComponent(reference!)}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const tx = body.transaction as
+          | { status?: string; purpose?: string; reference?: string; amountKesCents?: number }
+          | undefined;
+        if (tx && (tx.status === 'success' || tx.status === 'settled')) {
+          if (
+            tx.purpose !== 'subscription' ||
+            tx.reference !== reference ||
+            !Number.isSafeInteger(tx.amountKesCents) ||
+            Number(tx.amountKesCents) <= 0
+          ) {
+            showFailed('The payment receipt could not be validated for this subscription.');
+            return;
+          }
+          const receiptRef = document.getElementById('receipt-ref');
+          const receiptAmount = document.getElementById('receipt-amount');
+          if (receiptRef) receiptRef.textContent = tx.reference;
+          if (receiptAmount)
+            receiptAmount.textContent = new Intl.NumberFormat('en-KE', {
+              style: 'currency',
+              currency: 'KES',
+            }).format(Number(tx.amountKesCents) / 100);
+          document.getElementById('payment-receipt')?.classList.remove('hidden');
+          if (launchBtn) {
+            launchBtn.href = '/billing';
+            launchBtn.textContent = 'Continue to billing';
+          }
+          reveal('success');
+          return;
+        }
+        if (tx && (tx.status === 'failed' || tx.status === 'abandoned')) {
+          showFailed(
+            'This payment was not completed. No subscription activation has been confirmed.'
+          );
+          return;
+        }
+      } catch (error) {
+        if (error instanceof RegistrationError && [401, 403].includes(error.status)) {
+          showPending('Sign in to confirm this payment for your workspace.');
+          return;
+        }
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+    showPending(
+      'Payment confirmation is taking longer than expected. Do not pay twice; revisit this page to check the reference.'
+    );
+  }
+
+  if (reference && !/^[a-zA-Z0-9_-]{8,100}$/.test(reference)) {
+    showFailed('No valid payment reference was found. Return to workspace setup or billing.');
+  } else if (pending) {
+    if (pending.reference !== reference)
+      showFailed(
+        'This payment reference does not match your workspace setup. Return to registration to continue securely.'
+      );
+    else void checkRegistration();
+  } else if (registration) {
+    void checkRegistration();
+  } else if (reference) {
+    void checkSubscriptionReceipt();
+  } else {
+    showFailed('No valid payment reference was found. Return to workspace setup or billing.');
+  }
 </script>

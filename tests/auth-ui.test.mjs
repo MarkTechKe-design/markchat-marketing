@@ -185,7 +185,7 @@ describe('MarkChat Authentication & Registration UI (Distraction-Free AuthLayout
       'Callback page must scrub URL fragment via history.replaceState'
     );
     assert.ok(
-      content.includes('markchat_cp_token'),
+      content.includes('persistCustomerSession(payload.token)'),
       'Callback page must store authentication token'
     );
   });
