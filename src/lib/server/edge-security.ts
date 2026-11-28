@@ -196,7 +196,11 @@ export async function readJson(request: Request, maxBytes = 12_000): Promise<unk
   return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(body));
 }
 export async function readBoundedBytes(
-  request: Pick<Request, 'headers' | 'body'>,
+  request: {
+    headers: Headers;
+    // R2 streams may yield Uint8Array<ArrayBufferLike>; the size guard is unchanged.
+    body: ReadableStream<Uint8Array<ArrayBufferLike>> | null;
+  },
   maxBytes: number
 ): Promise<Uint8Array<ArrayBuffer>> {
   const length = Number(request.headers.get('Content-Length') || '0');
