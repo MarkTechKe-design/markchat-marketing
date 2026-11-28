@@ -13,11 +13,14 @@
 import MarketingLayout from '@/layouts/MarketingLayout.astro';
 import { Icon } from 'astro-icon/components';
 import { siteConfig } from '@/config';
-import { fetchCareers, fetchCareersContent } from '@/lib/cms-api';
+import { fetchCareersContent, type Career } from '@/lib/cms-api';
 import CareersEditorialHero from '@/components/careers/CareersEditorialHero.astro';
 import CareerApplicationNotice from '@/components/careers/CareerApplicationNotice.astro';
 
-const [careers, content] = await Promise.all([fetchCareers(), fetchCareersContent()]);
+// Static builds cannot establish current recruitment authorization. Never publish
+// bundled or cached roles as actual vacancies without a trusted runtime feed.
+const careers: Career[] = [];
+const content = await fetchCareersContent();
 
 // Distinct departments and work arrangements for filtering
 const departments = [...new Set(careers.map((j) => j.department))];
@@ -191,7 +194,7 @@ const defaultDeptAccent = {
           </div>
         </div>
 
-        <div class="mb-8 space-y-4">
+        <div class="mb-8 space-y-4" hidden={careers.length === 0}>
           <div
             class="flex flex-wrap items-center gap-2"
             role="group"
@@ -345,20 +348,22 @@ const defaultDeptAccent = {
             <Icon name="lucide:briefcase" class="w-7 h-7" />
           </div>
           <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">
-            No Open Roles Matching Criteria
+            No Open Positions at the Moment
           </h3>
           <p class="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-5">
-            No roles match these filters. Reset filters to explore current opportunities, or check
-            the Talent Pool updates below.
+            We're not currently recruiting, but we're always building towards what's next.
+            Thank you for your interest in joining MarkChat. Please check back here for future opportunities.
           </p>
-          <button
-            type="button"
-            id="reset-vacancies-btn"
-            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold text-xs shadow-none hover:bg-blue-700 transition-colors"
-          >
-            <Icon name="lucide:rotate-ccw" class="w-3.5 h-3.5" />
-            <span>Reset Filters</span>
-          </button>
+          {careers.length > 0 && (
+            <button
+              type="button"
+              id="reset-vacancies-btn"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold text-xs shadow-none hover:bg-blue-700 transition-colors"
+            >
+              <Icon name="lucide:rotate-ccw" class="w-3.5 h-3.5" />
+              <span>Reset Filters</span>
+            </button>
+          )}
         </div>
       </section>
 
@@ -370,8 +375,7 @@ const defaultDeptAccent = {
           <p class="mb-3 text-sm font-semibold text-blue-100">Talent Pool</p>
           <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">{content.generalAppTitle}</h2>
           <p class="mt-3 text-sm leading-relaxed text-blue-50 sm:text-base">
-            Secure CV uploads are temporarily unavailable while we complete document screening.
-            Check here for updates before sending an application.
+            General applications are currently closed. Please check back here for future opportunities.
           </p>
         </div>
         <div
