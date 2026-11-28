@@ -115,6 +115,11 @@ export default {
       let html = await template.text();
       html = html.replace(new RegExp('<title>[^<]*</title>', 'i'), '<title>' + title + '</title>');
       html = html.replace(new RegExp('<meta\\s+name="robots"[^>]*>', 'i'), '');
+      // The static renderer uses /careers/position as its template canonical.
+      // Replace only that trusted canonical origin with the verified role URL.
+      const canonical = 'https://markchat.co.ke/careers/' + publicJobPath[1];
+      html = html.split('https://markchat.co.ke/careers/position/').join(canonical);
+      html = html.split('https://markchat.co.ke/careers/position').join(canonical);
       html = html.replace('</head>', jobPostingScript + '</head>');
       const headers = new Headers(template.headers);
       headers.set('Content-Type', 'text/html; charset=utf-8');
